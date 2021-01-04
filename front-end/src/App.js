@@ -12,6 +12,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import BetterDocument from './BetterDocument';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 
 function App() {
   const [username, set_username] = useState('');
@@ -21,6 +22,12 @@ function App() {
   const [pool, set_pool] = useState([]);
   const [doc, set_doc] = useState('');
 
+  const btn_labels = [['0', 'irrelevant'],
+                      ['1', 'topical'],
+                      ['2', 'significant'],
+                      ['3', 'decisional'],
+                      ['4', 'DECISIVE']];
+  
   const color_mapping = [['0', 'secondary'],
                          ['1', 'info'],
                          ['2', 'primary'],
@@ -70,6 +77,19 @@ function App() {
         set_current(i);
       });
   };
+
+  const judge_current = (level) => {
+    pool[current].judgment = level;
+    // Oh and send something back to the server willya?
+  };
+
+  const judgment_buttons = btn_labels.map((entry) => (
+    <ListGroup.Item action
+                    variant={rel_colors.get(entry[0])}
+                    onClick={() => judge_current(entry[0])}>
+      {entry[1]}
+    </ListGroup.Item>
+  ));
 
   const pool_list = pool.map((entry, i) => (
     <ListGroup.Item action
@@ -122,10 +142,15 @@ function App() {
             </div>
           </Form>		  
         </div>
+        <div>
+          <ListGroup horizontal>
+            {judgment_buttons}
+          </ListGroup>
+        </div>
       </Navbar>
 
-      <Container fluid>
-        <Row className="mx-5 mt-5">
+      <Container className='mx-3 mt-5'>
+        <Row className='mt-5'>
           <Col xs={4} style={{overflowY: 'scroll'}}>
             <ListGroup>
               { pool_list }
