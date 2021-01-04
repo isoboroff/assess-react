@@ -54,8 +54,8 @@ function App() {
 	}
       }).then((data) => {
         set_topic(data.topic);
-        set_current(0);
         set_pool(data.pool);
+        set_current(0);
       });
   };
 
@@ -83,13 +83,19 @@ function App() {
     // Oh and send something back to the server willya?
   };
 
-  const judgment_buttons = btn_labels.map((entry) => (
-    <ListGroup.Item action
-                    variant={rel_colors.get(entry[0])}
-                    onClick={() => judge_current(entry[0])}>
-      {entry[1]}
-    </ListGroup.Item>
-  ));
+  const judgment_buttons = btn_labels.map((entry) => {
+    let entry_text = entry[1];
+    if (current >= 0 && pool[current].judgment === entry[0]){
+      entry_text = (<b> {entry[1]} </b>);
+    }
+    return (
+      <ListGroup.Item action
+                      variant={rel_colors.get(entry[0])}
+                      onClick={() => judge_current(entry[0])}>
+        {entry_text}
+      </ListGroup.Item>
+    );
+  });
 
   const pool_list = pool.map((entry, i) => (
     <ListGroup.Item action
@@ -151,7 +157,7 @@ function App() {
 
       <Container className='mx-3 mt-5'>
         <Row className='mt-5'>
-          <Col xs={4} style={{overflowY: 'scroll'}}>
+          <Col xs={5} style={{overflowY: 'scroll'}}>
             <ListGroup>
               { pool_list }
             </ListGroup>
