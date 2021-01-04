@@ -7,16 +7,27 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Navbar from 'react-bootstrap/Navbar';
 import Container from 'react-bootstrap/Container';
+import ListGroup from 'react-bootstrap/ListGroup';
+
+import BetterDocument from './BetterDocument';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
-  const [username, set_username] = useState(null);
+  const [username, set_username] = useState('');
   const [login_required, set_login_required] = useState(true);
   const [topic, set_topic] = useState(-1);
   const [current, set_current] = useState(-1);
   const [pool, set_pool] = useState([]);
+  const [doc, set_doc] = useState('');
 
+  const color_mapping = [['0', 'secondary'],
+                         ['1', 'info'],
+                         ['2', 'primary'],
+                         ['3', 'success'],
+                         ['4', 'danger']];
+  const rel_colors = new Map(color_mapping);
+  
   const do_login = () => {
     if (username !== null)
       set_login_required(false);
@@ -26,7 +37,7 @@ function App() {
     if (username === null)
       return;
 
-    const url = 'get_pool?u=' + username + '&t=' + topic;
+    const url = 'pool?u=' + username + '&t=' + topic;
     fetch(url)
       .then((response) => {
 	if (response.ok) {
@@ -41,6 +52,34 @@ function App() {
       });
   };
 
+  const load_doc = (docid, i) => {
+    if (username === null)
+      return;
+
+    const url = 'doc?u=' + username + '&d=' + docid;
+    fetch(url)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw Error(response.statusText);
+        }
+      }).then((data) => {
+        // put the document data where it should go.
+        set_doc(data);
+        set_current(i);
+      });
+  };
+
+  const pool_list = pool.map((entry, i) => (
+    <ListGroup.Item action
+                    active={current === i}
+                    variant={rel_colors.get(entry.judgment) || null}
+                    onClick={() => load_doc(entry.docid, i)}>
+      {entry.docid}: {entry.judgment}
+    </ListGroup.Item>
+  ));
+  
   return (
     <>
       <Modal show={login_required} onHide={do_login}
@@ -88,10 +127,12 @@ function App() {
       <Container fluid>
         <Row className="mx-5 mt-5">
           <Col xs={4} style={{overflowY: 'scroll'}}>
-            <p> This is the pool view </p>
+            <ListGroup>
+              { pool_list }
+            </ListGroup>
           </Col>
           <Col>
-            <p> This is the document view</p>
+            <BetterDocument content={doc}/>
           </Col>
         </Row>
       </Container>
