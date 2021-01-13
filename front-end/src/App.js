@@ -94,6 +94,9 @@ function App() {
       });
   };
 
+  // When updating a judgment in the pool, we need to update the
+  // pool object using set_pool so that the DOM refresh reflects
+  // the update.
   const set_judgment = (index, level) => {
     let newPool = pool.map((item, i) => {
       if (index === i) {
@@ -110,13 +113,21 @@ function App() {
     // Oh and send something back to the server willya?
   };
 
-  const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => (
-    <ListGroup.Item action
-                    variant={rel_levels[i].color}
-                    onClick={() => judge_current(i)}>
-      {rel_levels[i].label}
-    </ListGroup.Item>
-  ));
+  const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
+    let style = 'font-weight-normal';
+    if (current >= 0 && current < pool.length && i === pool[current].judgment) {
+      style = 'font-weight-bold';
+    }
+    return (
+      <ListGroup.Item action
+                      variant={rel_levels[i].color}
+                      onClick={() => judge_current(i)}>
+        <span className={style}>
+          {rel_levels[i].label}
+        </span>
+      </ListGroup.Item>
+    );
+  });
 
   return (
     <>
