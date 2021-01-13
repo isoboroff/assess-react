@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -32,15 +32,11 @@ function PoolItem(props) {
           throw Error(response.statusText);
         }
       }).then((data) => {
+        // put the document data where it should go.
         props.setDoc(data);
+        props.setCurrent(seq);
       });
   };
-
-  useEffect(() => {
-    if (props.current) {
-      load_doc(props.docid, props.seq);
-    }
-  });
   
   let badge = '';
   if (props.judgment !== '-1') {
@@ -51,7 +47,7 @@ function PoolItem(props) {
   return (
     <ListGroup.Item action
                     active={props.current}
-                    onClick={() => props.setCurrent(props.seq)}>
+                    onClick={() => load_doc(props.docid, props.seq)}>
       {props.seq}: {props.docid} {badge}
     </ListGroup.Item>
   );
