@@ -6,6 +6,7 @@ import json
 import sys
 import re
 import traceback
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -28,11 +29,6 @@ app = Flask(__name__, static_folder='../front-end/build/static',
 es = Elasticsearch([{'host': args.host, 'port': args.port}])
 
 Path(args.save).mkdir(exist_ok=True)
-
-def log(user, event):
-    with open(Path(args.save) / f'{user}.log', 'a') as fp:
-        print(datetime.now(), event, file=fp)
-
 
 class Pool:
     '''This pool reads standard TREC mastermerge pools.'''
@@ -139,6 +135,19 @@ def get_document():
     except Exception:
         app.logger.exception('Unexpected error getting docid ' + docid + ' for user ' + user)
 
+@app.route('/judge', methods=['POST'])
+def set_judgment() :
+    user = request.args['u']
+    topic = request.args['t']
+    docid = request.args['d']
+    judgment = request.args['j']
+
+    logfile = Path(args.save) / user / f'topic{topic}.log'
+    with open(logfile, 'a') as fp:
+        print(time.time(), docid, judgment, file=fp)
+        
+    return('', 200)
+    
 
 if __name__ == '__main__':
     print('Starting Flask...')

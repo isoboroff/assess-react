@@ -37,7 +37,7 @@ function PoolItem(props) {
         props.setCurrent(seq);
       });
   };
-
+  
   let badge = '';
   if (props.judgment !== '-1') {
     badge = (<Badge variant={rel_levels[props.judgment].color}>
@@ -98,14 +98,25 @@ function App() {
   // pool object using set_pool so that the DOM refresh reflects
   // the update.
   const set_judgment = (index, level) => {
-    let newPool = pool.map((item, i) => {
-      if (index === i) {
-        return { ...item, judgment: level };
-      } else {
-        return item;
-      }
-    });
-    set_pool(newPool);
+    const url = 'judge?u=' + username
+          + '&t=' + topic
+          + '&d=' + pool[index].docid
+          + '&j=' + level;
+    fetch(url, { method: 'POST' })
+      .then((response) => {
+        if (response.ok) {
+          let newPool = pool.map((item, i) => {
+            if (index === i) {
+              return { ...item, judgment: level };
+            } else {
+              return item;
+            }
+          });
+          set_pool(newPool);
+        } else {
+          throw Error(response.statusText);
+        }
+      });
   };                      
   
   const judge_current = (level) => {
