@@ -175,9 +175,9 @@ function App() {
       </ListGroup.Item>
     );
   });
-
+  
   return (
-    <>
+    <Container fluid className='overflow-hidden'>
       <Modal show={login_required} onHide={do_login}
              backdrop="static" keyboard={false}>
         <Modal.Header>
@@ -225,17 +225,17 @@ function App() {
         </div>
       </Navbar>
 
-      <Container className='mx-3 mt-5'>
-        <Row className='mt-5'>
-          <Col xs={4} style={{overflowY: 'scroll'}}>
+      <Container fluid className='mx-3 mt-5 h-100 overflow-hidden'>
+        <Row className='mt-5 vh-100 overflow-hidden'>
+          <Col xs={4} className='vh-100 overflow-auto'>
             <Pool pool={pool} current={current} fetchDoc={fetch_doc} setCurrent={set_current}/>
           </Col>
-          <Col>
+          <Col className='vh-100 mr-3 overflow-auto'>
             <BetterDocument content={doc} loading={docIsLoading} error={docIsError}/>
           </Col>
         </Row>
       </Container>
-    </>
+    </Container>
   );
 }
 
