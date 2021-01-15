@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -21,33 +21,114 @@ const rel_levels = {'0': {label: 'irrelevant',  color: 'secondary'},
                     '3': {label: 'decisional',  color: 'success'},
                     '4': {label: 'DECISIVE',    color: 'danger'}};
 
-function PoolItem(props) {
-  const load_doc = (docid, seq) => {
-    const url = 'doc?u=foo&d=' + docid;
-    fetch(url)
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw Error(response.statusText);
+const useDocApi = (username) => {
+  const [doc, setDoc] = useState('');
+  const [docid, setDocid] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsError(false);
+      setIsLoading(true);
+      const url = 'doc?u=' + username + '&d=' + docid;
+      
+      try {
+        const response = await fetch(url);
+        const content = await response.json();
+        setDoc(content);
+      } catch (error) {
+        setIsError(true);
+      }
+
+      setIsLoading(false);
+    };
+
+    if (username)
+      fetchData();
+  }, /* depends on */ [docid]);
+
+  return [{ doc, isLoading, isError }, setDocid];
+};
+
+const usePoolApi = (username, initTopic) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [topic, setTopic] = useState(initTopic);
+  const [pool, setPool] = useState([]);
+  const [judgment, setJudgment] = useState({});
+
+  // Pool load effect
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsError(false);
+      setIsLoading(true);
+      const url = 'pool?u=' + username + '&t=' + topic;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        setPool(data.pool);
+      } catch (error) {
+        setIsError(true);
+      }
+
+      setIsLoading(false);
+    };
+
+    if (username)
+      fetchData();
+  }, /* depends on */ [topic]);
+
+  // Document judgement effect
+  useEffect(() => {
+    const sendJudgment = async () => {
+      setIsError(false);
+      setIsLoading(true);
+      const url = 'judge?u=' + username
+            + '&t=' + topic
+            + '&d=' + pool[judgment.index].docid
+            + '&j=' + judgment.level;
+      try {
+        const response = await fetch(url, { method: 'POST' });
+        if (await response.ok) {
+          let newPool = pool.map((item, i) => {
+            if (judgment.index === i) {
+              return { ...item, judgment: judgment.level };
+            } else {
+              return item;
+            }
+          });
+          setPool(newPool);
         }
-      }).then((data) => {
-        // put the document data where it should go.
-        props.setDoc(data);
-        props.setCurrent(seq);
-      });
-  };
-  
+      } catch (error) {
+        setIsError(true);
+      }
+      setIsLoading(false);
+    };
+
+    if (judgment && judgment.index > 0 && judgment.index < pool.length)
+      sendJudgment();
+  }, /* depends on */ [judgment]);
+
+  return [{ pool, isLoading, isError }, setTopic, setJudgment];
+};
+
+function PoolItem(props) {
   let badge = '';
   if (props.judgment !== '-1') {
     badge = (<Badge variant={rel_levels[props.judgment].color}>
                {rel_levels[props.judgment].label}
              </Badge>);
   }
+  const do_fetch_and_set = (docid, index) => {
+    props.fetchDoc(docid);
+    props.setCurrent(index);
+  };
+  
   return (
     <ListGroup.Item action
                     active={props.current}
-                    onClick={() => load_doc(props.docid, props.seq)}>
+                    onClick={() => do_fetch_and_set(props.docid, props.seq)}>
       {props.seq}: {props.docid} {badge}
     </ListGroup.Item>
   );
@@ -57,7 +138,7 @@ function Pool(props) {
   const entries =  props.pool.map((entry, i) => (
     <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
               current={props.current === i}
-              setDoc={props.setDoc} setCurrent={props.setCurrent}/>
+              fetchDoc={props.fetchDoc} setCurrent={props.setCurrent}/>
   ));
   return (<ListGroup> {entries} </ListGroup>);
 }
@@ -67,61 +148,16 @@ function App() {
   const [login_required, set_login_required] = useState(true);
   const [topic, set_topic] = useState(-1);
   const [current, set_current] = useState(-1);
-  const [pool, set_pool] = useState([]);
-  const [doc, set_doc] = useState('');
+  const [{ pool, poolIsLoading, poolError }, load_pool, do_judge] = usePoolApi(username, -1);
+  const [{ doc, docIsLoading, docIsError}, fetch_doc] = useDocApi(username);
 
   const do_login = () => {
     if (username !== null)
       set_login_required(false);
   };
 
-  const load_topic = () => {
-    if (username === null)
-      return;
-
-    const url = 'pool?u=' + username + '&t=' + topic;
-    fetch(url)
-      .then((response) => {
-	if (response.ok) {
-	  return response.json();
-	} else {
-	  throw Error(response.statusText);
-	}
-      }).then((data) => {
-        set_topic(data.topic);
-        set_current(0);
-        set_pool(data.pool);
-      });
-  };
-
-  // When updating a judgment in the pool, we need to update the
-  // pool object using set_pool so that the DOM refresh reflects
-  // the update.
-  const set_judgment = (index, level) => {
-    const url = 'judge?u=' + username
-          + '&t=' + topic
-          + '&d=' + pool[index].docid
-          + '&j=' + level;
-    fetch(url, { method: 'POST' })
-      .then((response) => {
-        if (response.ok) {
-          let newPool = pool.map((item, i) => {
-            if (index === i) {
-              return { ...item, judgment: level };
-            } else {
-              return item;
-            }
-          });
-          set_pool(newPool);
-        } else {
-          throw Error(response.statusText);
-        }
-      });
-  };                      
-  
   const judge_current = (level) => {
-    set_judgment(current, level);
-    // Oh and send something back to the server willya?
+    do_judge({index: current, level: level});
   };
 
   const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
@@ -174,9 +210,9 @@ function App() {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               e.stopPropagation();
-                              load_topic();
+                              load_pool(topic);
                             }}}/>
-            <Button variant="primary" onClick={load_topic}>Load</Button>
+            <Button variant="primary" onClick={() => load_pool(topic)}>Load</Button>
             <div className="p-2">
               {username} &nbsp; {current + 1} of {pool.length}
             </div>
@@ -192,10 +228,10 @@ function App() {
       <Container className='mx-3 mt-5'>
         <Row className='mt-5'>
           <Col xs={4} style={{overflowY: 'scroll'}}>
-            <Pool pool={pool} current={current} setDoc={set_doc} setCurrent={set_current}/>
+            <Pool pool={pool} current={current} fetchDoc={fetch_doc} setCurrent={set_current}/>
           </Col>
           <Col>
-            <BetterDocument content={doc}/>
+            <BetterDocument content={doc} loading={docIsLoading} error={docIsError}/>
           </Col>
         </Row>
       </Container>
