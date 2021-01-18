@@ -11,6 +11,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
 
 import BetterDocument from './BetterDocument';
+import { useLocalStorage } from './hooks';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -55,7 +56,7 @@ const useDocApi = (username) => {
       setIsLoading(false);
     };
 
-    if (username)
+    if (username && docid)
       fetchData();
   }, /* depends on */ [docid]);
 
@@ -97,7 +98,7 @@ const usePoolApi = (username, initTopic) => {
       setIsLoading(false);
     };
 
-    if (username)
+    if (username && topic != -1)
       fetchData();
   }, /* depends on */ [topic]);
 
@@ -181,15 +182,15 @@ function Pool(props) {
  * BetterDocument component handles document rendering.
  */
 function App() {
-  const [username, set_username] = useState('');
+  const [username, set_username] = useLocalStorage('username', '');
   const [login_required, set_login_required] = useState(true);
-  const [topic, set_topic] = useState(-1);
-  const [current, set_current] = useState(-1);
+  const [topic, set_topic] = useLocalStorage('topic', -1);
+  const [current, set_current] = useLocalStorage('current', -1);
   const [{ pool, poolIsLoading, poolError }, load_pool, do_judge] = usePoolApi(username, -1);
   const [{ doc, docIsLoading, docIsError}, fetch_doc] = useDocApi(username);
 
   const do_login = () => {
-    if (username !== null)
+    if (username !== '')
       set_login_required(false);
   };
 
@@ -197,6 +198,20 @@ function App() {
     do_judge({index: current, level: level});
   };
 
+  useEffect(() => {
+    set_login_required(username === '');  
+    load_pool(topic);
+  }, []);
+
+  let current_docid = '';
+  if (current >= 0 && current < pool.length) {
+    current_docid = pool[current].docid;
+  }
+  
+  useEffect(() => {
+    fetch_doc(current_docid);
+  }, [pool]);
+  
   /*
    * The judgment buttons are colored according to the key at the top,
    * and the judgment for the currently selected document is bolded.
