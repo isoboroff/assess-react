@@ -15,12 +15,23 @@ import BetterDocument from './BetterDocument';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
+/* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {'0': {label: 'irrelevant',  color: 'secondary'},
                     '1': {label: 'topical',     color: 'info'},
                     '2': {label: 'significant', color: 'primary'},
                     '3': {label: 'decisional',  color: 'success'},
                     '4': {label: 'DECISIVE',    color: 'danger'}};
-
+/*
+ * A tricky thing about React Hooks is that they have to be used
+ * at the "top level", or from within another hook, otherwise it
+ * causes weird stuff in the render loop.  A major impact is that
+ * stuff that fetches data from the backend needs to be wrapped in
+ * it's own custom hook.  I haven't found a nice pattern for these.
+ *
+ * So, this custom hook is about getting documents.  When the 
+ * docid value is set, then the document gets fetched.  The
+ * doc state value can be passed to an interface prop.
+ */
 const useDocApi = (username) => {
   const [doc, setDoc] = useState('');
   const [docid, setDocid] = useState('');
@@ -51,6 +62,17 @@ const useDocApi = (username) => {
   return [{ doc, isLoading, isError }, setDocid];
 };
 
+/*
+ * This custom hook is for loading the pool and judging
+ * documents.  Both of these actions affect the pool
+ * state, and so I combined both activities in one custom
+ * hook.
+ *
+ * Setting the topic triggers a pool load.  Setting the
+ * judgment triggers a judgment-action, which is applied
+ * both in the local pool and is sent to the back-end for
+ * logging.
+ */
 const usePoolApi = (username, initTopic) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -79,7 +101,7 @@ const usePoolApi = (username, initTopic) => {
       fetchData();
   }, /* depends on */ [topic]);
 
-  // Document judgement effect
+  // Document judgment effect
   useEffect(() => {
     const sendJudgment = async () => {
       setIsError(false);
@@ -113,6 +135,12 @@ const usePoolApi = (username, initTopic) => {
   return [{ pool, isLoading, isError }, setTopic, setJudgment];
 };
 
+/*
+ * A pool item interface component.  Clicking a pool item causes it to
+ * load into the document pane.  The component isn't really that complex,
+ * but the relevance indicators make this worth packing into its own
+ * component function.
+ */
 function PoolItem(props) {
   let badge = '';
   if (props.judgment !== '-1') {
@@ -134,6 +162,9 @@ function PoolItem(props) {
   );
 }
 
+/*
+ * The pool component.  This basically renders the pool itself into pool items.
+ */
 function Pool(props) {
   const entries =  props.pool.map((entry, i) => (
     <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
@@ -143,6 +174,12 @@ function Pool(props) {
   return (<ListGroup> {entries} </ListGroup>);
 }
 
+/*
+ * The "app".  The main interface pieces here are a modal for logins, selecting a
+ * topic to load, and judgment buttons for judging the currently displayed doc.
+ * Wraps the Pool in one subpane and a BetterDocument in the other.  The
+ * BetterDocument component handles document rendering.
+ */
 function App() {
   const [username, set_username] = useState('');
   const [login_required, set_login_required] = useState(true);
@@ -160,6 +197,10 @@ function App() {
     do_judge({index: current, level: level});
   };
 
+  /*
+   * The judgment buttons are colored according to the key at the top,
+   * and the judgment for the currently selected document is bolded.
+   */
   const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
     let style = 'font-weight-normal';
     if (current >= 0 && current < pool.length && i === pool[current].judgment) {
