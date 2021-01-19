@@ -1,8 +1,8 @@
-===== React-Assess =====
+##### React-Assess
 
 This is a document assessment tool implemented in Python/Flask (backend) and React (frontend).  The goals are to keep things simple, with the exception that it will support labeling with highlighting as well as selecting a relevance level for an entire document.
 
-==== Running ====
+#### Running
 
 Currently the code is set up for development.  First, you need an ElasticSearch server running on localhost:9200.  The URL for the ElasticSearch endpoint is in back-end/server.py.
 
@@ -25,7 +25,7 @@ yarn build
 
 At this point, you should be able to browse to localhost:5000 and use the tool.
 
-==== Setup ====
+#### Setup
 
 The back end looks for pools to assess in a directory `back-end/relevance`.  In there you should create a directory for each user.  A pool for topic 123 should be in the file topic123, and the topic description should be in topic123.desc.
 
