@@ -45,17 +45,23 @@ const Actions = Object.freeze({
 function assess_reducer(state, action) {
   switch (action.type) {
   case Actions.LOGIN:
+    window.localStorage.setItem('user', action.payload.username);
     return {...state,
             username: action.payload.username};
+    
   case Actions.LOAD_POOL:
+    window.localStorage.setItem('topic', action.payload.topic);
     return {...state,
             topic: action.payload.topic,
             current: 0,
             pool: action.payload.pool};
+    
   case Actions.FETCH_DOC:
+    window.localStorage.setItem('current', action.payload.current);
     return {...state,
             current: action.payload.current,
             doc: action.payload.doc};
+    
   case Actions.JUDGE:
     // Update the judgment of the document that was judged
     const newPool = state.pool.map((entry) => {
@@ -174,16 +180,42 @@ function App() {
 
   /* Effect to fire just before initial render */
   useEffect(() => {
-    if (state.username === '')
-      set_login_required(true);
+    if (state.username === '') {
+      // Try to restore state from the browser's local storage.
+      // First check for a username.
+      const stored_username = window.localStorage.getItem('user');
+      if (stored_username) {
+        dispatch({ type: Actions.LOGIN, payload: { username: stored_username }});
+
+        // Then, check for last topic loaded
+        const cur_topic = window.localStorage.getItem('topic');
+        if (cur_topic) {
+          set_topic_entry(cur_topic);
+          // And last document viewed?  If not just set to 0
+          let cur_doc = window.localStorage.getItem('current');
+          if (cur_doc)
+            cur_doc = parseInt(cur_doc);
+          else
+            cur_doc = 0;
+          load_pool(stored_username, cur_topic, cur_doc);
+        }
+      } else {
+        set_login_required(true);
+      }
+    }
   }, []);
 
-  function load_pool(topic) {
-    fetch('pool?u=' + state.username + '&t=' + topic_entry)
+  function load_pool(username, topic, current = 0) {
+    fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
       .then(data => {
-        dispatch({ type: Actions.LOAD_POOL, payload: { topic: topic_entry,
+        dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
                                                       pool: data.pool}});
+        return fetch('doc?d=' + data.pool[current].docid);
+      }).then(response => response.json())
+      .then(data => {
+        dispatch({ type: Actions.FETCH_DOC, payload: {doc: data,
+                                                      current: current}});
       });
   }    
   
@@ -237,10 +269,10 @@ function App() {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                load_pool(topic_entry);
+                                load_pool(state.username, topic_entry);
                               }}}/>
               <Button variant="primary"
-                      onClick={() => load_pool(topic_entry)}>Load</Button>
+                      onClick={() => load_pool(state.username, topic_entry)}>Load</Button>
               <div className="p-2">
                 {state.username} &nbsp; {state.current + 1} of {state.pool.length}
               </div>
