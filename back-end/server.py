@@ -124,7 +124,6 @@ def get_pool():
 
 @app.route('/doc')
 def get_document():
-    user = request.args['u']
     docid = request.args['d']
     try:
         response = es.get(index=args.index, id=docid)
@@ -133,7 +132,9 @@ def get_document():
         else:
             return('', 404)
     except Exception:
-        app.logger.exception('Unexpected error getting docid ' + docid + ' for user ' + user)
+        app.logger.exception('Unexpected error getting docid ' + docid)
+        return('', 503)
+    
 
 @app.route('/judge', methods=['POST'])
 def set_judgment() :
