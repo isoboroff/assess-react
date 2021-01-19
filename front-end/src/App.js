@@ -22,6 +22,7 @@ const rel_levels = {'0': {label: 'irrelevant',  color: 'secondary'},
                     '3': {label: 'decisional',  color: 'success'},
                     '4': {label: 'DECISIVE',    color: 'danger'}};
 
+/* This is the application state. */
 const initial_state = {
   username: '',
   current: -1,
@@ -30,32 +31,37 @@ const initial_state = {
   pool: []
 };
 
-const States = Object.freeze({
+/* These are actions which change the application state. */
+const Actions = Object.freeze({
   LOGIN: 'LOGIN',
   LOAD_POOL: 'LOAD_POOL',
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
 });
-  
+
+/* And this function, called a "reducer", updates the application state
+ * appropriately for each action
+ */
 function assess_reducer(state, action) {
   switch (action.type) {
-  case States.LOGIN:
+  case Actions.LOGIN:
     return {...state,
             username: action.payload.username};
-  case States.LOAD_POOL:
+  case Actions.LOAD_POOL:
     return {...state,
             topic: action.payload.topic,
             current: 0,
             pool: action.payload.pool};
-  case States.FETCH_DOC:
+  case Actions.FETCH_DOC:
     return {...state,
             current: action.payload.current,
             doc: action.payload.doc};
-  case States.JUDGE:
+  case Actions.JUDGE:
+    // Update the judgment of the document that was judged
     const newPool = state.pool.map((entry) => {
       if (entry.docid === action.payload.docid)
         return {...entry,
-                level: action.payload.level};
+                judgment: action.payload.judgment};
       else
         return entry;
     });
@@ -66,33 +72,37 @@ function assess_reducer(state, action) {
   }
 };
 
-
-
+/* React Contexts allow us to store a value and get it back down deep in
+ * the DOM tree, without needing to pass the value all the way down
+ * through the properties at each node.
+ */
 const AssessDispatch = React.createContext(null);
 
 /*
  * A pool item interface component.  Clicking a pool item causes it to
- * load into the document pane.  The component isn't really that complex,
- * but the relevance indicators make this worth packing into its own
- * component function.
+ * load into the document pane.  
  */
 function PoolItem(props) {
+  // Set the relevance 'badge' according to the judgment
   let badge = '';
   if (props.judgment !== '-1') {
     badge = (<Badge variant={rel_levels[props.judgment].color}>
                {rel_levels[props.judgment].label}
              </Badge>);
   }
+
+  // This function fetches the document and updates the application state.
   const dispatch = useContext(AssessDispatch);
   function fetch_doc(seq, docid) {
     fetch('doc?d=' + docid)
       .then(response => response.json())
       .then(data => {
-        dispatch({ type: States.FETCH_DOC,
+        dispatch({ type: Actions.FETCH_DOC,
                    payload: { current: seq,
                               doc: data }});
       });
   }
+
   return (
     <ListGroup.Item action
                     active={props.current}
@@ -113,12 +123,16 @@ function Pool(props) {
   return (<ListGroup> {entries} </ListGroup>);
 }
 
+/* A modal dialog to force logging in.
+ * This used to be in App(), but I decided to move it out to a separate
+ * component.
+ */
 function LoginModal(props) {
   const [username, set_username] = useState('');
   const dispatch = useContext(AssessDispatch);
 
   function do_login() {
-    dispatch({type: States.LOGIN, payload: {username: username}});
+    dispatch({type: Actions.LOGIN, payload: {username: username}});
     props.set_required(false);
   }
   
@@ -157,7 +171,6 @@ function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
   const [login_required, set_login_required] = useState(false);
   const [topic_entry, set_topic_entry] = useState('');
-  const [load_pool, set_load_pool] = useState(false);
 
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -165,18 +178,26 @@ function App() {
       set_login_required(true);
   }, []);
 
-  useEffect(() => {
-    if (!load_pool)
-      return;
-    
+  function load_pool(topic) {
     fetch('pool?u=' + state.username + '&t=' + topic_entry)
       .then(response => response.json())
       .then(data => {
-        dispatch({ type: States.LOAD_POOL, payload: { topic: topic_entry,
+        dispatch({ type: Actions.LOAD_POOL, payload: { topic: topic_entry,
                                                       pool: data.pool}});
-        set_load_pool(false);
       });
-  }, [load_pool, topic_entry]);
+  }    
+  
+  function judge_current(judgment) {
+    const docid = state.pool[state.current].docid;
+    fetch('judge?u=' + state.username +
+          '&t=' + state.topic +
+          '&d=' + docid +
+          '&j=' + judgment, { method: 'POST' })
+      .then(response => {
+        if (response.ok)
+          dispatch({ type: Actions.JUDGE, payload: { docid: docid, judgment: judgment }});
+      });
+  }
   
   /*
    * The judgment buttons are colored according to the key at the top,
@@ -192,7 +213,7 @@ function App() {
     return (
       <ListGroup.Item action
                       variant={rel_levels[i].color}
-                      onClick={() => console.log('judge_current('+i+')')}>
+                      onClick={() => judge_current(i)}>
         <span className={style}>
           {rel_levels[i].label}
         </span>
@@ -216,10 +237,10 @@ function App() {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                set_load_pool(true);
+                                load_pool(topic_entry);
                               }}}/>
               <Button variant="primary"
-                      onClick={() => set_load_pool(true)}>Load</Button>
+                      onClick={() => load_pool(topic_entry)}>Load</Button>
               <div className="p-2">
                 {state.username} &nbsp; {state.current + 1} of {state.pool.length}
               </div>
