@@ -34,12 +34,16 @@ function BetterDocument(props) {
     );
   };
 
-  if (props.content) {	
-	return (
+  if (props.loading) {
+    return ( <p>loading...</p> );
+  } else if (props.error) {
+    return ( <p>Error</p> );
+  } else if (props.content) {	
+    return (
 	  <>{display_doc(props.content)}</>
-	);
+    );
   } else {
-	return (<p>waiting for document...</p>);
+    return (<p>waiting for document...</p>);
   }
 }
 
