@@ -6,11 +6,7 @@ html,body {
     height: 100%;
 }
 
-.navbar {
-    margin: 0 !important;
-    padding: 0px !important;
-}
 
 .vh-full {
-    height: calc(100vh - 46px);
+    height: calc(100vh - 112px);
 }

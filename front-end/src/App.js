@@ -9,6 +9,11 @@ import Navbar from 'react-bootstrap/Navbar';
 import Container from 'react-bootstrap/Container';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
+import Collapse from 'react-bootstrap/Collapse';
+
+import Mark from 'mark.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 import BetterDocument from './BetterDocument';
 
@@ -178,7 +183,7 @@ function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
   const [login_required, set_login_required] = useState(false);
   const [topic_entry, set_topic_entry] = useState('');
-
+  
   /* Effect to fire just before initial render */
   useEffect(() => {
     if (state.username === '') {
@@ -261,8 +266,10 @@ function App() {
         
         <LoginModal login_required={login_required} set_required={set_login_required}/>
 
-        <Row className="bg-light fixed-top align-items-center flex-shrink-0">
-          <Col className="col-1"></Col>
+        <Row className="fixed-top align-items-center flex-shrink-0">
+          <Col className="col-2 flex-row flex-shrink-0 mx-3">
+              <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
+          </Col>
           <Col>
             <Form inline>
               <Form.Control placeholder="Topic" className="col-4"
@@ -290,8 +297,13 @@ function App() {
             <Button>Log out</Button>
           </Col>
         </Row>
-
-        <Row className="mt-5"> </Row>
+        <Row className="mt-5 pt-2"> </Row>
+          <Col>
+            <Form inline>
+              <Form.Control placeholder="Scan terms" className="col-10 mx-3"/>
+              <Button variant="primary">Apply</Button>
+            </Form>
+          </Col>
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
             <Pool pool={state.pool} current={state.current}/>
