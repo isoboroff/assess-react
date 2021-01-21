@@ -2,6 +2,15 @@
   text-align: center;
 }
 
-body {
-    padding-top: 40px;
+html,body {
+    height: 100%;
+}
+
+.navbar {
+    margin: 0 !important;
+    padding: 0px !important;
+}
+
+.calc-height {
+    height: calc(100vh - 50px);
 }

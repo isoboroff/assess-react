@@ -53,6 +53,7 @@ function assess_reducer(state, action) {
     window.localStorage.setItem('topic', action.payload.topic);
     return {...state,
             topic: action.payload.topic,
+            desc: action.payload.desc,
             current: 0,
             pool: action.payload.pool};
     
@@ -210,7 +211,8 @@ function App() {
       .then(response => response.json())
       .then(data => {
         dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
-                                                      pool: data.pool}});
+                                                      pool: data.pool,
+                                                      desc: data.desc}});
         return fetch('doc?d=' + data.pool[current].docid);
       }).then(response => response.json())
       .then(data => {
@@ -255,11 +257,11 @@ function App() {
   
   return (
     <AssessDispatch.Provider value={dispatch}>
-      <Container fluid className='overflow-hidden'>
+      <Container fluid className='calc-height d-flex flex-column'>
         
         <LoginModal login_required={login_required} set_required={set_login_required}/>
 
-        <Navbar fixed="top" className="bg-light">
+        <Navbar fixed="top" className="bg-light flex-shrink-0">
           <div className="">
             <Form inline>
               <Form.Control placeholder="Topic" className="col-3"
@@ -285,16 +287,19 @@ function App() {
           </div>
         </Navbar>
 
-        <Container fluid className='mx-3 mt-5 h-100 overflow-hidden'>
-          <Row className='mt-5 vh-100 overflow-hidden'>
-            <Col xs={4} className='vh-100 overflow-auto'>
-              <Pool pool={state.pool} current={state.current}/>
-            </Col>
-            <Col className='vh-100 mr-3 overflow-auto'>
-              <BetterDocument content={state.doc}/>
-            </Col>
-          </Row>
-        </Container>
+        <Row className='mt-5 justify-content-center'>
+          <Col xs={8}>
+            <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
+          </Col>
+        </Row>
+        <Row className='flex-grow-1'>
+          <Col xs={4} className='overflow-auto vh-100'>
+            <Pool pool={state.pool} current={state.current}/>
+          </Col>
+          <Col className='mr-3 overflow-auto vh-100'>
+            <BetterDocument content={state.doc}/>
+          </Col>
+        </Row>
       </Container>
     </AssessDispatch.Provider>
   );
