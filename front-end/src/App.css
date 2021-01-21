@@ -11,6 +11,6 @@ html,body {
     padding: 0px !important;
 }
 
-.calc-height {
-    height: calc(100vh - 50px);
+.vh-full {
+    height: calc(100vh - 46px);
 }

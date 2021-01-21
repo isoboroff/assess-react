@@ -257,14 +257,15 @@ function App() {
   
   return (
     <AssessDispatch.Provider value={dispatch}>
-      <Container fluid className='calc-height d-flex flex-column'>
+      <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
         
         <LoginModal login_required={login_required} set_required={set_login_required}/>
 
-        <Navbar fixed="top" className="bg-light flex-shrink-0">
-          <div className="">
+        <Row className="bg-light fixed-top align-items-center flex-shrink-0">
+          <Col className="col-1"></Col>
+          <Col>
             <Form inline>
-              <Form.Control placeholder="Topic" className="col-3"
+              <Form.Control placeholder="Topic" className="col-4"
                             value={topic_entry}
                             onChange={(e) => set_topic_entry(e.target.value)}
                             onKeyDown={(e) => {
@@ -275,28 +276,30 @@ function App() {
                               }}}/>
               <Button variant="primary"
                       onClick={() => load_pool(state.username, topic_entry)}>Load</Button>
-              <div className="p-2">
-                {state.username} &nbsp; {state.current + 1} of {state.pool.length}
-              </div>
-            </Form>		  
-          </div>
-          <div>
+            </Form>
+          </Col>
+          <Col>
+            {state.username} &nbsp; {state.current + 1} of {state.pool.length}
+          </Col>
+          <Col>
             <ListGroup horizontal>
               {judgment_buttons}
             </ListGroup>
-          </div>
-        </Navbar>
-
-        <Row className='mt-5 justify-content-center'>
-          <Col xs={8}>
-            <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
+          </Col>
+          <Col>
+            <Button>Log out</Button>
           </Col>
         </Row>
-        <Row className='flex-grow-1'>
-          <Col xs={4} className='overflow-auto vh-100'>
+
+        <Row className="mt-5"> </Row>
+        <Row className="mt-3 vh-full">
+          <Col xs={4} className="vh-full overflow-auto">
             <Pool pool={state.pool} current={state.current}/>
           </Col>
-          <Col className='mr-3 overflow-auto vh-100'>
+          <Col xs={8} className="vh-full overflow-auto">
+            <div className="border-bottom">
+              <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
+            </div>
             <BetterDocument content={state.doc}/>
           </Col>
         </Row>
