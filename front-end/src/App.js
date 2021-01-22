@@ -11,7 +11,6 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
 import Collapse from 'react-bootstrap/Collapse';
 
-import Mark from 'mark.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
@@ -33,6 +32,7 @@ const initial_state = {
   current: -1,
   cur_doc: '',
   topic: '',
+  scan_terms: '',
   pool: []
 };
 
@@ -42,6 +42,7 @@ const Actions = Object.freeze({
   LOAD_POOL: 'LOAD_POOL',
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
+  SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS'
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -79,6 +80,11 @@ function assess_reducer(state, action) {
     });
     return {...state,
             pool: newPool};
+
+  case Actions.SAVE_SCAN_TERMS:
+    window.localStorage.setItem('scan_terms', action.payload.scan_terms);
+    return {...state,
+            scan_terms: action.payload.scan_terms};
   default:
     return state;
   }
@@ -183,6 +189,7 @@ function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
   const [login_required, set_login_required] = useState(false);
   const [topic_entry, set_topic_entry] = useState('');
+  const [scan_terms, set_scan_terms] = useState('');
   
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -192,6 +199,13 @@ function App() {
       const stored_username = window.localStorage.getItem('user');
       if (stored_username) {
         dispatch({ type: Actions.LOGIN, payload: { username: stored_username }});
+
+        // check for scan terms
+        const scan_terms = window.localStorage.getItem('scan_terms');
+        if (scan_terms) {
+          dispatch({ type: Actions.SAVE_SCAN_TERMS, payload: { scan_terms: scan_terms }});
+          set_scan_terms(scan_terms);
+        };
 
         // Then, check for last topic loaded
         const cur_topic = window.localStorage.getItem('topic');
@@ -225,7 +239,7 @@ function App() {
                                                       current: current}});
       });
   }    
-  
+
   function judge_current(judgment) {
     const docid = state.pool[state.current].docid;
     fetch('judge?u=' + state.username +
@@ -237,7 +251,7 @@ function App() {
           dispatch({ type: Actions.JUDGE, payload: { docid: docid, judgment: judgment }});
       });
   }
-  
+
   /*
    * The judgment buttons are colored according to the key at the top,
    * and the judgment for the currently selected document is bolded.
@@ -300,8 +314,22 @@ function App() {
         <Row className="mt-5 pt-2"> </Row>
           <Col>
             <Form inline>
-              <Form.Control placeholder="Scan terms" className="col-10 mx-3"/>
-              <Button variant="primary">Apply</Button>
+              <Form.Control placeholder="Scan terms" className="col-10 mx-3"
+                            value={scan_terms}
+                            onChange={(e) => set_scan_terms(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                dispatch({type: 'SAVE_SCAN_TERMS',
+                                                payload: { scan_terms: scan_terms }
+                                         });
+                              }}}/>
+              <Button variant="primary"
+                      onClick={() => {dispatch({type: 'SAVE_SCAN_TERMS',
+                                                payload: { scan_terms: scan_terms }
+                                               });
+                                     }}>Apply</Button>
             </Form>
           </Col>
         <Row className="mt-3 vh-full">
@@ -312,7 +340,7 @@ function App() {
             <div className="border-bottom">
               <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
             </div>
-            <BetterDocument content={state.doc}/>
+            <BetterDocument content={state.doc} scan_terms={state.scan_terms}/>
           </Col>
         </Row>
       </Container>

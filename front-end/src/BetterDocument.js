@@ -1,4 +1,5 @@
-import React from 'react';
+import { React, useEffect } from 'react';
+import Mark from 'mark.js';
 
 function BetterDocument(props) {
   const display_doc = (content_string) => {
@@ -34,17 +35,30 @@ function BetterDocument(props) {
     );
   };
 
+  useEffect(() => {
+    const marker = new Mark(document.querySelector('.reviewdoc'));
+    marker.unmark({done: () => {
+      marker.mark(props.scan_terms, {
+        diacritics: true,
+        acrossElements: true,
+        accuracy: 'complementary',
+        limiters: '.,:;-?!'.split('')
+      });
+    }});
+  });
+
   if (props.loading) {
     return ( <p>loading...</p> );
   } else if (props.error) {
     return ( <p>Error</p> );
   } else if (props.content) {	
     return (
-	  <>{display_doc(props.content)}</>
+	  <div className="reviewdoc">{display_doc(props.content)}</div>
     );
   } else {
     return (<p>waiting for document...</p>);
   }
+
 }
 
 export { BetterDocument as default };
