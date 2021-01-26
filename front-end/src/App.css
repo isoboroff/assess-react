@@ -10,3 +10,11 @@ html,body {
 .vh-full {
     height: calc(100vh - 112px);
 }
+
+.rel-highlight {
+    background-color: #c0ffc8;
+}
+
+span.scan-term {
+    background-color: #fff36d;
+}

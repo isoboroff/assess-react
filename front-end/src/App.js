@@ -71,10 +71,17 @@ function assess_reducer(state, action) {
     
   case Actions.JUDGE:
     // Update the judgment of the document that was judged
-    const newPool = state.pool.map((entry) => {
+    let update = { judgment: action.payload.judgment };
+    if (action.payload.hasOwnProperty('passage')) {
+      if (action.payload.passage.hasOwnProperty('clear'))
+        update.passage = null;
+      else
+        update.passage = action.payload.passage;
+    }
+    
+    let newPool = state.pool.map((entry) => {
       if (entry.docid === action.payload.docid)
-        return {...entry,
-                judgment: action.payload.judgment};
+        return {...entry, ...update};
       else
         return entry;
     });
@@ -240,16 +247,40 @@ function App() {
       });
   }    
 
-  function judge_current(judgment) {
+  function judge_current(judgment, passage = null) {
     const docid = state.pool[state.current].docid;
+
+    if (passage && (judgment === '0' || judgment === '-1'))
+      judgment = '1';
+
+    if (judgment === '0')
+      passage={ clear: true }; // Clear any passage judgments
+    
+    let fetch_opts = { method: 'POST' };
+    let judge_payload = { docid: docid,
+                          judgment: judgment };
+
+    if (passage) {
+      fetch_opts.headers = { 'Content-Type': 'application/json' };
+      fetch_opts.body = JSON.stringify(passage);
+      judge_payload.passage = passage;
+    }
+    
     fetch('judge?u=' + state.username +
           '&t=' + state.topic +
           '&d=' + docid +
-          '&j=' + judgment, { method: 'POST' })
+          '&j=' + judgment, fetch_opts)
       .then(response => {
         if (response.ok)
-          dispatch({ type: Actions.JUDGE, payload: { docid: docid, judgment: judgment }});
+          dispatch({ type: Actions.JUDGE, payload: judge_payload });
       });
+  }
+
+  function note_passage(passage) {
+    let judgment = state.pool[state.current].judgment;
+    if (judgment === '-1' || judgment === '0')
+      judgment = '1';
+    judge_current(judgment, passage);
   }
 
   /*
@@ -340,7 +371,10 @@ function App() {
             <div className="border-bottom">
               <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
             </div>
-            <BetterDocument content={state.doc} scan_terms={state.scan_terms}/>
+            <BetterDocument content={state.doc} scan_terms={state.scan_terms}
+                            rel={(state.current > 0 && state.pool[state.current].passage)
+                                 ? state.pool[state.current].passage : ''}
+                            note_passage={note_passage}/>
           </Col>
         </Row>
       </Container>

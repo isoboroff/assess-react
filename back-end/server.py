@@ -31,7 +31,9 @@ es = Elasticsearch([{'host': args.host, 'port': args.port}])
 Path(args.save).mkdir(exist_ok=True)
 
 class Pool:
-    '''This pool reads standard TREC mastermerge pools.'''
+    '''This pool reads standard TREC mastermerge pools, but the
+    logs are JSON lines.
+    '''
     def __init__(self, filename):
         self.pool = {}
         self.topic = None
@@ -44,13 +46,17 @@ class Pool:
                     self.topic = fields[0]
                 if fields[0] != self.topic:
                     continue
-                self.pool[fields[4]] = '-1'
+                self.pool[fields[4]] = { 'judgment': '-1' }
 
         try:
             with open(f'{filename}.log', 'r') as log:
                 for line in log:
-                    stamp, docid, judgment = line.split()
-                    self.pool[docid] = judgment
+                    log_entry = Pool.read_log_entry(line)
+                    if 'passage' in log_entry:
+                        self.pool[log_entry['docid']]['passage'] = log_entry['passage']
+                    if 'judgment' in log_entry:
+                        self.pool[log_entry['docid']]['judgment'] = log_entry['judgment']
+                    
         except FileNotFoundError:
             pass
         except KeyError:
@@ -70,10 +76,27 @@ class Pool:
         return sum([1 for judgment in self.pool.values() if judgment != '-1'])
     
     def json(self):
-        poollist = [{"docid": docid, "judgment": judgment} for docid, judgment in self.pool.items()]
+        poollist = []
+        for docid, jobj in self.pool.items():
+            if 'passage' in jobj:
+                poollist.append({"docid": docid, "judgment": jobj['judgment'], "passage": jobj['passage']})
+            else:
+                poollist.append({"docid": docid, "judgment": jobj['judgment']})
         return json.dumps({ "pool": poollist,
                             "topic": self.topic,
                             "desc": self.desc })
+
+    @staticmethod
+    def read_log_entry(line):
+        if line.startswith('#'):
+            return None
+        log_entry = json.loads(line)
+        if 'stamp' not in log_entry or 'docid' not in log_entry:
+            app.logger.debug('Bad log object: ' + json.dumps(log_entry))
+            return None
+        return log_entry
+
+                 
 
 @app.route('/')
 def hello():
@@ -143,12 +166,20 @@ def set_judgment() :
     docid = request.args['d']
     judgment = request.args['j']
 
+    log_obj = { 'stamp': time.time(),
+                'docid': docid,
+                'judgment': judgment }
+        
+    if request.content_length > 0:
+        passage = request.get_json()
+        log_obj['passage'] = passage
+
     logfile = Path(args.save) / user / f'topic{topic}.log'
     with open(logfile, 'a') as fp:
-        print(time.time(), docid, judgment, file=fp)
+        print(json.dumps(log_obj), file=fp)
         
     return('', 200)
-    
+
 
 if __name__ == '__main__':
     print('Starting Flask...')

@@ -1,8 +1,14 @@
-import { React, useEffect } from 'react';
+import { React, useEffect, useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
+import Row from 'react-bootstrap/Row';
+import Button from 'react-bootstrap/Button';
+import ListGroup from 'react-bootstrap/ListGroup';
 import Mark from 'mark.js';
 
 function BetterDocument(props) {
-  const display_doc = (content_string) => {
+  const [highlight, set_highlight] = useState(null);
+  
+  const display_doc = (content) => {
     let obj = null;
     /*
     try {
@@ -12,7 +18,7 @@ function BetterDocument(props) {
       return '';
     }
     */
-    obj = content_string;
+    obj = content;
 
     let doctext = obj['text'];
     
@@ -22,7 +28,7 @@ function BetterDocument(props) {
       const prefix = doctext.slice(0, start);
       const span = doctext.slice(start, end);
       const suffix = doctext.slice(end);
-      doctext = <> {prefix} <mark> {span} </mark> {suffix} </>;
+      doctext = <div> {prefix} <mark className="rel-highlight"> {span} </mark> {suffix} </div>;
     }
     
     return (
@@ -35,29 +41,118 @@ function BetterDocument(props) {
     );
   };
 
+  /*
   useEffect(() => {
-    const marker = new Mark(document.querySelector('.reviewdoc'));
-    marker.unmark({done: () => {
-      marker.mark(props.scan_terms, {
-        diacritics: true,
-        acrossElements: true,
-        accuracy: 'complementary',
-        limiters: '.,:;-?!'.split('')
-      });
-    }});
-  });
+    if (props.scan_terms) {
+      const marker = new Mark(document.querySelector('.article-text'));
+      marker.unmark({done: () => {
+        marker.mark(props.scan_terms, {
+          diacritics: true,
+          acrossElements: true,
+          element: 'span',
+          className: 'scan-term',
+          accuracy: 'complementary',
+          limiters: '.,:;-?!'.split('')
+        });
+      }});
+    }
+  }, [props.content, props.scan_terms]);
+  */
 
-  if (props.loading) {
-    return ( <p>loading...</p> );
-  } else if (props.error) {
-    return ( <p>Error</p> );
-  } else if (props.content) {	
-    return (
-	  <div className="reviewdoc">{display_doc(props.content)}</div>
+  // Adapted from https://github.com/wooorm/is-whitespace-character (MIT license)
+  function isSpace(char) {
+    return char && /\s/.test(
+      typeof char === 'number'
+        ? String.fromCharCode(char)
+        : char.charAt(0)
     );
-  } else {
-    return (<p>waiting for document...</p>);
   }
+
+  // Search for a text string in the props.content document
+  // This is for highlighted passages.  I expect it to match and
+  // am happy to take the first match found.
+  // Returns [start, end]
+  function search(highlight) {
+    let hpos = 0; // position in highlight
+    let tpos = 0; // position in text
+    let mstart = -1;  // marked start pos in text
+    const text = props.content['text'];
+    // console.log('highlight is "' + highlight + '", len ' + highlight.length);
+    while (true) {
+      if (hpos >= highlight.length) {
+        // console.log('off end of highlight');
+        return [mstart, tpos];
+      } else if (tpos >= text.length) {
+        // console.log('off end of text');
+        return [mstart, tpos];
+      } else if (highlight[hpos] == text[tpos]) {
+        // console.log('match ' + highlight[hpos] + ' : ' + text[tpos]);
+        if (mstart < 0) {
+          // console.log('start!');
+          mstart = tpos;
+        }
+        // console.log('inc');
+        hpos += 1;
+        tpos += 1;
+      } else if (isSpace(highlight[hpos])) {
+        // console.log('skipping nonmatching hl space');
+        hpos += 1;
+      } else {
+        // console.log('searching...');
+        mstart = -1;
+        hpos = 0;
+        tpos += 1;
+      }
+    }
+  }
+  
+  function has_selection() {
+    return (window.getSelection && !window.getSelection().isCollapsed);
+  }
+  
+  function get_selected_text() {
+    if (window.getSelection) {
+      const sel = window.getSelection();
+      if (!sel.isCollapsed) {
+        const highlight = sel.toString();
+        const [start, end] = search(highlight);
+        if (start < 0 || (end - start) < highlight.length) {
+          console.log('bad search output ' + start + ' ' + end);
+          return null;
+        } else {
+          return { "start": start,
+                   "length": end - start,
+                   "text": highlight };
+        }
+      }
+    }
+    return null;
+  }
+
+  useEffect(() => {
+    if (highlight && props.note_passage) {
+      props.note_passage(highlight);
+      set_highlight(null);
+    }
+  }, [highlight]);
+  
+  return (
+    <>
+      { props.loading && (<p>loading...</p>) }
+      { props.error && (<p>error loading!</p>) }
+      <div className="reviewdoc"
+           onMouseUp={(e) => {
+             if (props.note_passage && has_selection()) {
+               const h = get_selected_text();
+               if (h)
+                 set_highlight(h);
+             }
+           }}
+      >
+        { props.content && display_doc(props.content) }
+      </div>
+    </>
+  );
 
 }
 
