@@ -18,11 +18,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 /* Mapping relevance levels to labels to colors in the interface */
-const rel_levels = {'0': {label: 'irrelevant',  color: 'secondary'},
-                    '1': {label: 'topical',     color: 'info'},
-                    '2': {label: 'significant', color: 'primary'},
-                    '3': {label: 'decisional',  color: 'success'},
-                    '4': {label: 'DECISIVE',    color: 'danger'}};
+const rel_levels = {'0': {label: 'irrelevant',    color: 'secondary'},
+                    '1': {label: 'topical',       color: 'info'},
+                    '2': {label: 'specific info', color: 'primary'},
+                    '3': {label: 'direct answer', color: 'success'},
+                    '4': {label: 'DECISIVE',      color: 'danger'}};
 
 /* This is the application state. */
 const initial_state = {
