@@ -76,22 +76,25 @@ function Highlightable(props) {
   }
   
   function get_selected_text() {
+    let result = null;
     if (window.getSelection) {
       const sel = window.getSelection();
+      
       if (!sel.isCollapsed) {
         const hl_text = sel.toString();
         const [start, end] = search(hl_text);
         if (start < 0 || (end - start) < hl_text.length) {
           console.log('bad search output ' + start + ' ' + end);
-          return null;
         } else {
-          return { "start": start,
-                   "length": end - start,
-                   "text": hl_text };
+          result = { "start": start,
+                     "length": end - start,
+                     "text": hl_text };
         }
+        sel.removeAllRanges();
       }
     }
-    return null;
+
+    return result;
   }
 
   useEffect(() => {
@@ -110,7 +113,7 @@ function Highlightable(props) {
         <div className="article-text"
              onMouseUp={() => {
                if (has_selection()) {
-                 set_highlight(get_selected_text());        
+                 set_highlight(get_selected_text());
                }
              }}>
           <Interweave content={ highlight_rel_passage(props.content.text) }
