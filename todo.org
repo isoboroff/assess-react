@@ -3,7 +3,7 @@
 * DONE Improve the relevance indicator for the current document
 * DONE Highlight-based judgments
 * DONE Retain document-level (no highlight, full doc) judgments
-* TODO Pool filters
+* DONE Pool filters
 * TODO Keyboard controls
 * DONE Fix scrolling: pool should scroll independently of the document
 * DONE Topic statement view

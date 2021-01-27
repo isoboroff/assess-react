@@ -139,10 +139,16 @@ function PoolItem(props) {
  * The pool component.  This basically renders the pool itself into pool items.
  */
 function Pool(props) {
-  const entries =  props.pool.map((entry, i) => (
-    <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
-              current={props.current === i}/>
-  ));
+  const entries =  props.pool
+        .flatMap((entry, i) => {
+          if (props.filter == 'all' ||
+              (props.filter == 'unjudged' && entry.judgment === '-1') ||
+              props.filter === entry.judgment) {
+            return <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
+                                   current={props.current === i}/>;
+          } else
+            return [];
+        });
   return (<ListGroup> {entries} </ListGroup>);
 }
 
@@ -195,6 +201,7 @@ function App() {
   const [login_required, set_login_required] = useState(false);
   const [topic_entry, set_topic_entry] = useState('');
   const [scan_terms, set_scan_terms] = useState('');
+  const [pool_filter, set_pool_filter] = useState('all');
   
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -332,6 +339,14 @@ function App() {
             {state.username} &nbsp; {state.current + 1} of {state.pool.length}
           </Col>
           <Col>
+            <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
+              <option>all</option>
+              <option>unjudged</option>
+              { Object.getOwnPropertyNames(rel_levels).map((i) =>
+                <option value={i}>{rel_levels[i].label}</option>) }
+            </Form.Control>
+          </Col>
+          <Col>
             <ListGroup horizontal>
               {judgment_buttons}
             </ListGroup>
@@ -363,7 +378,7 @@ function App() {
           </Col>
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
-            <Pool pool={state.pool} current={state.current}/>
+            <Pool pool={state.pool} current={state.current} filter={pool_filter}/>
           </Col>
           <Col xs={8} className="vh-full overflow-auto">
             <div className="border-bottom">
