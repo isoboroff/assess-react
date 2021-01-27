@@ -1,9 +1,9 @@
 * DONE log judgments back to server
 * DONE implement browser-stored state restoration
 * DONE Improve the relevance indicator for the current document
-* TODO Highlight-based judgments
-* TODO Retain document-level (no highlight, full doc) judgments
+* DONE Highlight-based judgments
+* DONE Retain document-level (no highlight, full doc) judgments
 * TODO Pool filters
 * TODO Keyboard controls
 * DONE Fix scrolling: pool should scroll independently of the document
-* TODO Topic statement view
+* DONE Topic statement view
