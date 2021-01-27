@@ -15,6 +15,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 import BetterDocument from './BetterDocument';
+import Highlightable from './Highlightable';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -371,10 +372,10 @@ function App() {
             <div className="border-bottom">
               <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
             </div>
-            <BetterDocument content={state.doc} scan_terms={state.scan_terms}
-                            rel={(state.current > 0 && state.pool[state.current].passage)
-                                 ? state.pool[state.current].passage : ''}
-                            note_passage={note_passage}/>
+            <Highlightable content={state.doc} scan_terms={state.scan_terms}
+                           rel={(state.current >= 0 && state.pool[state.current].passage)
+                                ? state.pool[state.current].passage : ''}
+                           note_passage={note_passage}/>
           </Col>
         </Row>
       </Container>
