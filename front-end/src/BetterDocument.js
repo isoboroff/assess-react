@@ -8,57 +8,6 @@ import Mark from 'mark.js';
 function BetterDocument(props) {
   const [highlight, set_highlight] = useState(null);
   
-  const display_doc = (content) => {
-    let obj = null;
-    /*
-    try {
-      obj = JSON.parse(content_string);
-    } catch (error) {
-      console.error(error);
-      return '';
-    }
-    */
-    obj = content;
-
-    let doctext = obj['text'];
-    
-    if (props.rel) {
-      const start = props.rel.start;
-      const end = start + props.rel.length;
-      const prefix = doctext.slice(0, start);
-      const span = doctext.slice(start, end);
-      const suffix = doctext.slice(end);
-      doctext = <div> {prefix} <mark className="rel-highlight"> {span} </mark> {suffix} </div>;
-    }
-    
-    return (
-      <div>
-        <h1> {obj['title']} </h1>
-        <p> (best guess on publication date is '{obj['date']}')</p>
-        <p><strong> {obj['url']} </strong></p>
-        <p className="article-text"> {doctext} </p>
-      </div>
-    );
-  };
-
-  /*
-  useEffect(() => {
-    if (props.scan_terms) {
-      const marker = new Mark(document.querySelector('.article-text'));
-      marker.unmark({done: () => {
-        marker.mark(props.scan_terms, {
-          diacritics: true,
-          acrossElements: true,
-          element: 'span',
-          className: 'scan-term',
-          accuracy: 'complementary',
-          limiters: '.,:;-?!'.split('')
-        });
-      }});
-    }
-  }, [props.content, props.scan_terms]);
-  */
-
   // Adapted from https://github.com/wooorm/is-whitespace-character (MIT license)
   function isSpace(char) {
     return char && /\s/.test(
@@ -128,6 +77,66 @@ function BetterDocument(props) {
     }
     return null;
   }
+
+  const display_doc = (content) => {
+    let obj = null;
+    /*
+    try {
+      obj = JSON.parse(content_string);
+    } catch (error) {
+      console.error(error);
+      return '';
+    }
+    */
+    obj = content;
+
+    let doctext = obj['text'];
+
+    if (props.rel) {
+      const start = props.rel.start;
+      const end = start + props.rel.length;
+      const prefix = doctext.slice(0, start);
+      const span = doctext.slice(start, end);
+      const suffix = doctext.slice(end);
+      doctext = <div> {prefix} <mark className="rel-highlight"> {span} </mark> {suffix} </div>;
+    }
+
+    return (
+      <div>
+        <h1> {obj['title']} </h1>
+        <p> (best guess on publication date is '{obj['date']}')</p>
+        <p><strong> {obj['url']} </strong></p>
+        <div className="article-text"
+             onMouseUp={(e) => {
+               if (props.note_passage && has_selection()) {
+                 const h = get_selected_text();
+                 if (h)
+                   set_highlight(h);
+               }
+             }}>
+          {doctext}
+        </div>
+      </div>
+    );
+  };
+
+  /*
+  useEffect(() => {
+    if (props.scan_terms) {
+      const marker = new Mark(document.querySelector('.article-text'));
+      marker.unmark({done: () => {
+        marker.mark(props.scan_terms, {
+          diacritics: true,
+          acrossElements: true,
+          element: 'span',
+          className: 'scan-term',
+          accuracy: 'complementary',
+          limiters: '.,:;-?!'.split('')
+        });
+      }});
+    }
+  }, [props.content, props.scan_terms]);
+  */
 
   useEffect(() => {
     if (highlight && props.note_passage) {
