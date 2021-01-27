@@ -13,9 +13,8 @@ function Highlightable(props) {
       const prefix = text.slice(0, start);
       const span = text.slice(start, end);
       const suffix = text.slice(end);
-      return prefix + ' <mark className="rel-highlight"> ' + span + ' </mark> ' + suffix;
+      return prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
     } else {
-      console.log('no rel');
       return text;
     }
   };    
@@ -48,7 +47,7 @@ function Highlightable(props) {
       } else if (tpos >= text.length) {
         // console.log('off end of text');
         return [mstart, tpos];
-      } else if (highlight.charAt(hpos) == text.charAt(tpos)) {
+      } else if (highlight.charAt(hpos) === text.charAt(tpos)) {
         // console.log('match ' + highlight.charAt(hpos) + ' : ' + text.charAt(tpos));
         if (mstart < 0) {
           // console.log('start!');
@@ -102,10 +101,6 @@ function Highlightable(props) {
     }
   }, [highlight]);
 
-  if (props.rel) {
-    console.log(props.rel);
-  }
-  
   if (props.content) {
     return (
       <div>
