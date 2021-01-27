@@ -5,6 +5,7 @@ import Col from 'react-bootstrap/Col';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Container from 'react-bootstrap/Container';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
@@ -300,13 +301,14 @@ function App() {
       style = 'font-weight-bold';
     }
     return (
-      <ListGroup.Item action
-                      variant={rel_levels[i].color}
-                      onClick={() => judge_current(i)}>
-        <span className={style}>
-          {rel_levels[i].label}
-        </span>
-      </ListGroup.Item>
+      <ButtonGroup>
+        <Button variant={rel_levels[i].color}
+                onClick={() => judge_current(i)}>
+          <span className={style}>
+            {rel_levels[i].label}
+          </span>
+        </Button>
+      </ButtonGroup>
     );
   });
   
@@ -316,13 +318,13 @@ function App() {
         
         <LoginModal login_required={login_required} set_required={set_login_required}/>
 
-        <Row className="fixed-top align-items-center flex-shrink-0">
-          <Col className="col-2 flex-row flex-shrink-0 mx-3">
+        <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
+          <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
               <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
           </Col>
-          <Col>
-            <Form inline>
-              <Form.Control placeholder="Topic" className="col-4"
+          <Col xs="auto" className="flex-shrink-1">
+            <Form.Row>
+              <Form.Control placeholder="Topic" className="col-3"
                             value={topic_entry}
                             onChange={(e) => set_topic_entry(e.target.value)}
                             onKeyDown={(e) => {
@@ -333,12 +335,12 @@ function App() {
                               }}}/>
               <Button variant="primary"
                       onClick={() => load_pool(state.username, topic_entry)}>Load</Button>
-            </Form>
+            </Form.Row>
           </Col>
-          <Col>
+          <Col xs="auto">
             {state.username} &nbsp; {state.current + 1} of {state.pool.length}
           </Col>
-          <Col>
+          <Col xs="auto">
             <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
               <option>all</option>
               <option>unjudged</option>
@@ -346,12 +348,10 @@ function App() {
                 <option value={i}>{rel_levels[i].label}</option>) }
             </Form.Control>
           </Col>
-          <Col>
-            <ListGroup horizontal>
-              {judgment_buttons}
-            </ListGroup>
+          <Col xs="auto" className="mr-auto">
+            {judgment_buttons}
           </Col>
-          <Col>
+          <Col xs="auto">
             <Button>Log out</Button>
           </Col>
         </Row>
