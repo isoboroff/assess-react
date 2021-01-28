@@ -29,3 +29,16 @@ At this point, you should be able to browse to localhost:5000 and use the tool.
 
 The back end looks for pools to assess in a directory `back-end/relevance`.  In there you should create a directory for each user.  A pool for topic 123 should be in the file topic123, and the topic description should be in topic123.desc.
 
+#### Deploy
+
+I've included a `uwsgi.ini` script in `back-end/` that is configured to run the `server.py` application through a domain socket `uwsgi.sock`.  You'll need a clause in your `nginx.conf` like so:
+```
+        location = /assess { rewrite ^ /assess/; }
+        location /assess { try_files $uri @assess; }
+        location @assess {
+                include uwsgi_params;
+                uwsgi_pass unix:/home/ubuntu/react-assess/back-end/uwsgi.sock;
+        }
+```
+
+In `front-end/package.json`, the `homepage` setting needs to be `"."`.  The full path to uwsgi.sock and the relevance directories in `backend` need to be readable and executable by the nginx server process.
