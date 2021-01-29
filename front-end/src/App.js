@@ -38,6 +38,7 @@ const initial_state = {
 /* These are actions which change the application state. */
 const Actions = Object.freeze({
   LOGIN: 'LOGIN',
+  LOGOUT: 'LOGOUT',
   LOAD_POOL: 'LOAD_POOL',
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
@@ -53,6 +54,10 @@ function assess_reducer(state, action) {
     window.localStorage.setItem('user', action.payload.username);
     return {...state,
             username: action.payload.username};
+
+  case Actions.LOGOUT:
+    window.localStorage.clear();
+    return {...initial_state};
     
   case Actions.LOAD_POOL:
     window.localStorage.setItem('topic', action.payload.topic);
@@ -236,7 +241,7 @@ function App() {
         set_login_required(true);
       }
     }
-  }, []);
+  }, [state.username]);
 
   function load_pool(username, topic, current = 0) {
     fetch('pool?u=' + username + '&t=' + topic)
@@ -352,7 +357,7 @@ function App() {
             {judgment_buttons}
           </Col>
           <Col xs="auto">
-            <Button>Log out</Button>
+            <Button onClick={() => dispatch({type: Actions.LOGOUT})}>Log out</Button>
           </Col>
         </Row>
         <Row className="mt-5 pt-2"> </Row>
