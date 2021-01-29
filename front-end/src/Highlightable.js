@@ -17,7 +17,11 @@ function Highlightable(props) {
     } else {
       return text;
     }
-  };    
+  };
+
+  const set_rtl = (string) => {
+    return '<div dir="rtl" class="text-right">' + string + '</div>';
+  };
 
   // Adapted from https://github.com/wooorm/is-whitespace-character (MIT license)
   // It turns out JavaScript doesn't have a proper UTF-8 compliant isSpace() #wtf
@@ -107,7 +111,7 @@ function Highlightable(props) {
   if (props.content) {
     return (
       <div>
-        <h1> { props.content.title } </h1>
+        <h1 dir="rtl" className="text-right"> { props.content.title } </h1>
         <p> (best guess on publication date is '{props.content.date}') </p>
         <p> <strong> { props.content.url } </strong> </p>
         <div className="article-text"
@@ -116,7 +120,7 @@ function Highlightable(props) {
                  set_highlight(get_selected_text());
                }
              }}>
-          <Interweave content={ highlight_rel_passage(props.content.text) }
+          <Interweave content={ set_rtl(highlight_rel_passage(props.content.text)) }
                                 matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}/>
         </div>
       </div>

@@ -18,3 +18,11 @@ html,body {
 span.scan-term {
     background-color: #fff36d;
 }
+
+.article-text {
+    font-size: 1.25rem;
+    font-family: georgia,Times New Roman,serif;
+    line-height: 1.75;
+    padding-bottom: 24px;
+    white-space: pre-wrap;
+}

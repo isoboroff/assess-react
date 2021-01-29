@@ -4,6 +4,9 @@
 * DONE Highlight-based judgments
 * DONE Retain document-level (no highlight, full doc) judgments
 * DONE Pool filters
-* TODO Keyboard controls
 * DONE Fix scrolling: pool should scroll independently of the document
 * DONE Topic statement view
+* TODO Topic selection dialog rather than entering a number
+* TODO Actual logging out
+* TODO On pool load, set the current from the last judgment in the log
+* DONE Arabic documents, RTL, check highlighting and scanterms
