@@ -70,10 +70,10 @@ class Pool:
         return len(self.pool)
 
     def num_rel(self):
-        return sum([1 for judgment in self.pool.values() if int(judgment) > 0])
+        return sum([1 for judgment in self.pool.values() if int(judgment['judgment']) > 0])
 
     def num_judged(self):
-        return sum([1 for judgment in self.pool.values() if judgment != '-1'])
+        return sum([1 for judgment in self.pool.values() if judgment['judgment'] != '-1'])
     
     def json(self):
         poollist = []
@@ -112,7 +112,7 @@ def inbox():
     try:
         homedir = Path(args.save) / username
         for child in homedir.iterdir():
-            if re.match(r'^topic[0-9]+$', child.name):
+            if re.match(r'^topic[IRTr0-9-]+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
                 
