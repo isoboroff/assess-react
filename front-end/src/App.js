@@ -425,7 +425,7 @@ function App() {
           </Col>
           <Col xs="auto" className="flex-shrink-1">
             <Button variant="primary"
-                    onClick={() => set_topic_requested(true)}>Load Topic</Button>
+                    onClick={() => set_topic_requested(true)}>Load Request</Button>
           </Col>
           <Col xs="auto">
             {state.current + 1} of {state.pool.length}
