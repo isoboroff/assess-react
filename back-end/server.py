@@ -38,6 +38,7 @@ class Pool:
         self.pool = {}
         self.topic = None
         self.desc = ''
+        self.last = ''
         
         with open(filename, 'r') as fp:
             for line in fp:
@@ -52,6 +53,7 @@ class Pool:
             with open(f'{filename}.log', 'r') as log:
                 for line in log:
                     log_entry = Pool.read_log_entry(line)
+                    self.last = log_entry['docid']
                     if 'passage' in log_entry:
                         self.pool[log_entry['docid']]['passage'] = log_entry['passage']
                     if 'judgment' in log_entry:
@@ -77,14 +79,20 @@ class Pool:
     
     def json(self):
         poollist = []
+        last = 0
+        count = 0
         for docid, jobj in self.pool.items():
+            if docid == self.last:
+                last = count
             if 'passage' in jobj:
                 poollist.append({"docid": docid, "judgment": jobj['judgment'], "passage": jobj['passage']})
             else:
                 poollist.append({"docid": docid, "judgment": jobj['judgment']})
+            count += 1
         return json.dumps({ "pool": poollist,
                             "topic": self.topic,
-                            "desc": self.desc })
+                            "desc": self.desc,
+                            "last": last })
 
     @staticmethod
     def read_log_entry(line):

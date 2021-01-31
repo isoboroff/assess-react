@@ -331,6 +331,9 @@ function App() {
     fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
       .then(data => {
+        if (data.last)
+          current = data.last;
+        
         dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
                                                       pool: data.pool,
                                                       desc: data.desc}});
