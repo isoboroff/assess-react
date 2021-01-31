@@ -354,7 +354,7 @@ function App() {
     const docid = state.pool[state.current].docid;
 
     if (passage && (judgment === '0' || judgment === '-1'))
-      judgment = '1';
+      judgment = '2';
 
     if (judgment === '0')
       passage={ clear: true }; // Clear any passage judgments
@@ -382,7 +382,7 @@ function App() {
   function note_passage(passage) {
     let judgment = state.pool[state.current].judgment;
     if (judgment === '-1' || judgment === '0')
-      judgment = '1';
+      judgment = '2';
     judge_current(judgment, passage);
   }
 
