@@ -237,6 +237,31 @@ function LoadTopicModal(props) {
     </Modal>
   );}
 
+// Render the task/request description
+function Description(props) {
+  if (props.desc) {
+    const desc = JSON.parse(props.desc);
+    return (
+      <div className="border-bottom">
+        <h2>Request: {desc['req-num']}</h2>
+        <p><b>{desc['req-text']}</b></p>
+        <p>Background task:</p>
+        <ul>
+          <li>{desc['task-stmt']}</li>
+          <li>{desc['task-narr']}</li>
+          <li><b>In scope:</b> {desc['task-in-scope']}</li>
+          <li><b>Not in scope:</b> {desc['task-not-in-scope']}</li>
+        </ul>
+        <b>Examples:</b><br/>
+        {desc.ex.map(ex => <p>{ex}</p>)}
+      </div>
+    );
+  } else {
+    return null;
+  }
+  // <p style={{whiteSpace: 'pre-wrap'}}>{desc}</p>
+}
+
 /*
  * The "app".  The main interface pieces here are a modal for logins, selecting a
  * topic to load, and judgment buttons for judging the currently displayed doc.
@@ -443,9 +468,7 @@ function App() {
             <Pool pool={state.pool} current={state.current} filter={pool_filter}/>
           </Col>
           <Col xs={8} className="vh-full overflow-auto">
-            <div className="border-bottom">
-              <p style={{whiteSpace: "pre-wrap"}}>{state.desc}</p>
-            </div>
+            <Description desc={state.desc}/>
             <Highlightable content={state.doc} scan_terms={state.scan_terms}
                            rel={(state.current >= 0 && state.pool[state.current].passage)
                                 ? state.pool[state.current].passage : ''}
@@ -458,3 +481,4 @@ function App() {
 }
 
 export default App;
+
