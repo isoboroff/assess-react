@@ -93,7 +93,10 @@ function assess_reducer(state, action) {
             pool: newPool};
 
   case Actions.SAVE_SCAN_TERMS:
-    window.localStorage.setItem('scan_terms', action.payload.scan_terms);
+    if (action.payload.scan_terms)
+      window.localStorage.setItem('scan_terms', action.payload.scan_terms);
+    else
+      window.localStorage.removeItem('scan_terms');
     return {...state,
             scan_terms: action.payload.scan_terms};
   default:
@@ -455,15 +458,21 @@ function App() {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                dispatch({type: 'SAVE_SCAN_TERMS',
+                                dispatch({type: Actions.SAVE_SCAN_TERMS,
                                                 payload: { scan_terms: scan_terms }
                                          });
                               }}}/>
               <Button variant="primary"
-                      onClick={() => {dispatch({type: 'SAVE_SCAN_TERMS',
+                      onClick={() => {dispatch({type: Actions.SAVE_SCAN_TERMS,
                                                 payload: { scan_terms: scan_terms }
                                                });
                                      }}>Apply</Button>
+              <Button variant="secondary"
+                      onClick={() => {set_scan_terms('');
+                                      dispatch({type: Actions.SAVE_SCAN_TERMS,
+                                                payload: { scan_terms: null}
+                                               });
+                                     }}>Clear</Button>
             </Form>
           </Col>
         <Row className="mt-3 vh-full">
