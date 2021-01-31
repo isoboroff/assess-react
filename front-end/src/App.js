@@ -136,7 +136,7 @@ function PoolItem(props) {
     <ListGroup.Item action
                     active={props.current}
                     onClick={() => fetch_doc(props.seq, props.docid)}>
-      {props.seq + 1}: {props.docid} {badge}
+      {props.seq + 1}: {props.docid.slice(0,15)} {badge}
     </ListGroup.Item>
   );
 }
