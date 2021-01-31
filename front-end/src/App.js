@@ -23,7 +23,7 @@ const rel_levels = {'0': {label: 'irrelevant',    color: 'secondary'},
                     '1': {label: 'topical',       color: 'info'},
                     '2': {label: 'specific info', color: 'primary'},
                     '3': {label: 'direct answer', color: 'success'},
-                    '4': {label: 'DECISIVE',      color: 'danger'}};
+                    '4': {label: 'DECISIONAL',    color: 'danger'}};
 
 /* This is the application state. */
 const initial_state = {
