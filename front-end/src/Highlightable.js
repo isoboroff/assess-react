@@ -112,7 +112,7 @@ function Highlightable(props) {
     return (
       <div>
         <h1 dir="rtl" className="text-right"> { props.content.title } </h1>
-        <p> (best guess on publication date is '{props.content.date}') </p>
+        { props.content.date && (<p> (best guess on publication date is '{props.content.date}') </p>)}
         <p> <strong> { props.content.url } </strong> </p>
         <div className="article-text"
              onMouseUp={() => {

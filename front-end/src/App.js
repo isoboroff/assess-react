@@ -425,7 +425,7 @@ function App() {
                     onClick={() => set_topic_requested(true)}>Load Topic</Button>
           </Col>
           <Col xs="auto">
-            {state.username} &nbsp; {state.current + 1} of {state.pool.length}
+            {state.current + 1} of {state.pool.length}
           </Col>
           <Col xs="auto">
             <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
@@ -438,8 +438,8 @@ function App() {
           <Col xs="auto" className="mr-auto">
             {judgment_buttons}
           </Col>
-          <Col xs="auto">
-            <Button onClick={() => dispatch({type: Actions.LOGOUT})}>Log out</Button>
+          <Col xs="auto" className="mx-3">
+            <Button onClick={() => dispatch({type: Actions.LOGOUT})}>Log out {state.username}</Button>
           </Col>
         </Row>
         <Row className="mt-5 pt-2"> </Row>
