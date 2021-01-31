@@ -147,8 +147,8 @@ function PoolItem(props) {
 function Pool(props) {
   const entries =  props.pool
         .flatMap((entry, i) => {
-          if (props.filter == 'all' ||
-              (props.filter == 'unjudged' && entry.judgment === '-1') ||
+          if (props.filter === 'all' ||
+              (props.filter === 'unjudged' && entry.judgment === '-1') ||
               props.filter === entry.judgment) {
             return <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
                                    current={props.current === i}/>;
@@ -196,6 +196,47 @@ function LoginModal(props) {
   );
 }
 
+/* 
+ * A modal for loading the topic.  This is much nicer than typing a topic
+ * number in a form, which is error prone.  As a bonus, we can show
+ * for each topic how big it is and how much is left to do.
+ */
+function LoadTopicModal(props) {
+  return (
+    <Modal show={props.show_topic_dialog}>
+      <Modal.Header>
+        <Modal.Title>
+          Select a topic to load
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <table className="table table-hover">
+          <thead style={{position: "sticky"}}>
+            <tr>
+              <th scope="col">Topic</th>
+              <th scope="col">Length</th>
+              <th scope="col">Unjudged</th>
+            </tr>
+          </thead>
+          <tbody>
+            { Object.getOwnPropertyNames(props.inbox).map((topic) => (
+              <tr onClick={() => props.load_pool(topic)}>
+                <td>{topic}</td>
+                <td>{props.inbox[topic][0]}</td>
+                <td>{props.inbox[topic][0] - props.inbox[topic][1]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="primary" onClick={() => props.set_show_topic_dialog(false)}>
+          Cancel
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );}
+
 /*
  * The "app".  The main interface pieces here are a modal for logins, selecting a
  * topic to load, and judgment buttons for judging the currently displayed doc.
@@ -205,7 +246,9 @@ function LoginModal(props) {
 function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
   const [login_required, set_login_required] = useState(false);
-  const [topic_entry, set_topic_entry] = useState('');
+  const [topic_requested, set_topic_requested] = useState(false);
+  const [show_topic_dialog, set_show_topic_dialog] = useState(false);
+  const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState('');
   const [pool_filter, set_pool_filter] = useState('all');
   
@@ -228,7 +271,6 @@ function App() {
         // Then, check for last topic loaded
         const cur_topic = window.localStorage.getItem('topic');
         if (cur_topic) {
-          set_topic_entry(cur_topic);
           // And last document viewed?  If not just set to 0
           let cur_doc = window.localStorage.getItem('current');
           if (cur_doc)
@@ -243,6 +285,23 @@ function App() {
     }
   }, [state.username]);
 
+  /* Load the "inbox", the list of topics to do and how much has been done. */
+  function load_inbox(username) {
+    fetch('inbox?u=' + state.username)
+      .then(response => response.json())
+      .then(data => set_inbox(data));
+  }
+
+  /* If someone clicks "Load topic", we need to refresh the inbox and
+   * put up the load-topic dialog. */
+  useEffect(() => {
+    if (topic_requested && state.username !== '') {
+      load_inbox(state.username);
+      set_topic_requested(false);
+      set_show_topic_dialog(true);
+    }
+  }, [topic_requested]);
+  
   function load_pool(username, topic, current = 0) {
     fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
@@ -255,8 +314,13 @@ function App() {
       .then(data => {
         dispatch({ type: Actions.FETCH_DOC, payload: {doc: data,
                                                       current: current}});
+        set_show_topic_dialog(false);
       });
-  }    
+  }
+
+  function load_pool_for_current_user(topic, current=0) {
+    load_pool(state.username, topic, current);
+  }
 
   function judge_current(judgment, passage = null) {
     const docid = state.pool[state.current].docid;
@@ -322,25 +386,18 @@ function App() {
       <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
         
         <LoginModal login_required={login_required} set_required={set_login_required}/>
-
+        <LoadTopicModal show_topic_dialog={show_topic_dialog}
+                        set_show_topic_dialog={set_show_topic_dialog}
+                        inbox={inbox}
+                        load_pool={load_pool_for_current_user}/>
+ 
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
           <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
               <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
           </Col>
           <Col xs="auto" className="flex-shrink-1">
-            <Form.Row>
-              <Form.Control placeholder="Topic" className="col-3"
-                            value={topic_entry}
-                            onChange={(e) => set_topic_entry(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                load_pool(state.username, topic_entry);
-                              }}}/>
-              <Button variant="primary"
-                      onClick={() => load_pool(state.username, topic_entry)}>Load</Button>
-            </Form.Row>
+            <Button variant="primary"
+                    onClick={() => set_topic_requested(true)}>Load Topic</Button>
           </Col>
           <Col xs="auto">
             {state.username} &nbsp; {state.current + 1} of {state.pool.length}
