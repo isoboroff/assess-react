@@ -1,3 +1,12 @@
+
+Tasks for News 2021:
+
+* TODO retarget for WaPo
+* TODO judgment buttons
+* TODO news track topic rendering
+
+Tasks for BETTER assessing:
+
 * DONE log judgments back to server
 * DONE implement browser-stored state restoration
 * DONE Improve the relevance indicator for the current document
@@ -10,3 +19,4 @@
 * DONE Actual logging out
 * DONE On pool load, set the current from the last judgment in the log
 * DONE Arabic documents, RTL, check highlighting and scanterms
+
