@@ -124,7 +124,15 @@ function Highlightable(props) {
   // Document rendering
   // from bench/front-end/src/WaPoDocument.js
   //
-  const display_doc = (content_obj) => {
+  const display_doc = (content_string) => {
+    let content_obj = null;
+    try {
+      content_obj = JSON.parse(content_string);
+    } catch (error) {
+      console.error(error);
+      return '';
+    }
+    
     if (!(content_obj && content_obj.hasOwnProperty('contents')))
       return '';
     let content = content_obj.contents.filter(block => {
@@ -195,7 +203,7 @@ function Highlightable(props) {
   
 
   if (props.content) {
-    return display_doc(props.content);
+    return display_doc(props.content['orig']);
   } else {
     return <p>waiting...</p>;
   }
