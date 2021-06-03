@@ -15,13 +15,13 @@ if (__name__ == '__main__'):
     argparser.add_argument('--host', help='ElasticSearch host', default='localhost')
     argparser.add_argument('--port', help='ElasticSearch port', default=9200)
     argparser.add_argument('--save', help='Location for saved data', default='relevance')
-    argparser.add_argument('--index', help='Index to search against', default='better_ar')
+    argparser.add_argument('--index', help='Index to search against', default='wapo')
     args = argparser.parse_args()
 else:
     args = argparse.Namespace(**{'host': 'elastic',
                                  'port': 9200,
                                  'save': 'relevance',
-                                 'index': 'better_ar'})
+                                 'index': 'wapo'})
 
 
 app = Flask(__name__, static_folder='../front-end/build/static',
@@ -120,7 +120,7 @@ def inbox():
     try:
         homedir = Path(args.save) / username
         for child in homedir.iterdir():
-            if re.match(r'^topic[IRTr0-9-]+$', child.name):
+            if re.match(r'^topic[0-9]+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
                 
