@@ -19,6 +19,8 @@ function Highlightable(props) {
     }
   };
 
+  // This is for right-to-left text in the document.  We shouldn't generally
+  // need it unless we're assessing a RTL language like Arabic.
   const set_rtl = (string) => {
     return '<div dir="rtl" class="text-right">' + string + '</div>';
   };
@@ -120,8 +122,8 @@ function Highlightable(props) {
                  set_highlight(get_selected_text());
                }
              }}>
-          <Interweave content={ set_rtl(highlight_rel_passage(props.content.text)) }
-                                matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}/>
+          <Interweave content={ highlight_rel_passage(props.content.text) }
+                      matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}/>
         </div>
       </div>
     );
@@ -132,4 +134,3 @@ function Highlightable(props) {
 }
 
 export { Highlightable as default };
-//matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}
