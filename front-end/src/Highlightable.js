@@ -1,6 +1,6 @@
 import { React, useState, useEffect } from 'react';
 
-import Interweave from 'interweave';
+import { Markup, Interweave } from 'interweave';
 import ScanTermMatcher from './ScanTermMatcher';
 
 function Highlightable(props) {
@@ -81,7 +81,7 @@ function Highlightable(props) {
     return (window.getSelection && !window.getSelection().isCollapsed);
   }
   
-  function get_selected_text() {
+  function get_selected_text(blockno) {
     let result = null;
     if (window.getSelection) {
       const sel = window.getSelection();
@@ -92,7 +92,8 @@ function Highlightable(props) {
         if (start < 0 || (end - start) < hl_text.length) {
           console.log('bad search output ' + start + ' ' + end);
         } else {
-          result = { "start": start,
+          result = { "block": blockno,
+                     "start": start,
                      "length": end - start,
                      "text": hl_text };
         }
@@ -110,7 +111,67 @@ function Highlightable(props) {
     }
   }, [highlight]);
 
-  if (props.content) {
+  // from bench/front-end/src/WaPoDocument.js
+  //
+  const display_doc = (content_string) => {
+    let obj = null;
+    try {
+      obj = JSON.parse(content_string);
+    } catch (error) {
+      console.error(error);
+      return '';
+    }
+    if (!(obj && obj.hasOwnProperty('contents')))
+      return '';
+    let content = obj.contents.filter(block => {
+      return block != null;
+    }).map((block, i) => {
+      switch (block.type) {
+      case 'kicker': return (<h3> {block.content} </h3>);
+      case 'title': return (<h1> {block.content} </h1>);
+      case 'byline': return (<h3> {block.content} </h3>);
+      case 'date': return (<p> { new Date(block.content).toDateString() } </p>);
+      case 'sanitized_html':
+        return (
+          <div className="article-text"
+               onMouseUp={() => {
+                 if (has_selection()) {
+                   set_highlight(get_selected_text(i));
+                 }
+               }}>
+            <Interweave content={ highlight_rel_passage(block.content) }
+                        matchers={[new ScanTermMatcher('scanterms',
+                                                       { scan_terms: props.scan_terms })]}/>
+          </div>);
+      case 'image': return (
+        <figure class="figure">
+          <img src={block.imageURL} class="figure-img img-fluid w-75"/>
+          <figcaption class="figure-caption">{block.fullcaption}</figcaption>
+        </figure>
+      );
+      case 'video': if (/youtube/.test(block.mediaURL)) {
+        let id = block.mediaURL.match(/v=([^&]+)&/)[1];
+        let url = "https://www.youtube.com/embed/" + id + "?feature=oembed";
+        return (
+          <iframe width="480" height="270" src={url} frameborder="0" allowfullscreen></iframe>
+        );
+      } else {
+        return (
+          <video controls src={block.mediaURL} poster={block.imageURL}>
+            A video should appear here
+          </video>
+        );
+      }
+      case 'author_info': return (<p><i>{block.bio}</i></p>);
+      default: return (<i> {block.type} not rendered</i>);
+      };
+    });
+    let doc = ( <div>{content}</div> );
+    return doc;
+  };
+
+  // Holding on to this just for reference.
+  const display_doc_better = (content_string) => {
     return (
       <div>
         <h1 dir="rtl" className="text-right"> { props.content.title } </h1>
@@ -125,8 +186,13 @@ function Highlightable(props) {
           <Interweave content={ highlight_rel_passage(props.content.text) }
                       matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}/>
         </div>
-      </div>
-    );
+      </div>);
+  };
+  
+
+  if (props.content) {
+    // old BETTER document rendering with highlighting
+    return display_doc(props.content);
   } else {
     return <p>waiting...</p>;
   }
