@@ -1,6 +1,6 @@
 import { React, useState, useEffect } from 'react';
 
-import { Markup, Interweave } from 'interweave';
+import Interweave from 'interweave';
 import ScanTermMatcher from './ScanTermMatcher';
 
 function Highlightable(props) {
