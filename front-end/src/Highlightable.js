@@ -6,6 +6,8 @@ import ScanTermMatcher from './ScanTermMatcher';
 function Highlightable(props) {
   const [highlight, set_highlight] = useState(null);
 
+  // If there is a corresponding highlight in props.rel,
+  // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
     if (props.rel) {
       const start = props.rel.start;
@@ -38,6 +40,10 @@ function Highlightable(props) {
   // Search for a text string in the props.content document
   // This is for highlighted passages.  I expect it to match and
   // am happy to take the first match found.
+  // We need this because JavaScript will give us back what was highlighted,
+  // but not the starting and ending coordinates in the original (possibly already
+  // highlighted) text block.
+  //
   // Returns [start, end]
   function search(highlight) {
     let hpos = 0; // position in highlight
@@ -77,10 +83,12 @@ function Highlightable(props) {
     }
   }
 
+  // Is something selected?
   function has_selection() {
     return (window.getSelection && !window.getSelection().isCollapsed);
   }
-  
+
+  // Return the selection, with (block, start, len)
   function get_selected_text(blockno) {
     let result = null;
     if (window.getSelection) {
@@ -104,6 +112,8 @@ function Highlightable(props) {
     return result;
   }
 
+  // This effect fires if highlight changes.
+  // It calls props.note_passage which notes the relevance judgment.
   useEffect(() => {
     if (highlight) {
       props.note_passage(highlight);
@@ -111,19 +121,13 @@ function Highlightable(props) {
     }
   }, [highlight]);
 
+  // Document rendering
   // from bench/front-end/src/WaPoDocument.js
   //
-  const display_doc = (content_string) => {
-    let obj = null;
-    try {
-      obj = JSON.parse(content_string);
-    } catch (error) {
-      console.error(error);
+  const display_doc = (content_obj) => {
+    if (!(content_obj && content_obj.hasOwnProperty('contents')))
       return '';
-    }
-    if (!(obj && obj.hasOwnProperty('contents')))
-      return '';
-    let content = obj.contents.filter(block => {
+    let content = content_obj.contents.filter(block => {
       return block != null;
     }).map((block, i) => {
       switch (block.type) {
@@ -191,7 +195,6 @@ function Highlightable(props) {
   
 
   if (props.content) {
-    // old BETTER document rendering with highlighting
     return display_doc(props.content);
   } else {
     return <p>waiting...</p>;
