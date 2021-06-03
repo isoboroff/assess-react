@@ -246,17 +246,10 @@ function Description(props) {
     const desc = JSON.parse(props.desc);
     return (
       <div className="border-bottom">
-        <h2>Request: {desc['req-num']}</h2>
-        <p><b>{desc['req-text']}</b></p>
-        <p>Background task:</p>
-        <ul>
-          <li>{desc['task-stmt']}</li>
-          <li>{desc['task-narr']}</li>
-          <li><b>In scope:</b> {desc['task-in-scope']}</li>
-          <li><b>Not in scope:</b> {desc['task-not-in-scope']}</li>
-        </ul>
-        <b>Examples:</b><br/>
-        {desc.ex.map(ex => <p>{ex}</p>)}
+        <h2>Topic: {desc['num']}</h2>
+        <p><b>{desc['title']}</b></p>
+        <p>{desc['desc']}</p>
+        <p>{desc['narr']}</p>
       </div>
     );
   } else {
