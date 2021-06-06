@@ -1,9 +1,14 @@
 
 Tasks for News 2021:
 
-* TODO retarget for WaPo
-* TODO judgment buttons
+* DONE retarget for WaPo
+* DONE judgment buttons
 * TODO news track topic rendering
+  mostly done, need subtopic buttons.
+* TODO highlight fix
+* TODO render source doc somehow...
+* TODO scanterms box is RTL-oriented
+
 
 Tasks for BETTER assessing:
 
