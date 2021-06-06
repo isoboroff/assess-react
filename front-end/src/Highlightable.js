@@ -6,15 +6,20 @@ import ScanTermMatcher from './ScanTermMatcher';
 function Highlightable(props) {
   const [highlight, set_highlight] = useState(null);
 
+  // The 'doc' is populated from the 'orig' field of props.content
+  let parsed = null;
+  
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
     if (props.rel) {
+      console.log(props.rel.start, props.rel.length);
       const start = props.rel.start;
       const end = start + props.rel.length;
       const prefix = text.slice(0, start);
       const span = text.slice(start, end);
       const suffix = text.slice(end);
+      console.log(span);
       return prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
     } else {
       return text;
@@ -45,37 +50,37 @@ function Highlightable(props) {
   // highlighted) text block.
   //
   // Returns [start, end]
-  function search(highlight) {
+  function search(blockno, highlight) {
     let hpos = 0; // position in highlight
     let tpos = 0; // position in text
     let mstart = -1;  // marked start pos in text
-    const text = props.content['text'];
-    // console.log('highlight is "' + highlight + '", len ' + highlight.length);
+    const text = parsed.contents[blockno].content;
+    console.log('highlight is "' + highlight + '", len ' + highlight.length);
     while (true) {
-      // console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
+      console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
       if (hpos >= highlight.length) {
-        // console.log('off end of highlight');
+        console.log('off end of highlight');
         return [mstart, tpos];
       } else if (tpos >= text.length) {
-        // console.log('off end of text');
+        console.log('off end of text');
         return [mstart, tpos];
       } else if (highlight.charAt(hpos) === text.charAt(tpos)) {
-        // console.log('match ' + highlight.charAt(hpos) + ' : ' + text.charAt(tpos));
+        console.log('match ' + highlight.charAt(hpos) + ' : ' + text.charAt(tpos));
         if (mstart < 0) {
-          // console.log('start!');
+          console.log('start!');
           mstart = tpos;
         }
-        // console.log('inc');
+        console.log('inc');
         hpos += 1;
         tpos += 1;
       } else if (isSpace(highlight[hpos])) {
-        // console.log('skipping nonmatching hl space');
+        console.log('skipping nonmatching hl space');
         hpos += 1;
       } else if (isSpace(text[tpos])) {
-        // console.log('skippnig nonmatching text space');
+        console.log('skippnig nonmatching text space');
         tpos += 1;
       } else {
-        // console.log('searching...');
+        console.log('searching...');
         mstart = -1;
         hpos = 0;
         tpos += 1;
@@ -96,7 +101,7 @@ function Highlightable(props) {
       
       if (!sel.isCollapsed) {
         const hl_text = sel.toString();
-        const [start, end] = search(hl_text);
+        const [start, end] = search(blockno, hl_text);
         if (start < 0 || (end - start) < hl_text.length) {
           console.log('bad search output ' + start + ' ' + end);
         } else {
@@ -124,18 +129,13 @@ function Highlightable(props) {
   // Document rendering
   // from bench/front-end/src/WaPoDocument.js
   //
-  const display_doc = (content_string) => {
-    let content_obj = null;
-    try {
-      content_obj = JSON.parse(content_string);
-    } catch (error) {
-      console.error(error);
+  const display_doc = () => {
+    if (parsed === null)
       return '';
-    }
     
-    if (!(content_obj && content_obj.hasOwnProperty('contents')))
+    if (!(parsed && parsed.hasOwnProperty('contents')))
       return '';
-    let content = content_obj.contents.filter(block => {
+    let content = parsed.contents.filter(block => {
       return block != null;
     }).map((block, i) => {
       switch (block.type) {
@@ -185,8 +185,9 @@ function Highlightable(props) {
     return doc;
   };
 
-  if (props.content) {
-    return display_doc(props.content['orig']);
+  if (props.content && props.content.hasOwnProperty('orig')) {
+    parsed = JSON.parse(props.content['orig']);
+    return display_doc();
   } else {
     return <p>waiting...</p>;
   }
