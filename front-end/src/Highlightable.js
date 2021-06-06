@@ -55,32 +55,32 @@ function Highlightable(props) {
     let tpos = 0; // position in text
     let mstart = -1;  // marked start pos in text
     const text = parsed.contents[blockno].content;
-    console.log('highlight is "' + highlight + '", len ' + highlight.length);
+    //console.log('highlight is "' + highlight + '", len ' + highlight.length);
     while (true) {
-      console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
+      //console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
       if (hpos >= highlight.length) {
-        console.log('off end of highlight');
+        //console.log('off end of highlight');
         return [mstart, tpos];
       } else if (tpos >= text.length) {
-        console.log('off end of text');
+        //console.log('off end of text');
         return [mstart, tpos];
       } else if (highlight.charAt(hpos) === text.charAt(tpos)) {
-        console.log('match ' + highlight.charAt(hpos) + ' : ' + text.charAt(tpos));
+        //console.log('match ' + highlight.charAt(hpos) + ' : ' + text.charAt(tpos));
         if (mstart < 0) {
-          console.log('start!');
+          //console.log('start!');
           mstart = tpos;
         }
-        console.log('inc');
+        //console.log('inc');
         hpos += 1;
         tpos += 1;
       } else if (isSpace(highlight[hpos])) {
-        console.log('skipping nonmatching hl space');
+        //console.log('skipping nonmatching hl space');
         hpos += 1;
       } else if (isSpace(text[tpos])) {
-        console.log('skippnig nonmatching text space');
+        //console.log('skippnig nonmatching text space');
         tpos += 1;
       } else {
-        console.log('searching...');
+        //console.log('searching...');
         mstart = -1;
         hpos = 0;
         tpos += 1;
