@@ -13,13 +13,11 @@ function Highlightable(props) {
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
     if (props.rel) {
-      console.log(props.rel.start, props.rel.length);
       const start = props.rel.start;
       const end = start + props.rel.length;
       const prefix = text.slice(0, start);
       const span = text.slice(start, end);
       const suffix = text.slice(end);
-      console.log(span);
       return prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
     } else {
       return text;
