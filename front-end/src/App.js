@@ -415,20 +415,22 @@ function App() {
   return (
     <AssessDispatch.Provider value={dispatch}>
       <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
-        
+
+        { /************** Modals */ }
         <LoginModal login_required={login_required} set_required={set_login_required}/>
         <LoadTopicModal show_topic_dialog={show_topic_dialog}
                         set_show_topic_dialog={set_show_topic_dialog}
                         inbox={inbox}
                         load_pool={load_pool_for_current_user}/>
- 
+        
+        { /************** Header line: load pool, filter pool, judgment buttons, logout button */ }
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
           <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
               <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
           </Col>
           <Col xs="auto" className="flex-shrink-1">
             <Button variant="primary"
-                    onClick={() => set_topic_requested(true)}>Load Request</Button>
+                    onClick={() => set_topic_requested(true)}>Load Pool</Button>
           </Col>
           <Col xs="auto">
             {state.current + 1} of {state.pool.length}
@@ -448,10 +450,12 @@ function App() {
             <Button onClick={() => dispatch({type: Actions.LOGOUT})}>Log out {state.username}</Button>
           </Col>
         </Row>
+
+        { /************** Scanterms */ }
         <Row className="mt-5 pt-2"> </Row>
           <Col>
             <Form inline>
-              <Form.Control placeholder="Scan terms" className="col-10 mx-3" dir="rtl"
+              <Form.Control placeholder="Scan terms" className="col-10 mx-3"
                             value={scan_terms}
                             onChange={(e) => set_scan_terms(e.target.value)}
                             onKeyDown={(e) => {
@@ -475,6 +479,8 @@ function App() {
                                      }}>Clear</Button>
             </Form>
           </Col>
+
+        { /************** Main: pool column and topic/document column */ }
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
             <Pool pool={state.pool} current={state.current} filter={pool_filter}/>
