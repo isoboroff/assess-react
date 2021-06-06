@@ -246,7 +246,14 @@ function Description(props) {
     const desc = JSON.parse(props.desc);
     return (
       <div className="border-bottom">
-        <h2>Topic: {desc['num']}</h2>
+        <span className="h2 mr-5">Topic {desc['num']}</span>
+        <Button onClick={() => {
+          window.open(desc['url'], '_blank', 'noreferrer,noopener');
+          return false;
+        }}>
+          Open source in new tab
+        </Button>
+        
         <p><b>{desc['title']}</b></p>
         <p>{desc['desc']}</p>
         <p>{desc['narr']}</p>
