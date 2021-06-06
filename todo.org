@@ -5,7 +5,7 @@ Tasks for News 2021:
 * DONE judgment buttons
 * TODO news track topic rendering
   mostly done, need subtopic buttons.
-* TODO highlight fix
+* DONE highlight fix
 * DONE render source doc somehow...
 * DONE scanterms box is RTL-oriented
 

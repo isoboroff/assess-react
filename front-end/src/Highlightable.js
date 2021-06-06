@@ -144,6 +144,9 @@ function Highlightable(props) {
       case 'byline': return (<h3> {block.content} </h3>);
       case 'date': return (<p> { new Date(block.content).toDateString() } </p>);
       case 'sanitized_html':
+        let the_block = block.content;
+        if (props.rel && props.rel.block == i)
+          the_block = highlight_rel_passage(the_block);
         return (
           <div className="article-text"
                onMouseUp={() => {
@@ -151,14 +154,14 @@ function Highlightable(props) {
                    set_highlight(get_selected_text(i));
                  }
                }}>
-            <Interweave content={ highlight_rel_passage(block.content) }
+            <Interweave content={ the_block }
                         matchers={[new ScanTermMatcher('scanterms',
                                                        { scan_terms: props.scan_terms })]}/>
           </div>);
       case 'image': return (
-        <figure class="figure">
-          <img src={block.imageURL} class="figure-img img-fluid w-75"/>
-          <figcaption class="figure-caption">{block.fullcaption}</figcaption>
+        <figure className="figure">
+          <img src={block.imageURL} classNAme="figure-img img-fluid w-75"/>
+          <figcaption className="figure-caption">{block.fullcaption}</figcaption>
         </figure>
       );
       case 'video': if (/youtube/.test(block.mediaURL)) {
@@ -181,26 +184,6 @@ function Highlightable(props) {
     let doc = ( <div>{content}</div> );
     return doc;
   };
-
-  // Holding on to this just for reference.
-  const display_doc_better = (content_string) => {
-    return (
-      <div>
-        <h1 dir="rtl" className="text-right"> { props.content.title } </h1>
-        { props.content.date && (<p> (best guess on publication date is '{props.content.date}') </p>)}
-        <p> <strong> { props.content.url } </strong> </p>
-        <div className="article-text"
-             onMouseUp={() => {
-               if (has_selection()) {
-                 set_highlight(get_selected_text());
-               }
-             }}>
-          <Interweave content={ highlight_rel_passage(props.content.text) }
-                      matchers={[new ScanTermMatcher('scanterms', { scan_terms: props.scan_terms })]}/>
-        </div>
-      </div>);
-  };
-  
 
   if (props.content) {
     return display_doc(props.content['orig']);
