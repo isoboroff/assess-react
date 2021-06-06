@@ -160,7 +160,7 @@ function Highlightable(props) {
           </div>);
       case 'image': return (
         <figure className="figure">
-          <img src={block.imageURL} classNAme="figure-img img-fluid w-75"/>
+          <img src={block.imageURL} className="figure-img img-fluid w-75"/>
           <figcaption className="figure-caption">{block.fullcaption}</figcaption>
         </figure>
       );
