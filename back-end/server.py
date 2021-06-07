@@ -184,7 +184,6 @@ def set_judgment() :
     docid = request.args['d']
 
     payload = request.get_json()
-    app.logger.debug(payload)
     
     log_obj = { 'stamp': time.time(),
                 'docid': docid }
