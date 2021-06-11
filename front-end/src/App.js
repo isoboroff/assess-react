@@ -266,12 +266,11 @@ function Description(props) {
     return (
       <div className="border-bottom">
         <span className="h2 mr-5">Topic {desc['num']}</span>
-        <Button onClick={() => {
-          window.open(desc['url'], '_blank', 'noreferrer,noopener');
-          return false;
-        }}>
+        <a href={desc['url']} target='_blank'
+           referrerpolicy='no-referrer'
+           rel='noopener noreferrer'>
           Open source in new tab
-        </Button>
+        </a>
         
         <p><b>{desc['title']}</b></p>
         <p>{desc['desc']}</p>
