@@ -9,11 +9,13 @@ import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Container from 'react-bootstrap/Container';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
+import Collapse from 'react-bootstrap/Collapse';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 import Highlightable from './Highlightable';
+import WaPoDocument from './WaPoDocument';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -244,6 +246,17 @@ function LoadTopicModal(props) {
 
 // Render the task/request description
 function Description(props) {
+  const [show, setShow] = useState(false);
+  const [source_document, set_source_document] = useState(null);
+
+  useEffect(() => {
+    if (props.desc) {
+      fetch('doc?d=' + props.desc.docid)
+        .then(response => response.json())
+        .then(data => set_source_document(data.orig));
+    }
+  });
+  
   const handle_check = (evt) => {
     const sub = evt.target.id.substring(3);
     let current_subs = props.rel;
@@ -255,8 +268,7 @@ function Description(props) {
   };
   
   if (props.desc) {
-    const desc = JSON.parse(props.desc);
-    const subtopics = desc['subtopics'].map((sub) => (
+    const subtopics = props.desc['subtopics'].map((sub) => (
       <Form.Check type="checkbox"
                   onChange={handle_check}
                   id={"sub" + sub['num']}
@@ -265,16 +277,22 @@ function Description(props) {
     ));
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Topic {desc['num']}</span>
-        <a href={desc['url']} target='_blank'
-           referrerpolicy='no-referrer'
-           rel='noopener noreferrer'>
-          Open source in new tab
-        </a>
+        <span className="h2 mr-5">Topic {props.desc['num']}</span>
+        <Button onClick={() => setShow(!show)}
+                aria-controls='source-document'
+                aria-expanded={show}>
+          Click to { show ? 'hide' : 'show' } Source Document
+        </Button>
+
+        <Collapse in={show}>
+          <div id="source-document" className="border rounded-lg p-5">
+            <WaPoDocument content={source_document}/>
+          </div>
+        </Collapse>
         
-        <p><b>{desc['title']}</b></p>
-        <p>{desc['desc']}</p>
-        <p>{desc['narr']}</p>
+        <p><b>{props.desc.title}</b></p>
+        <p>{props.desc.desc}</p>
+        <p>{props.desc.narr}</p>
 
         <ul className="list-unstyled">
           { subtopics}
@@ -359,10 +377,10 @@ function App() {
       .then(data => {
         if (data.last)
           current = data.last;
-        
+        const desc_obj = JSON.parse(data.desc);
         dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
                                                       pool: data.pool,
-                                                      desc: data.desc}});
+                                                      desc: desc_obj}});
         return fetch('doc?d=' + data.pool[current].docid);
       }).then(response => response.json())
       .then(data => {

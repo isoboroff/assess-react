@@ -126,6 +126,7 @@ function Highlightable(props) {
 
   // Document rendering
   // from bench/front-end/src/WaPoDocument.js
+  // but with added bits to support highlighting
   //
   const display_doc = () => {
     if (parsed === null)
