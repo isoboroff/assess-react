@@ -130,7 +130,9 @@ function PoolItem(props) {
   // This function fetches the document and updates the application state.
   const dispatch = useContext(AssessDispatch);
   function fetch_doc(seq, docid) {
-    fetch('doc?d=' + docid)
+    fetch('doc?t=' + props.topic
+          + '&u=' + props.user
+          + '&d=' + docid)
       .then(response => response.json())
       .then(data => {
         dispatch({ type: Actions.FETCH_DOC,
@@ -157,8 +159,9 @@ function Pool(props) {
           if (props.filter === 'all' ||
               (props.filter === 'unjudged' && entry.judgment === '-1') ||
               props.filter === entry.judgment) {
-            return <PoolItem docid={entry.docid} seq={i} judgment={entry.judgment}
-                                   current={props.current === i}/>;
+            return <PoolItem user={props.user} topic={props.topic}
+                             docid={entry.docid} seq={i} judgment={entry.judgment}
+                             current={props.current === i}/>;
           } else
             return [];
         });
@@ -381,7 +384,9 @@ function App() {
         dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
                                                       pool: data.pool,
                                                       desc: desc_obj}});
-        return fetch('doc?d=' + data.pool[current].docid);
+        return fetch('doc?u=' + username
+                     + '&t=' + topic
+                     + '&d=' + data.pool[current].docid);
       }).then(response => response.json())
       .then(data => {
         dispatch({ type: Actions.FETCH_DOC, payload: {doc: data,
@@ -546,7 +551,8 @@ function App() {
         { /************** Main: pool column and topic/document column */ }
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
-            <Pool pool={state.pool} current={state.current} filter={pool_filter}/>
+            <Pool user={state.username} topic={state.topic}
+                  pool={state.pool} current={state.current} filter={pool_filter}/>
           </Col>
           <Col xs={8} className="vh-full overflow-auto">
             <Description desc={state.desc}
