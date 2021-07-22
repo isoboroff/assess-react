@@ -166,9 +166,21 @@ def get_pool():
 @app.route('/doc')
 def get_document():
     docid = request.args['d']
+    topic = None
+    if 't' in request.args:
+        topic = request.args['t']
+    if 'u' in request.args:
+        user = request.args['u']
     try:
         response = es.get(index=args.index, id=docid)
         if response['found']:
+            if topic and user:
+                logfile = Path(args.save) / user / f'topic{topic}.log'
+                with open(logfile, 'a') as fp:
+                    print(json.dumps({'stamp': time.time(),
+                                      'docid': docid,
+                                      'action': 'load'}), file=fp)
+
             return(response['_source'], 200)
         else:
             return('', 404)
