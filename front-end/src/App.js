@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useContext } from 'react';
+import React, { useState, useEffect, useReducer, useContext, useRef } from 'react';
 
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -479,6 +479,15 @@ function App() {
       </ButtonGroup>
     );
   });
+
+  const docDiv = useRef(null);
+  
+  // When the document is updated, scroll to the top.
+  useEffect(() => {
+    if (docDiv.current) {
+      docDiv.current.scrollTo(0, 0);
+    }
+  }, [state.doc])
   
   return (
     <AssessDispatch.Provider value={dispatch}>
@@ -554,7 +563,7 @@ function App() {
             <Pool user={state.username} topic={state.topic}
                   pool={state.pool} current={state.current} filter={pool_filter}/>
           </Col>
-          <Col xs={8} className="vh-full overflow-auto">
+          <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
             <Description desc={state.desc}
                          note_subtopic = {note_subtopic}
                          rel={(state.current >= 0 && state.pool[state.current].subtopics)
