@@ -1,3 +1,17 @@
+
+Tasks for News 2021:
+
+* DONE retarget for WaPo
+* DONE judgment buttons
+* TODO news track topic rendering
+  mostly done, need subtopic buttons.
+* DONE highlight fix
+* DONE render source doc somehow...
+* DONE scanterms box is RTL-oriented
+
+
+Tasks for BETTER assessing:
+
 * DONE log judgments back to server
 * DONE implement browser-stored state restoration
 * DONE Improve the relevance indicator for the current document
@@ -10,3 +24,4 @@
 * DONE Actual logging out
 * DONE On pool load, set the current from the last judgment in the log
 * DONE Arabic documents, RTL, check highlighting and scanterms
+

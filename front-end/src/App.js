@@ -9,21 +9,23 @@ import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import Container from 'react-bootstrap/Container';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
+import Collapse from 'react-bootstrap/Collapse';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 import Highlightable from './Highlightable';
+import WaPoDocument from './WaPoDocument';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 /* Mapping relevance levels to labels to colors in the interface */
-const rel_levels = {'0': {label: 'irrelevant',    color: 'secondary'},
-                    '1': {label: 'topical',       color: 'info'},
-                    '2': {label: 'specific info', color: 'primary'},
-                    '3': {label: 'direct answer', color: 'success'},
-                    '4': {label: 'DECISIONAL',    color: 'danger'}};
+const rel_levels = {'0': {label: 'irrelevant',     color: 'secondary'},
+                    '1': {label: 'some bg',        color: 'info'},
+                    '2': {label: 'significant bg', color: 'primary'},
+                    '3': {label: 'essential bg',   color: 'success'},
+                    '4': {label: 'MUST',           color: 'danger'}};
 
 /* This is the application state. */
 const initial_state = {
@@ -82,6 +84,8 @@ function assess_reducer(state, action) {
       else
         update.passage = action.payload.passage;
     }
+    if (action.payload.hasOwnProperty('subtopics'))
+      update.subtopics = action.payload.subtopics;
     
     let newPool = state.pool.map((entry) => {
       if (entry.docid === action.payload.docid)
@@ -242,21 +246,58 @@ function LoadTopicModal(props) {
 
 // Render the task/request description
 function Description(props) {
+  const [show, setShow] = useState(false);
+  const [source_document, set_source_document] = useState(null);
+
+  useEffect(() => {
+    if (props.desc) {
+      fetch('doc?d=' + props.desc.docid)
+        .then(response => response.json())
+        .then(data => set_source_document(data.orig));
+    }
+  });
+  
+  const handle_check = (evt) => {
+    const sub = evt.target.id.substring(3);
+    let current_subs = props.rel;
+    if (current_subs === null)
+      current_subs = new Object();
+    current_subs[sub] = evt.target.checked;
+    props.note_subtopic(current_subs);
+    return false;
+  };
+  
   if (props.desc) {
-    const desc = JSON.parse(props.desc);
+    const subtopics = props.desc['subtopics'].map((sub) => (
+      <Form.Check type="checkbox"
+                  onChange={handle_check}
+                  id={"sub" + sub['num']}
+                  checked={(props.rel && props.rel[sub['num']]) ? true : false}
+                  label={sub['desc']}/>
+    ));
     return (
       <div className="border-bottom">
-        <h2>Request: {desc['req-num']}</h2>
-        <p><b>{desc['req-text']}</b></p>
-        <p>Background task:</p>
-        <ul>
-          <li>{desc['task-stmt']}</li>
-          <li>{desc['task-narr']}</li>
-          <li><b>In scope:</b> {desc['task-in-scope']}</li>
-          <li><b>Not in scope:</b> {desc['task-not-in-scope']}</li>
+        <span className="h2 mr-5">Topic {props.desc['num']}</span>
+        <Button onClick={() => setShow(!show)}
+                aria-controls='source-document'
+                aria-expanded={show}>
+          Click to { show ? 'hide' : 'show' } Source Document
+        </Button>
+
+        <Collapse in={show}>
+          <div id="source-document" className="border rounded-lg p-5">
+            <WaPoDocument content={source_document}/>
+          </div>
+        </Collapse>
+        
+        <p><b>{props.desc.title}</b></p>
+        <p>{props.desc.desc}</p>
+        <p>{props.desc.narr}</p>
+
+        <ul className="list-unstyled">
+          { subtopics}
         </ul>
-        <b>Examples:</b><br/>
-        {desc.ex.map(ex => <p>{ex}</p>)}
+        
       </div>
     );
   } else {
@@ -336,10 +377,10 @@ function App() {
       .then(data => {
         if (data.last)
           current = data.last;
-        
+        const desc_obj = JSON.parse(data.desc);
         dispatch({ type: Actions.LOAD_POOL, payload: {topic: topic,
                                                       pool: data.pool,
-                                                      desc: data.desc}});
+                                                      desc: desc_obj}});
         return fetch('doc?d=' + data.pool[current].docid);
       }).then(response => response.json())
       .then(data => {
@@ -353,29 +394,39 @@ function App() {
     load_pool(state.username, topic, current);
   }
 
-  function judge_current(judgment, passage = null) {
+  function judge_current({
+    judgment = '0',
+    passage = null,
+    subtopics = {},    
+  }) {
     const docid = state.pool[state.current].docid;
 
     if (passage && (judgment === '0' || judgment === '-1'))
       judgment = '2';
 
-    if (judgment === '0')
-      passage={ clear: true }; // Clear any passage judgments
-    
-    let fetch_opts = { method: 'POST' };
-    let judge_payload = { docid: docid,
-                          judgment: judgment };
-
-    if (passage) {
-      fetch_opts.headers = { 'Content-Type': 'application/json' };
-      fetch_opts.body = JSON.stringify(passage);
-      judge_payload.passage = passage;
+    if (judgment === '0') {
+      passage = { clear: true }; // Clear any passage judgments
+      subtopics = []; // Clear any subtopic judgments
     }
     
+    let judge_payload = { docid: docid,
+                          judgment: judgment,
+                        };
+
+    if (passage) {
+      judge_payload.passage = passage;
+    }
+    if (subtopics && Object.keys(subtopics).length > 0) {
+      judge_payload.subtopics = subtopics;
+    }
+
     fetch('judge?u=' + state.username +
           '&t=' + state.topic +
-          '&d=' + docid +
-          '&j=' + judgment, fetch_opts)
+          '&d=' + docid, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify(judge_payload)
+          })
       .then(response => {
         if (response.ok)
           dispatch({ type: Actions.JUDGE, payload: judge_payload });
@@ -385,9 +436,21 @@ function App() {
   function note_passage(passage) {
     let judgment = state.pool[state.current].judgment;
     if (judgment === '-1' || judgment === '0')
-      judgment = '2';
-    judge_current(judgment, passage);
+      judgment = '1';
+    judge_current({judgment: judgment, passage: passage});
   }
+
+  function note_subtopic(subchecks) {
+    let judgment = state.pool[state.current].judgment;
+    
+    if (Object.values(subchecks).some(x => x === true)) {
+      if (judgment === '-1' || judgment === '0') {
+        judgment = '1';
+      }
+    }
+    judge_current({judgment: judgment, subtopics: subchecks});
+  }
+    
 
   /*
    * The judgment buttons are colored according to the key at the top,
@@ -403,7 +466,7 @@ function App() {
     return (
       <ButtonGroup>
         <Button variant={rel_levels[i].color}
-                onClick={() => judge_current(i)}>
+                onClick={() => judge_current({judgment: i})}>
           <span className={style}>
             {rel_levels[i].label}
           </span>
@@ -415,20 +478,22 @@ function App() {
   return (
     <AssessDispatch.Provider value={dispatch}>
       <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
-        
+
+        { /************** Modals */ }
         <LoginModal login_required={login_required} set_required={set_login_required}/>
         <LoadTopicModal show_topic_dialog={show_topic_dialog}
                         set_show_topic_dialog={set_show_topic_dialog}
                         inbox={inbox}
                         load_pool={load_pool_for_current_user}/>
- 
+        
+        { /************** Header line: load pool, filter pool, judgment buttons, logout button */ }
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
           <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
               <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
           </Col>
           <Col xs="auto" className="flex-shrink-1">
             <Button variant="primary"
-                    onClick={() => set_topic_requested(true)}>Load Request</Button>
+                    onClick={() => set_topic_requested(true)}>Load Pool</Button>
           </Col>
           <Col xs="auto">
             {state.current + 1} of {state.pool.length}
@@ -448,10 +513,12 @@ function App() {
             <Button onClick={() => dispatch({type: Actions.LOGOUT})}>Log out {state.username}</Button>
           </Col>
         </Row>
+
+        { /************** Scanterms */ }
         <Row className="mt-5 pt-2"> </Row>
           <Col>
             <Form inline>
-              <Form.Control placeholder="Scan terms" className="col-10 mx-3" dir="rtl"
+              <Form.Control placeholder="Scan terms" className="col-10 mx-3"
                             value={scan_terms}
                             onChange={(e) => set_scan_terms(e.target.value)}
                             onKeyDown={(e) => {
@@ -475,12 +542,17 @@ function App() {
                                      }}>Clear</Button>
             </Form>
           </Col>
+
+        { /************** Main: pool column and topic/document column */ }
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
             <Pool pool={state.pool} current={state.current} filter={pool_filter}/>
           </Col>
           <Col xs={8} className="vh-full overflow-auto">
-            <Description desc={state.desc}/>
+            <Description desc={state.desc}
+                         note_subtopic = {note_subtopic}
+                         rel={(state.current >= 0 && state.pool[state.current].subtopics)
+                              ? state.pool[state.current].subtopics : null}/>
             <Highlightable content={state.doc} scan_terms={state.scan_terms}
                            rel={(state.current >= 0 && state.pool[state.current].passage)
                                 ? state.pool[state.current].passage : ''}

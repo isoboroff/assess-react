@@ -15,13 +15,13 @@ if (__name__ == '__main__'):
     argparser.add_argument('--host', help='ElasticSearch host', default='localhost')
     argparser.add_argument('--port', help='ElasticSearch port', default=9200)
     argparser.add_argument('--save', help='Location for saved data', default='relevance')
-    argparser.add_argument('--index', help='Index to search against', default='better_ar')
+    argparser.add_argument('--index', help='Index to search against', default='wapo')
     args = argparser.parse_args()
 else:
     args = argparse.Namespace(**{'host': 'elastic',
                                  'port': 9200,
                                  'save': 'relevance',
-                                 'index': 'better_ar'})
+                                 'index': 'wapo'})
 
 
 app = Flask(__name__, static_folder='../front-end/build/static',
@@ -58,6 +58,11 @@ class Pool:
                         self.pool[log_entry['docid']]['passage'] = log_entry['passage']
                     if 'judgment' in log_entry:
                         self.pool[log_entry['docid']]['judgment'] = log_entry['judgment']
+                    if 'subtopics' in log_entry:
+                        if 'subtopics' not in self.pool[log_entry['docid']]:
+                            self.pool[log_entry['docid']]['subtopics'] = {}
+                        for subtopic, value in log_entry['subtopics'].items():
+                            self.pool[log_entry['docid']]['subtopics'][subtopic] = value
                     
         except FileNotFoundError:
             pass
@@ -84,11 +89,16 @@ class Pool:
         for docid, jobj in self.pool.items():
             if docid == self.last:
                 last = count
+            poolitem = {'docid': docid,
+                        'judgment': jobj['judgment']}
             if 'passage' in jobj:
-                poollist.append({"docid": docid, "judgment": jobj['judgment'], "passage": jobj['passage']})
-            else:
-                poollist.append({"docid": docid, "judgment": jobj['judgment']})
+                poolitem['passage'] = jobj['passage']
+            if 'subtopics' in jobj:
+                poolitem['subtopics'] = jobj['subtopics']
+
+            poollist.append(poolitem)
             count += 1
+            
         return json.dumps({ "pool": poollist,
                             "topic": self.topic,
                             "desc": self.desc,
@@ -120,7 +130,7 @@ def inbox():
     try:
         homedir = Path(args.save) / username
         for child in homedir.iterdir():
-            if re.match(r'^topic[IRTr0-9-]+$', child.name):
+            if re.match(r'^topic[0-9]+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
                 
@@ -172,15 +182,15 @@ def set_judgment() :
     user = request.args['u']
     topic = request.args['t']
     docid = request.args['d']
-    judgment = request.args['j']
 
+    payload = request.get_json()
+    
     log_obj = { 'stamp': time.time(),
-                'docid': docid,
-                'judgment': judgment }
-        
-    if request.content_length > 0:
-        passage = request.get_json()
-        log_obj['passage'] = passage
+                'docid': docid }
+
+    for key in ['judgment', 'passage', 'subtopics']:
+        if key in payload:
+            log_obj[key] = payload[key]
 
     logfile = Path(args.save) / user / f'topic{topic}.log'
     with open(logfile, 'a') as fp:
