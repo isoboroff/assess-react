@@ -130,7 +130,7 @@ def inbox():
     try:
         homedir = Path(args.save) / username
         for child in homedir.iterdir():
-            if re.match(r'^topic[0-9]+$', child.name):
+            if re.match(r'^topicIR-T\d+-r\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
                 
