@@ -125,63 +125,37 @@ function Highlightable(props) {
   }, [highlight]);
 
   // Document rendering
-  // from bench/front-end/src/WaPoDocument.js
   // but with added bits to support highlighting
   //
   const display_doc = () => {
     if (parsed === null)
       return '';
 
-    if (!(parsed && parsed.hasOwnProperty('contents')))
+    if (!(parsed && parsed.hasOwnProperty('derived-metadata')))
       return '';
-    let content = parsed.contents.filter(block => {
-      return block != null;
-    }).map((block, i) => {
-      switch (block.type) {
-      case 'kicker': return (<h3> {block.content} </h3>);
-      case 'title': return (<h1> {block.content} </h1>);
-      case 'byline': return (<h3> {block.content} </h3>);
-      case 'date': return (<p> { new Date(block.content).toDateString() } </p>);
-      case 'sanitized_html':
-        let the_block = block.content;
-        if (props.rel && props.rel.block == i)
-          the_block = highlight_rel_passage(the_block);
-        return (
-          <div className="article-text"
-               onMouseUp={() => {
-                 if (has_selection()) {
-                   set_highlight(get_selected_text(i));
-                 }
-               }}>
-            <Interweave content={ the_block }
-                        matchers={[new ScanTermMatcher('scanterms',
-                                                       { scan_terms: props.scan_terms })]}/>
-          </div>);
-      case 'image': return (
-        <figure className="figure">
-          <img src={block.imageURL} className="figure-img img-fluid w-75"/>
-          <figcaption className="figure-caption">{block.fullcaption}</figcaption>
-        </figure>
-      );
-      case 'video': if (/youtube/.test(block.mediaURL)) {
-        let id = block.mediaURL.match(/v=([^&]+)&/)[1];
-        let url = "https://www.youtube.com/embed/" + id + "?feature=oembed";
-        return (
-          <iframe width="480" height="270" src={url} frameborder="0" allowfullscreen></iframe>
-        );
-      } else {
-        return (
-          <video controls src={block.mediaURL} poster={block.imageURL}>
-            A video should appear here
-          </video>
-        );
-      }
-      case 'author_info': return (<p><i>{block.bio}</i></p>);
-      default: return (<i> {block.type} not rendered</i>);
-      };
-    });
-    let doc = ( <div>{content}</div> );
-    return doc;
+
+    let meta=parsed['derived-metadata'];
+    let parsed_to_render = parsed;
+    if (props.rel)
+      parsed_to_render = highlight_rel_passage(parsed_to_render);
+
+    return (
+      <div>
+        <h1 dir="rtl" className="text-right"> {props.title}... </h1>
+        <p> (best guess on publication date is '{props.date}')</p>
+        <p><strong> {parsed['WARC-Target-URI']} </strong></p>
+        <div dir="rtl" className="text-right article-text"
+             onMouseUp={() => {
+               if (has_selection()) {
+                 set_highlight(get_selected_text());
+               }
+             }}>
+          <Interweave content={ parsed_to_render }
+                      matchers={[new ScanTermMatcher('scanterms',
+                                                     { scan_terms: props.scan_terms })]}/>
+        </div>
+      </div>
+    );
   };
 
   if (props.content && props.content.hasOwnProperty('orig')) {
