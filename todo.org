@@ -1,10 +1,16 @@
+Tasks for BETTER phase 2 assessing
+
+* TODO Update Highlightable to render BETTER documents
+* TODO Update highlighting, which now takes blocks into account
+* TODO Update judgment buttons
+* TODO Test with BETTER pools
+
 
 Tasks for News 2021:
 
 * DONE retarget for WaPo
 * DONE judgment buttons
-* TODO news track topic rendering
-  mostly done, need subtopic buttons.
+* DONE news track topic rendering
 * DONE highlight fix
 * DONE render source doc somehow...
 * DONE scanterms box is RTL-oriented
