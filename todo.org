@@ -4,6 +4,8 @@ Tasks for BETTER phase 2 assessing
 * TODO Update highlighting, which now takes blocks into account
 * TODO Update judgment buttons
 * TODO Test with BETTER pools
+* TODO update topic display
+* TODO keep topic from scrolling?  Maybe move topic into header.
 
 
 Tasks for News 2021:
