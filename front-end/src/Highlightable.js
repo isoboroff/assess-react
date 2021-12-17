@@ -48,11 +48,11 @@ function Highlightable(props) {
   // highlighted) text block.
   //
   // Returns [start, end]
-  function search(blockno, highlight) {
+  function search(highlight) {
     let hpos = 0; // position in highlight
     let tpos = 0; // position in text
     let mstart = -1;  // marked start pos in text
-    const text = parsed.contents[blockno].content;
+    const text = parsed['derived-metadata'].text;
     //console.log('highlight is "' + highlight + '", len ' + highlight.length);
     while (true) {
       //console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
@@ -92,19 +92,18 @@ function Highlightable(props) {
   }
 
   // Return the selection, with (block, start, len)
-  function get_selected_text(blockno) {
+  function get_selected_text() {
     let result = null;
     if (window.getSelection) {
       const sel = window.getSelection();
 
       if (!sel.isCollapsed) {
         const hl_text = sel.toString();
-        const [start, end] = search(blockno, hl_text);
+        const [start, end] = search(hl_text);
         if (start < 0 || (end - start) < hl_text.length) {
           console.log('bad search output ' + start + ' ' + end);
         } else {
-          result = { "block": blockno,
-                     "start": start,
+          result = { "start": start,
                      "length": end - start,
                      "text": hl_text };
         }
