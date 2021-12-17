@@ -8,7 +8,7 @@ function Highlightable(props) {
 
   // The 'doc' is populated from the 'orig' field of props.content
   let parsed = null;
-  
+
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
@@ -96,7 +96,7 @@ function Highlightable(props) {
     let result = null;
     if (window.getSelection) {
       const sel = window.getSelection();
-      
+
       if (!sel.isCollapsed) {
         const hl_text = sel.toString();
         const [start, end] = search(blockno, hl_text);
@@ -131,7 +131,7 @@ function Highlightable(props) {
   const display_doc = () => {
     if (parsed === null)
       return '';
-    
+
     if (!(parsed && parsed.hasOwnProperty('contents')))
       return '';
     let content = parsed.contents.filter(block => {
@@ -190,7 +190,7 @@ function Highlightable(props) {
   } else {
     return <p>waiting...</p>;
   }
-  
+
 }
 
 export { Highlightable as default };

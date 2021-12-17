@@ -60,7 +60,7 @@ function assess_reducer(state, action) {
   case Actions.LOGOUT:
     window.localStorage.clear();
     return {...initial_state};
-    
+
   case Actions.LOAD_POOL:
     window.localStorage.setItem('topic', action.payload.topic);
     return {...state,
@@ -68,13 +68,13 @@ function assess_reducer(state, action) {
             desc: action.payload.desc,
             current: 0,
             pool: action.payload.pool};
-    
+
   case Actions.FETCH_DOC:
     window.localStorage.setItem('current', action.payload.current);
     return {...state,
             current: action.payload.current,
             doc: action.payload.doc};
-    
+
   case Actions.JUDGE:
     // Update the judgment of the document that was judged
     let update = { judgment: action.payload.judgment };
@@ -86,7 +86,7 @@ function assess_reducer(state, action) {
     }
     if (action.payload.hasOwnProperty('subtopics'))
       update.subtopics = action.payload.subtopics;
-    
+
     let newPool = state.pool.map((entry) => {
       if (entry.docid === action.payload.docid)
         return {...entry, ...update};
@@ -116,7 +116,7 @@ const AssessDispatch = React.createContext(null);
 
 /*
  * A pool item interface component.  Clicking a pool item causes it to
- * load into the document pane.  
+ * load into the document pane.
  */
 function PoolItem(props) {
   // Set the relevance 'badge' according to the judgment
@@ -180,7 +180,7 @@ function LoginModal(props) {
     dispatch({type: Actions.LOGIN, payload: {username: username}});
     props.set_required(false);
   }
-  
+
   return (
     <Modal show={props.login_required} onHide={do_login}
            backdrop="static" keyboard={false}>
@@ -206,7 +206,7 @@ function LoginModal(props) {
   );
 }
 
-/* 
+/*
  * A modal for loading the topic.  This is much nicer than typing a topic
  * number in a form, which is error prone.  As a bonus, we can show
  * for each topic how big it is and how much is left to do.
@@ -259,7 +259,7 @@ function Description(props) {
         .then(data => set_source_document(data.orig));
     }
   });
-  
+
   const handle_check = (evt) => {
     const sub = evt.target.id.substring(3);
     let current_subs = props.rel;
@@ -269,7 +269,7 @@ function Description(props) {
     props.note_subtopic(current_subs);
     return false;
   };
-  
+
   if (props.desc) {
     const subtopics = props.desc['subtopics'].map((sub) => (
       <Form.Check type="checkbox"
@@ -292,7 +292,7 @@ function Description(props) {
             <WaPoDocument content={source_document}/>
           </div>
         </Collapse>
-        
+
         <p><b>{props.desc.title}</b></p>
         <p>{props.desc.desc}</p>
         <p>{props.desc.narr}</p>
@@ -300,7 +300,7 @@ function Description(props) {
         <ul className="list-unstyled">
           { subtopics}
         </ul>
-        
+
       </div>
     );
   } else {
@@ -323,7 +323,7 @@ function App() {
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState('');
   const [pool_filter, set_pool_filter] = useState('all');
-  
+
   /* Effect to fire just before initial render */
   useEffect(() => {
     if (state.username === '') {
@@ -373,7 +373,7 @@ function App() {
       set_show_topic_dialog(true);
     }
   }, [topic_requested]);
-  
+
   function load_pool(username, topic, current = 0) {
     fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
@@ -402,7 +402,7 @@ function App() {
   function judge_current({
     judgment = '0',
     passage = null,
-    subtopics = {},    
+    subtopics = {},
   }) {
     const docid = state.pool[state.current].docid;
 
@@ -413,7 +413,7 @@ function App() {
       passage = { clear: true }; // Clear any passage judgments
       subtopics = []; // Clear any subtopic judgments
     }
-    
+
     let judge_payload = { docid: docid,
                           judgment: judgment,
                         };
@@ -447,7 +447,7 @@ function App() {
 
   function note_subtopic(subchecks) {
     let judgment = state.pool[state.current].judgment;
-    
+
     if (Object.values(subchecks).some(x => x === true)) {
       if (judgment === '-1' || judgment === '0') {
         judgment = '1';
@@ -455,7 +455,7 @@ function App() {
     }
     judge_current({judgment: judgment, subtopics: subchecks});
   }
-    
+
 
   /*
    * The judgment buttons are colored according to the key at the top,
@@ -481,14 +481,14 @@ function App() {
   });
 
   const docDiv = useRef(null);
-  
+
   // When the document is updated, scroll to the top.
   useEffect(() => {
     if (docDiv.current) {
       docDiv.current.scrollTo(0, 0);
     }
   }, [state.doc])
-  
+
   return (
     <AssessDispatch.Provider value={dispatch}>
       <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
@@ -499,7 +499,7 @@ function App() {
                         set_show_topic_dialog={set_show_topic_dialog}
                         inbox={inbox}
                         load_pool={load_pool_for_current_user}/>
-        
+
         { /************** Header line: load pool, filter pool, judgment buttons, logout button */ }
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
           <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
