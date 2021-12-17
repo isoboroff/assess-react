@@ -252,14 +252,6 @@ function Description(props) {
   const [show, setShow] = useState(false);
   const [source_document, set_source_document] = useState(null);
 
-  useEffect(() => {
-    if (props.desc) {
-      fetch('doc?d=' + props.desc.docid)
-        .then(response => response.json())
-        .then(data => set_source_document(data.orig));
-    }
-  });
-
   const handle_check = (evt) => {
     const sub = evt.target.id.substring(3);
     let current_subs = props.rel;
