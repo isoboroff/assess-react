@@ -249,49 +249,30 @@ function LoadTopicModal(props) {
 // Render the task/request description
 function Description(props) {
   const [show, setShow] = useState(false);
-  const [source_document, set_source_document] = useState(null);
-
-  const handle_check = (evt) => {
-    const sub = evt.target.id.substring(3);
-    let current_subs = props.rel;
-    if (current_subs === null)
-      current_subs = new Object();
-    current_subs[sub] = evt.target.checked;
-    props.note_subtopic(current_subs);
-    return false;
-  };
 
   if (props.desc) {
-    const subtopics = props.desc['subtopics'].map((sub) => (
-      <Form.Check type="checkbox"
-                  onChange={handle_check}
-                  id={"sub" + sub['num']}
-                  checked={(props.rel && props.rel[sub['num']]) ? true : false}
-                  label={sub['desc']}/>
-    ));
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Topic {props.desc['num']}</span>
-        <Button onClick={() => setShow(!show)}
-                aria-controls='source-document'
-                aria-expanded={show}>
-          Click to { show ? 'hide' : 'show' } Source Document
+        <span className="h2 mr-5">Request: {props.desc['req-num']}</span><br/>
+        <p><b>{props.desc['req-text']}</b></p>
+        <b>Examples:</b><br/>
+        {props.desc.ex.map(ex => <p>{ex}</p>)}
+        <Button variant="link"
+          onClick={() => setShow(!show)}
+          aria-controls="analytic-task"
+          aria-expanded={show}>
+          Show analytic task
         </Button>
-
         <Collapse in={show}>
-          <div id="source-document" className="border rounded-lg p-5">
-            placeholder
+          <div id="analytic-task">
+            <dl>
+              <dd>{props.desc['task-stmt']}</dd>
+              <dt>Narrative:</dt><dd>{props.desc['task-narr']}</dd>
+              <dt>In scope:</dt><dd>{props.desc['task-in-scope']}</dd>
+              <dt>Not in scope:</dt><dd> {props.desc['task-not-in-scope']}</dd>
+            </dl>
           </div>
         </Collapse>
-
-        <p><b>{props.desc.title}</b></p>
-        <p>{props.desc.desc}</p>
-        <p>{props.desc.narr}</p>
-
-        <ul className="list-unstyled">
-          { subtopics}
-        </ul>
-
       </div>
     );
   } else {
