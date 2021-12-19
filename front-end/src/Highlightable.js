@@ -133,23 +133,20 @@ function Highlightable(props) {
     if (!(parsed && parsed.hasOwnProperty('derived-metadata')))
       return '';
 
-    let meta=parsed['derived-metadata'];
-    let parsed_to_render = parsed;
+    let meta = parsed['derived-metadata'];
+    let text = meta['text'];
     if (props.rel)
-      parsed_to_render = highlight_rel_passage(parsed_to_render);
+      text = highlight_rel_passage(text);
 
     return (
       <div>
-        <h1 dir="rtl" className="text-right"> {props.title}... </h1>
-        <p> (best guess on publication date is '{props.date}')</p>
-        <p><strong> {parsed['WARC-Target-URI']} </strong></p>
         <div dir="rtl" className="text-right article-text"
              onMouseUp={() => {
                if (has_selection()) {
                  set_highlight(get_selected_text());
                }
              }}>
-          <Interweave content={ parsed_to_render }
+          <Interweave content={ text }
                       matchers={[new ScanTermMatcher('scanterms',
                                                      { scan_terms: props.scan_terms })]}/>
         </div>
