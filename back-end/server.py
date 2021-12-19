@@ -136,8 +136,9 @@ def inbox():
 
         app.logger.debug('Got inbox for ' + username)
         return(data, 200)
-    except IOError:
+    except IOError as e:
         app.logger.debug('I/O error reading for ' + username)
+        app.logger.debug(e.strerror + ': ' + e.filename)
         return('', 503)
     except Exception:
         app.logger.exception('Unexpected error reading for ' + username)
