@@ -1,7 +1,9 @@
 Tasks for BETTER phase 2 assessing
 
-* TODO Update Highlightable to render BETTER documents
-* TODO Update highlighting, which now takes blocks into account
+* DONE Update Highlightable to render BETTER documents
+CLOSED: [2021-12-19 Sun 10:09]
+* DONE Update highlighting, which now takes blocks into account
+CLOSED: [2021-12-19 Sun 10:09]
 * TODO Update judgment buttons
 * TODO Test with BETTER pools
 * TODO update topic display
