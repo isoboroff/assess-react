@@ -15,7 +15,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 import Highlightable from './Highlightable';
-import WaPoDocument from './WaPoDocument';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -281,7 +280,7 @@ function Description(props) {
 
         <Collapse in={show}>
           <div id="source-document" className="border rounded-lg p-5">
-            <WaPoDocument content={source_document}/>
+            placeholder
           </div>
         </Collapse>
 
