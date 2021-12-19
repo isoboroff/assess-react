@@ -505,6 +505,7 @@ function App() {
           <Col>
             <Form inline>
               <Form.Control placeholder="Scan terms" className="col-10 mx-3"
+                            dir="rtl"
                             value={scan_terms}
                             onChange={(e) => set_scan_terms(e.target.value)}
                             onKeyDown={(e) => {

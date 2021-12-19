@@ -6,9 +6,12 @@ CLOSED: [2021-12-19 Sun 10:09]
 CLOSED: [2021-12-19 Sun 10:09]
 * DONE Update judgment buttons
 CLOSED: [2021-12-19 Sun 10:58]
-* TODO Test with BETTER pools
-* TODO update topic display
-* TODO keep topic from scrolling?  Maybe move topic into header.
+* DONE Test with BETTER pools
+CLOSED: [2021-12-19 Sun 11:50]
+* DONE update topic display
+CLOSED: [2021-12-19 Sun 11:41]
+* DONE make the scanterms entry rtl
+CLOSED: [2021-12-19 Sun 12:29]
 
 
 Tasks for News 2021:
