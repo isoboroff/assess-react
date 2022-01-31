@@ -1,3 +1,12 @@
+
+Tasks for NeuCLIR test (Trinity)
+
+* TODO topic loading
+* TODO document display - handle doc-specific lang tag
+* TODO relevance levels
+
+
+
 Tasks for BETTER phase 2 assessing
 
 * DONE Update Highlightable to render BETTER documents
