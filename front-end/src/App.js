@@ -252,23 +252,28 @@ function Description(props) {
   if (props.desc) {
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Request: {props.desc['req-num']}</span><br/>
-        <p><b>{props.desc['req-text']}</b></p>
-        <b>Examples:</b><br/>
-        {props.desc.ex.map(ex => <p>{ex}</p>)}
+        <span className="h2 mr-5">Topic: {props.desc['topic_id']}</span><br/>
+        <p><b>Title:</b> {props.desc['topic_title']}</p>
+        <p><b>Description:</b> {props.desc['topic_description']}</p>
         <Button variant="link"
           onClick={() => setShow(!show)}
-          aria-controls="analytic-task"
+          aria-controls="lang-resources"
           aria-expanded={show}>
-          Show analytic task
+          Show details
         </Button>
         <Collapse in={show}>
-          <div id="analytic-task">
+          <div id="lang-resources">
             <dl>
-              <dd>{props.desc['task-stmt']}</dd>
-              <dt>Narrative:</dt><dd>{props.desc['task-narr']}</dd>
-              <dt>In scope:</dt><dd>{props.desc['task-in-scope']}</dd>
-              <dt>Not in scope:</dt><dd> {props.desc['task-not-in-scope']}</dd>
+              <dd>{props.desc['rus']['topic_title']}</dd>
+              <dt>Description:</dt><dd>{props.desc['rus']['topic_description']}</dd>
+              <dt>Very valuable:</dt>
+              <dd>{props.desc['rus']['narrative_very_valuable']}</dd>
+              <dt>Somewhat valuable:</dt>
+              <dd> {props.desc['rus']['narrative_somewhat_valuable']}</dd>
+              <dt>Not that valuable:</dt>
+              <dd> {props.desc['rus']['narrative_not_that_valuable']}</dd>
+              <dt>Not relevant:</dt>
+              <dd> {props.desc['rus']['narrative_non_relevant']}</dd>
             </dl>
           </div>
         </Collapse>
