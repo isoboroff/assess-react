@@ -15,7 +15,7 @@ if (__name__ == '__main__'):
     argparser.add_argument('--host', help='ElasticSearch host', default='localhost')
     argparser.add_argument('--port', help='ElasticSearch port', default=9200)
     argparser.add_argument('--save', help='Location for saved data', default='relevance')
-    argparser.add_argument('--index', help='Index to search against', default='better_fa')
+    argparser.add_argument('--index', help='Index to search against', default='hc4')
     args = argparser.parse_args()
 else:
     args = argparse.Namespace(**{'host': 'elastic',
@@ -31,7 +31,7 @@ es = Elasticsearch([{'host': args.host, 'port': args.port}])
 Path(args.save).mkdir(exist_ok=True)
 
 class Pool:
-    '''This pool reads standard TREC mastermerge pools, but the
+    '''This pool reads standard TREC qrels files, but the
     logs are JSON lines.
     '''
     def __init__(self, filename):
@@ -47,7 +47,7 @@ class Pool:
                     self.topic = fields[0]
                 if fields[0] != self.topic:
                     continue
-                self.pool[fields[4]] = { 'judgment': '-1' }
+                self.pool[fields[2]] = { 'judgment': '-1' }
 
         try:
             with open(f'{filename}.log', 'r') as log:
@@ -130,7 +130,7 @@ def inbox():
     try:
         homedir = Path(args.save) / username
         for child in homedir.iterdir():
-            if re.match(r'^topicIR-T\d+-r\d+$', child.name):
+            if re.match(r'^topic\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
