@@ -127,15 +127,15 @@ function Highlightable(props) {
   // but with added bits to support highlighting
   //
   const display_doc = () => {
-    let text = content['text'];
+    let text = props.content['text'];
     if (props.rel)
       text = highlight_rel_passage(text);
 
     return (
       <div>
-        { content['id'] }</br>
-        <h1> { content['title'] } </h1>
-        <h3> { content['date'] } </h3>
+        { props.content['id'] } <br/>
+        <h1> { props.content['title'] } </h1>
+        <h3> { props.content['date'] } </h3>
         <div dir="rtl" className="text-right article-text"
              onMouseUp={() => {
                if (has_selection()) {
