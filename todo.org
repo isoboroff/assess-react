@@ -1,10 +1,16 @@
 
 Tasks for NeuCLIR test (Trinity)
 
-* TODO topic loading
-* TODO document display - handle doc-specific lang tag
-* TODO relevance levels
-
+* DONE topic loading
+CLOSED: [2022-02-01 Tue 13:58]
+* DONE document display - handle doc-specific lang tag
+CLOSED: [2022-02-03 Thu 11:22]
+  - Document rendering is coded, but still displaying RTL for now.
+  - Rendering Farsi is ok, need to make reversible.
+* DONE relevance levels
+CLOSED: [2022-01-31 Mon 09:29]
+* DONE add passwords
+CLOSED: [2022-02-04 Fri 09:30]
 
 
 Tasks for BETTER phase 2 assessing
