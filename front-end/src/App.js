@@ -14,6 +14,8 @@ import Collapse from 'react-bootstrap/Collapse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
+import { sha256 } from 'hash-wasm';
+
 import Highlightable from './Highlightable';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -173,11 +175,31 @@ function Pool(props) {
  */
 function LoginModal(props) {
   const [username, set_username] = useState('');
+  const [password, set_password] = useState('');
+  const [error, set_error] = useState(false);
   const dispatch = useContext(AssessDispatch);
 
+  async function hash(password) {
+    const te = new TextEncoder();
+    const encoded = te.encode(password.normalize('NFKC'))
+    const hashval =  await sha256(encoded);
+    return hashval;
+  }
+
   function do_login() {
-    dispatch({type: Actions.LOGIN, payload: {username: username}});
-    props.set_required(false);
+    // Send username and hashed password to the server.
+    // Server responds 200 for ok login, 403 for denied
+    set_error(false);
+    hash(password)
+      .then(pwhash => fetch('login?u=' + username + '&p=' + pwhash))
+      .then(response => {
+        if (response.ok) {
+          dispatch({type: Actions.LOGIN, payload: {username: username}});
+          props.set_required(false);
+        } else {
+          set_error(true);
+        }
+      });
   }
 
   return (
@@ -187,10 +209,15 @@ function LoginModal(props) {
         <Modal.Title>Please log in</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        { error ? <p>Invalid username or password.</p> : '' }
         <Form.Control type="text"
                       placeholder="user"
                       value={username}
-                      onChange={(e) => set_username(e.target.value)}
+                      onChange={(e) => set_username(e.target.value)} />
+        <Form.Control type="password"
+                      placeholder="password"
+                      value={password}
+                      onChange={(e) => set_password(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();

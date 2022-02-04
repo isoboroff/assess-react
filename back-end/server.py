@@ -15,13 +15,15 @@ if (__name__ == '__main__'):
     argparser.add_argument('--host', help='ElasticSearch host', default='localhost')
     argparser.add_argument('--port', help='ElasticSearch port', default=9200)
     argparser.add_argument('--save', help='Location for saved data', default='relevance')
-    argparser.add_argument('--index', help='Index to search against', default='better_fa')
+    argparser.add_argument('--index', help='Index to search against', default='hc4')
+    argparser.add_argument('--pwfile', help='File containing username:pwhashes', default='passwd')
     args = argparser.parse_args()
 else:
-    args = argparse.Namespace(**{'host': 'elastic',
+    args = argparse.Namespace(**{'host': 'localhost',
                                  'port': 9200,
                                  'save': 'relevance',
-                                 'index': 'better_fa'})
+                                 'index': 'hc4',
+                                 'pwfile': 'passwd'})
 
 
 app = Flask(__name__, static_folder='../front-end/build/static',
@@ -211,6 +213,20 @@ def set_judgment() :
 
     return('', 200)
 
+@app.route('/login')
+def login():
+    user = request.args['u']
+    pw = request.args['p']
+
+    with open(args.pwfile, 'r') as pwfile:
+        for line in pwfile:
+            username, hashpw = line.strip().split(':')
+            if username == user:
+                if pw == hashpw:
+                    return('', 200)
+                else:
+                    return('', 403)
+    return('', 403)
 
 if __name__ == '__main__':
     print('Starting Flask...')
