@@ -461,6 +461,14 @@ function App() {
     );
   });
 
+  const setRTL = () => {
+    if (state.doc && state.doc['lang'] == 'fas') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   const docDiv = useRef(null);
 
   // When the document is updated, scroll to the top.
@@ -514,7 +522,7 @@ function App() {
           <Col>
             <Form inline>
               <Form.Control placeholder="Scan terms" className="col-10 mx-3"
-                            dir="rtl"
+                            dir={ setRTL() ? "rtl" : ""}
                             value={scan_terms}
                             onChange={(e) => set_scan_terms(e.target.value)}
                             onKeyDown={(e) => {
