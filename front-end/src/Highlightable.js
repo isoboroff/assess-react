@@ -130,13 +130,18 @@ function Highlightable(props) {
     let text = props.content['text'];
     if (props.rel)
       text = highlight_rel_passage(text);
+    let className = 'article-text';
+    if (props.content['lang'] == 'fas')
+      className = 'text-right article-text';
 
     return (
       <div>
         { props.content['id'] } <br/>
         <h1> { props.content['title'] } </h1>
         <h3> { props.content['date'] } </h3>
-        <div dir="rtl" className="text-right article-text"
+        <div
+          dir={ props.content['lang'] == 'fas' ? "rtl" : "ltr" }
+          className={ className }
              onMouseUp={() => {
                if (has_selection()) {
                  set_highlight(get_selected_text());
