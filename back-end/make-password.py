@@ -25,7 +25,7 @@ if args.random:
         password = ''.join(secrets.choice(alphabet) for i in range(10))
         if password_ok(password):
             break
-    print('Random password is', password, file=sys.stderr)
+    print(f'{args.username}:{password}', file=sys.stderr)
 else:
     print('Password must have an upper case letter, a digit, a punctuation character, and a haiku.')
     while True:
