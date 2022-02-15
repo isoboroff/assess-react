@@ -125,7 +125,7 @@ def hello():
 @app.route('/inbox')
 def inbox():
     username = request.args['u']
-    if not re.match(r'[a-z]+', username):
+    if not re.match(r'[a-z0-9]+', username):
         app.logger.debug('Load called with bad username: ' + username)
         return('', 404)
     data = {}
@@ -151,6 +151,9 @@ def inbox():
 def get_pool():
     user = request.args['u']
     topic = request.args['t']
+    if not re.match(r'[a-z0-9]+', user):
+        app.logger.debug('Load called with bad username: ' + username)
+        return('', 404)
     try:
         filename = Path(args.save) / user / f'topic{topic}'
         pool = Pool(filename)
@@ -174,6 +177,10 @@ def get_document():
         topic = request.args['t']
     if 'u' in request.args:
         user = request.args['u']
+        if not re.match(r'[a-z0-9]+', user):
+            app.logger.debug('Load called with bad username: ' + username)
+            return('', 404)
+
     try:
         response = es.get(index=args.index, id=docid)
         if response['found']:
@@ -198,6 +205,10 @@ def set_judgment() :
     topic = request.args['t']
     docid = request.args['d']
 
+    if not re.match(r'[a-z0-9]+', user):
+        app.logger.debug('Load called with bad username: ' + username)
+        return('', 404)
+
     payload = request.get_json()
 
     log_obj = { 'stamp': time.time(),
@@ -217,6 +228,10 @@ def set_judgment() :
 def login():
     user = request.args['u']
     pw = request.args['p']
+
+    if not re.match(r'[a-z0-9]+', user):
+        app.logger.debug('Load called with bad username: ' + username)
+        return('', 404)
 
     with open(args.pwfile, 'r') as pwfile:
         for line in pwfile:
