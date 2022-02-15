@@ -22,9 +22,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 /* Mapping relevance levels to labels to colors in the interface */
-const rel_levels = {'0': {label: 'irrelevant',    color: 'secondary'},
-                    '1': {label: 'relevant',      color: 'info'},
-                    '3': {label: 'highly rel',    color: 'primary'},
+const rel_levels = {'0': {label: 'irrelevant',        color: 'secondary'},
+                    '1': {label: 'somewhat valuable', color: 'info'},
+                    '3': {label: 'very valuable',     color: 'success'},
                    };
 
 /* This is the application state. */
