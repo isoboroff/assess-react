@@ -152,7 +152,7 @@ def get_pool():
     user = request.args['u']
     topic = request.args['t']
     if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + username)
+        app.logger.debug('Load called with bad username: ' + user)
         return('', 404)
     try:
         filename = Path(args.save) / user / f'topic{topic}'
@@ -178,7 +178,7 @@ def get_document():
     if 'u' in request.args:
         user = request.args['u']
         if not re.match(r'[a-z0-9]+', user):
-            app.logger.debug('Load called with bad username: ' + username)
+            app.logger.debug('Load called with bad username: ' + user)
             return('', 404)
 
     try:
@@ -206,7 +206,7 @@ def set_judgment() :
     docid = request.args['d']
 
     if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + username)
+        app.logger.debug('Load called with bad username: ' + user)
         return('', 404)
 
     payload = request.get_json()
@@ -230,7 +230,7 @@ def login():
     pw = request.args['p']
 
     if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + username)
+        app.logger.debug('Load called with bad username: ' + user)
         return('', 404)
 
     with open(args.pwfile, 'r') as pwfile:
