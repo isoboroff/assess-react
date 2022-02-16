@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, make_response
 from elasticsearch import Elasticsearch
+from webargs import fields, validate
+from webargs.flaskparser import use_args
 
 import argparse
 import json
@@ -116,6 +118,13 @@ class Pool:
             return None
         return log_entry
 
+query_args = {
+    'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
+                       required=True),
+    'p': fields.String(validate=validate.Length(equal=64)),
+    't': fields.String(validate=validate.Regexp(r'^[0-9]+$')),
+    'd': fields.String()
+}
 
 
 @app.route('/')
@@ -123,37 +132,33 @@ def hello():
     return render_template('index.html')
 
 @app.route('/inbox')
-def inbox():
-    username = request.args['u']
-    if not re.match(r'[a-z0-9]+', username):
-        app.logger.debug('Load called with bad username: ' + username)
-        return('', 404)
+@use_args(query_args, location='query')
+def inbox(qargs):
+    user = qargs['u']
     data = {}
     try:
-        homedir = Path(args.save) / username
+        homedir = Path(args.save) / user
         for child in homedir.iterdir():
             if re.match(r'^topicIR-T\d+-r\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
-        app.logger.debug('Got inbox for ' + username)
+        app.logger.debug('Got inbox for ' + user)
         return(data, 200)
     except IOError as e:
-        app.logger.debug('I/O error reading for ' + username)
+        app.logger.debug('I/O error reading for ' + user)
         app.logger.debug(e.strerror + ': ' + e.filename)
         return('', 503)
     except Exception:
-        app.logger.exception('Unexpected error reading for ' + username)
+        app.logger.exception('Unexpected error reading for ' + user)
         return('', 503)
 
 
 @app.route('/pool')
-def get_pool():
-    user = request.args['u']
-    topic = request.args['t']
-    if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + user)
-        return('', 404)
+@use_args(query_args, location='query')
+def get_pool(qargs):
+    topic = qargs['t']
+    user = qargs['u']
     try:
         filename = Path(args.save) / user / f'topic{topic}'
         pool = Pool(filename)
@@ -170,16 +175,11 @@ def get_pool():
 
 
 @app.route('/doc')
-def get_document():
-    docid = request.args['d']
-    topic = None
-    if 't' in request.args:
-        topic = request.args['t']
-    if 'u' in request.args:
-        user = request.args['u']
-        if not re.match(r'[a-z0-9]+', user):
-            app.logger.debug('Load called with bad username: ' + user)
-            return('', 404)
+@use_args(query_args, location='query')
+def get_document(qargs):
+    docid = qargs['d']
+    topic = qargs['t']
+    user = qargs['u']
 
     try:
         response = es.get(index=args.index, id=docid)
@@ -200,14 +200,11 @@ def get_document():
 
 
 @app.route('/judge', methods=['POST'])
-def set_judgment() :
-    user = request.args['u']
-    topic = request.args['t']
-    docid = request.args['d']
-
-    if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + user)
-        return('', 404)
+@use_args(query_args, location='query')
+def set_judgment(qargs):
+    user = qargs['u']
+    topic = qargs['t']
+    docid = qargs['d']
 
     payload = request.get_json()
 
@@ -225,13 +222,10 @@ def set_judgment() :
     return('', 200)
 
 @app.route('/login')
-def login():
-    user = request.args['u']
-    pw = request.args['p']
-
-    if not re.match(r'[a-z0-9]+', user):
-        app.logger.debug('Load called with bad username: ' + user)
-        return('', 404)
+@use_args(query_args, location='query')
+def login(qargs):
+    user = qargs['u']
+    pw = qargs['p']
 
     with open(args.pwfile, 'r') as pwfile:
         for line in pwfile:
