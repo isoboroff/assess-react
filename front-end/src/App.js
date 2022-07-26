@@ -146,7 +146,12 @@ function PoolItem(props) {
     fetch('doc?t=' + props.topic
       + '&u=' + props.user
       + '&d=' + docid)
-      .then(response => response.json())
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return null;
+      })
       .then(data => {
         dispatch({
           type: Actions.FETCH_DOC,
@@ -392,7 +397,13 @@ function App() {
         return fetch('doc?u=' + username
           + '&t=' + topic
           + '&d=' + data.pool[current].docid);
-      }).then(response => response.json())
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return null;
+      })
       .then(data => {
         dispatch({
           type: Actions.FETCH_DOC, payload: {

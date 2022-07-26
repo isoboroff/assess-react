@@ -159,7 +159,7 @@ function Highlightable(props) {
   if (props.content) {
     return display_doc();
   } else {
-    return <p>waiting...</p>;
+    return <p>No document selected, or document is missing</p>;
   }
 
 }
