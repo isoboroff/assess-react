@@ -1,3 +1,11 @@
+Tasks for NeuCLIR assessing
+
+* TODO forward-port the password infrastructure from neuclir-test
+* TODO detect document direction during rendering
+ - docs have a lang field we can use
+
+
+
 Tasks for BETTER phase 2 assessing
 
 * DONE Update Highlightable to render BETTER documents
