@@ -543,7 +543,7 @@ function App() {
         <Col>
           <Form inline>
             <Form.Control placeholder="Scan terms" className="col-10 mx-3"
-              dir="rtl"
+              dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
               value={scan_terms}
               onChange={(e) => set_scan_terms(e.target.value)}
               onKeyDown={(e) => {
