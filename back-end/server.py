@@ -3,7 +3,6 @@ from elasticsearch import Elasticsearch
 from webargs import fields, validate
 from webargs.flaskparser import use_args
 
-import argparse
 import json
 import sys
 import re
@@ -12,27 +11,14 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-if (__name__ == '__main__'):
-    argparser = argparse.ArgumentParser(description='An assessment backend', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    argparser.add_argument('--host', help='ElasticSearch host', default='localhost')
-    argparser.add_argument('--port', help='ElasticSearch port', default=9200)
-    argparser.add_argument('--save', help='Location for saved data', default='relevance')
-    argparser.add_argument('--index', help='Index to search against', default='hc4')
-    argparser.add_argument('--pwfile', help='File containing username:pwhashes', default='passwd')
-    args = argparser.parse_args()
-else:
-    args = argparse.Namespace(**{'host': 'localhost',
-                                 'port': 9200,
-                                 'save': 'relevance',
-                                 'index': 'hc4',
-                                 'pwfile': 'passwd'})
-
-
 app = Flask(__name__, static_folder='../front-end/build/static',
             template_folder='../front-end/build')
-es = Elasticsearch([{'host': args.host, 'port': args.port}])
+app.config.from_pyfile('settings.py')
 
-Path(args.save).mkdir(exist_ok=True)
+es = Elasticsearch([{'host': app.config['ELASTIC_HOST'],
+                     'port': app.config['ELASTIC_PORT']}])
+
+Path(app.config['SAVE']).mkdir(exist_ok=True)
 
 class Pool:
     '''This pool reads standard TREC mastermerge pools, but the
@@ -137,7 +123,7 @@ def inbox(qargs):
     user = qargs['u']
     data = {}
     try:
-        homedir = Path(args.save) / user
+        homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
             if re.match(r'^topicIR-T\d+-r\d+$', child.name):
                 p = Pool(child)
@@ -160,7 +146,7 @@ def get_pool(qargs):
     topic = qargs['t']
     user = qargs['u']
     try:
-        filename = Path(args.save) / user / f'topic{topic}'
+        filename = Path(app.config['SAVE']) / user / f'topic{topic}'
         pool = Pool(filename)
         return(pool.json(), 200)
     except FileNotFoundError:
@@ -182,10 +168,10 @@ def get_document(qargs):
     user = qargs['u']
 
     try:
-        response = es.get(index=args.index, id=docid)
+        response = es.get(index=app.config['INDEX'], id=docid)
         if response['found']:
             if topic and user:
-                logfile = Path(args.save) / user / f'topic{topic}.log'
+                logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
                 with open(logfile, 'a') as fp:
                     print(json.dumps({'stamp': time.time(),
                                       'docid': docid,
@@ -215,7 +201,7 @@ def set_judgment(qargs):
         if key in payload:
             log_obj[key] = payload[key]
 
-    logfile = Path(args.save) / user / f'topic{topic}.log'
+    logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
     with open(logfile, 'a') as fp:
         print(json.dumps(log_obj), file=fp)
 
@@ -227,7 +213,7 @@ def login(qargs):
     user = qargs['u']
     pw = qargs['p']
 
-    with open(args.pwfile, 'r') as pwfile:
+    with open(app.config['PWFILE'], 'r') as pwfile:
         for line in pwfile:
             username, hashpw = line.strip().split(':')
             if username == user:
