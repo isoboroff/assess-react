@@ -6,9 +6,6 @@ import ScanTermMatcher from './ScanTermMatcher';
 function Highlightable(props) {
   const [highlight, set_highlight] = useState(null);
 
-  // The 'doc' is populated from the 'orig' field of props.content
-  let parsed = null;
-
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
@@ -52,7 +49,7 @@ function Highlightable(props) {
     let hpos = 0; // position in highlight
     let tpos = 0; // position in text
     let mstart = -1;  // marked start pos in text
-    const text = parsed['derived-metadata'].text;
+    const text = props.content.text;
     //console.log('highlight is "' + highlight + '", len ' + highlight.length);
     while (true) {
       //console.log('h[' + hpos + '] = '+highlight.charAt(hpos)+', t['+tpos+'] = '+text.charAt(tpos));
@@ -103,9 +100,11 @@ function Highlightable(props) {
         if (start < 0 || (end - start) < hl_text.length) {
           console.log('bad search output ' + start + ' ' + end);
         } else {
-          result = { "start": start,
-                     "length": end - start,
-                     "text": hl_text };
+          result = {
+            "start": start,
+            "length": end - start,
+            "text": hl_text
+          };
         }
         sel.removeAllRanges();
       }
@@ -127,35 +126,31 @@ function Highlightable(props) {
   // but with added bits to support highlighting
   //
   const display_doc = () => {
-    if (parsed === null)
-      return '';
-
-    if (!(parsed && parsed.hasOwnProperty('derived-metadata')))
-      return '';
-
-    let meta = parsed['derived-metadata'];
-    let text = meta['text'];
+    const title = props.content['title'];
+    let text = props.content['text'];
     if (props.rel)
       text = highlight_rel_passage(text);
 
     return (
       <div>
+        <div dir="rtl" className="text-right article-text">
+          <h1>{title}</h1>
+        </div>
         <div dir="rtl" className="text-right article-text"
-             onMouseUp={() => {
-               if (has_selection()) {
-                 set_highlight(get_selected_text());
-               }
-             }}>
-          <Interweave content={ text }
-                      matchers={[new ScanTermMatcher('scanterms',
-                                                     { scan_terms: props.scan_terms })]}/>
+          onMouseUp={() => {
+            if (has_selection()) {
+              set_highlight(get_selected_text());
+            }
+          }}>
+          <Interweave content={text}
+            matchers={[new ScanTermMatcher('scanterms',
+              { scan_terms: props.scan_terms })]} />
         </div>
       </div>
     );
   };
 
-  if (props.content && props.content.hasOwnProperty('orig')) {
-    parsed = JSON.parse(props.content['orig']);
+  if (props.content) {
     return display_doc();
   } else {
     return <p>waiting...</p>;

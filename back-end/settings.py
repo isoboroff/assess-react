@@ -5,10 +5,10 @@ ELASTIC_HOST='localhost'
 ELASTIC_PORT=9200
 
 # Directory for saving assessor work
-SAVE='relevant'
+SAVE='relevance'
 
 # ElasticSearch index
-INDEX='hc4'
+INDEX='neuclir'
 
 # Password file
 PWFILE='passwd'
