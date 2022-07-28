@@ -17,6 +17,7 @@ import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 import { sha256 } from 'hash-wasm';
 
 import Highlightable from './Highlightable';
+import useKeyPress from './useKeyPress';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -499,6 +500,20 @@ function App() {
       </ButtonGroup>
     );
   });
+
+  const onKeyPress = (event) => {
+    console.log(`key pressed: ${event.key}`);
+    switch (event.key) {
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+        judge_current({ judgment: event.key });
+        break;
+    }
+  };
+
+  useKeyPress(['n', 'p', '0', '1', '2', '3'], onKeyPress);
 
   const docDiv = useRef(null);
 
