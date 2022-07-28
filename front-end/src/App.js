@@ -140,33 +140,10 @@ function PoolItem(props) {
     </Badge>);
   }
 
-  // This function fetches the document and updates the application state.
-  const dispatch = useContext(AssessDispatch);
-  function fetch_doc(seq, docid) {
-    fetch('doc?t=' + props.topic
-      + '&u=' + props.user
-      + '&d=' + docid)
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-        return null;
-      })
-      .then(data => {
-        dispatch({
-          type: Actions.FETCH_DOC,
-          payload: {
-            current: seq,
-            doc: data
-          }
-        });
-      });
-  }
-
   return (
     <ListGroup.Item action
       active={props.current}
-      onClick={() => fetch_doc(props.seq, props.docid)}>
+      onClick={() => props.fetch_doc(props.seq)}>
       {props.seq + 1}: {props.docid.slice(0, 15)} {badge}
     </ListGroup.Item>
   );
@@ -183,7 +160,8 @@ function Pool(props) {
         props.filter === entry.judgment) {
         return <PoolItem user={props.user} topic={props.topic}
           docid={entry.docid} seq={i} judgment={entry.judgment}
-          current={props.current === i} />;
+          current={props.current === i}
+          fetch_doc={props.fetch_doc} />;
       } else
         return [];
     });
@@ -419,6 +397,30 @@ function App() {
     load_pool(state.username, topic, current);
   }
 
+  function load_pool_item(i) {
+    if (i < 0 || i > state.pool.length) return;
+
+    const docid = state.pool[i].docid
+    fetch('doc?t=' + state.topic
+      + '&u=' + state.username
+      + '&d=' + docid)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return null;
+      })
+      .then(data => {
+        dispatch({
+          type: Actions.FETCH_DOC,
+          payload: {
+            current: i,
+            doc: data
+          }
+        });
+      });
+  }
+
   function judge_current({
     judgment = '0',
     passage = null,
@@ -476,7 +478,6 @@ function App() {
     }
     judge_current({ judgment: judgment, subtopics: subchecks });
   }
-
 
   /*
    * The judgment buttons are colored according to the key at the top,
@@ -603,7 +604,9 @@ function App() {
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
             <Pool user={state.username} topic={state.topic}
-              pool={state.pool} current={state.current} filter={pool_filter} />
+              pool={state.pool} current={state.current} filter={pool_filter}
+              fetch_doc={load_pool_item}
+            />
           </Col>
           <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
             <Description desc={state.desc}
