@@ -398,7 +398,7 @@ function App() {
   }
 
   function load_pool_item(i) {
-    if (i < 0 || i > state.pool.length) return;
+    if (i < 0 || i >= state.pool.length) return;
 
     const docid = state.pool[i].docid
     fetch('doc?t=' + state.topic
@@ -408,7 +408,7 @@ function App() {
         if (response.ok) {
           return response.json();
         }
-        return null;
+        return '';
       })
       .then(data => {
         dispatch({
@@ -502,14 +502,25 @@ function App() {
     );
   });
 
+  /*
+   * Keyboard controls: number keys apply the judgment level to the
+   * current document.  'n' and 'p' move to the next and previous
+   * pool document respectively.   The spacebar judges the current
+   * document irrelevant and moves to the next document.
+   */
   const onKeyPress = (event) => {
-    console.log(`key pressed: ${event.key}`);
     switch (event.key) {
       case '0':
       case '1':
       case '2':
       case '3':
         judge_current({ judgment: event.key });
+        break;
+      case 'n':
+        load_pool_item(state.current + 1);
+        break;
+      case 'p':
+        load_pool_item(state.current - 1);
         break;
     }
   };
