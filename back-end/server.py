@@ -37,7 +37,7 @@ class Pool:
                     self.topic = fields[0]
                 if fields[0] != self.topic:
                     continue
-                self.pool[fields[4]] = { 'judgment': '-1' }
+                self.pool[fields[1]] = { 'judgment': '-1' }
 
         try:
             with open(f'{filename}.log', 'r') as log:
@@ -125,7 +125,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+$', child.name):
+            if re.match(r'^topic\d+\.(fas|zho|rus)$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
