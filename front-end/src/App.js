@@ -144,7 +144,7 @@ function PoolItem(props) {
     <ListGroup.Item action
       active={props.current}
       onClick={() => props.fetch_doc(props.seq)}>
-      {props.seq + 1}: {props.docid.slice(0, 15)} {badge}
+      {props.seq + 1}: {props.docid.slice(0, 23)} {badge}
     </ListGroup.Item>
   );
 }
@@ -279,12 +279,13 @@ function Description(props) {
   const [show, setShow] = useState(false);
 
   if (props.desc) {
+    const desc = props.desc.topics[0];
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Request: {props.desc['num']}</span><br />
-        <p><b>{props.desc['title']}</b></p>
-        <p><b>{props.desc['desc']}</b></p>
-        <p><b>{props.desc['narr']}</b></p>
+        <span className="h2 mr-5">Request: {props.desc['topic_id']}</span><br />
+        <p><b>{desc['topic_title']}</b></p>
+        <p>{desc['topic_description']}</p>
+        <p>{desc['topic_narrative']}</p>
       </div>
     );
   } else {
