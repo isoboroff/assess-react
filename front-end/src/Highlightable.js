@@ -143,8 +143,8 @@ function Highlightable(props) {
           <h1>{title}</h1>
         </div>
         <div dir={textdir} className={textclass}
-          onMouseUp={() => {
-            if (has_selection()) {
+          onMouseUp={(e) => {
+            if (!e.altKey && has_selection()) {
               set_highlight(get_selected_text());
             }
           }}>
