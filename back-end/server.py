@@ -125,7 +125,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+\.(fas|zho|rus)$', child.name):
+            if re.match(r'^topic\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
