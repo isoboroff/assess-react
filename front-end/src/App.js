@@ -242,6 +242,54 @@ function LoadTopicModal(props) {
   );
 }
 
+function ScanTerms(props) {
+  const dispatch = useContext(AssessDispatch);
+  const change = useCallback((e) => {
+    props.set_scan_terms(e.target.value);
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  const update = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch({
+        type: Actions.SAVE_SCAN_TERMS,
+        payload: { scan_terms: props.scan_terms }
+      });
+    }
+  });
+  const apply = useCallback(() => {
+    dispatch({
+      type: Actions.SAVE_SCAN_TERMS,
+      payload: { scan_terms: props.scan_terms }
+    });
+  });
+  const clear = useCallback(() => {
+    props.set_scan_terms('');
+    dispatch({
+      type: Actions.SAVE_SCAN_TERMS,
+      payload: { scan_terms: null }
+    });
+  });
+
+  return (
+    <Col>
+      <Form inline>
+        <Form.Control placeholder="Scan terms" className="col-10 mx-3"
+          dir={props.dir}
+          value={props.scan_terms}
+          onChange={change}
+          onPressEnter={update} />
+        <Button variant="primary"
+          onClick={apply}>Apply</Button>
+        <Button variant="secondary"
+          onClick={clear}>Clear</Button>
+      </Form>
+    </Col>
+  )
+}
+
 /*
  * The "app".  The main interface pieces here are a modal for logins, selecting a
  * topic to load, and judgment buttons for judging the currently displayed doc.
@@ -527,39 +575,11 @@ function App() {
 
         { /************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
-        <Col>
-          <Form inline>
-            <Form.Control placeholder="Scan terms" className="col-10 mx-3"
-              dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
-              value={scan_terms}
-              onChange={(e) => set_scan_terms(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  dispatch({
-                    type: Actions.SAVE_SCAN_TERMS,
-                    payload: { scan_terms: scan_terms }
-                  });
-                }
-              }} />
-            <Button variant="primary"
-              onClick={() => {
-                dispatch({
-                  type: Actions.SAVE_SCAN_TERMS,
-                  payload: { scan_terms: scan_terms }
-                });
-              }}>Apply</Button>
-            <Button variant="secondary"
-              onClick={() => {
-                set_scan_terms('');
-                dispatch({
-                  type: Actions.SAVE_SCAN_TERMS,
-                  payload: { scan_terms: null }
-                });
-              }}>Clear</Button>
-          </Form>
-        </Col>
+        <ScanTerms
+          dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
+          scan_terms={scan_terms}
+          set_scan_terms={set_scan_terms}
+        />
 
         { /************** Main: pool column and topic/document column */}
         <Row className="mt-3 vh-full">
