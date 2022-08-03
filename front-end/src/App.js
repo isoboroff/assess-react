@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useReducer, useContext, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useReducer,
+  useContext,
+  useRef,
+  useCallback
+} from 'react';
 
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -146,7 +153,7 @@ function LoginModal(props) {
     return hashval;
   }
 
-  function do_login() {
+  const do_login = useCallback(() => {
     // Send username and hashed password to the server.
     // Server responds 200 for ok login, 403 for denied
     set_error(false);
@@ -160,7 +167,7 @@ function LoginModal(props) {
           set_error(true);
         }
       });
-  }
+  }, [password, username]);
 
   return (
     <Modal show={props.login_required} onHide={do_login}
@@ -284,11 +291,11 @@ function App() {
   }, [state.username]);
 
   /* Load the "inbox", the list of topics to do and how much has been done. */
-  function load_inbox(username) {
+  const load_inbox = useCallback((username) => {
     fetch('inbox?u=' + state.username)
       .then(response => response.json())
       .then(data => set_inbox(data));
-  }
+  });
 
   /* If someone clicks "Load topic", we need to refresh the inbox and
    * put up the load-topic dialog. */
@@ -300,7 +307,7 @@ function App() {
     }
   }, [topic_requested]);
 
-  function load_pool(username, topic, current = 0) {
+  const load_pool = useCallback((username, topic, current = 0) => {
     fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
       .then(data => {
@@ -333,13 +340,14 @@ function App() {
         });
         set_show_topic_dialog(false);
       });
-  }
+  });
 
-  function load_pool_for_current_user(topic, current = 0) {
-    load_pool(state.username, topic, current);
-  }
+  const load_pool_for_current_user =
+    useCallback((topic, current = 0) => {
+      load_pool(state.username, topic, current);
+    });
 
-  function load_pool_item(i) {
+  const load_pool_item = useCallback((i) => {
     if (i < 0 || i >= state.pool.length) return;
 
     const docid = state.pool[i].docid
@@ -361,13 +369,13 @@ function App() {
           }
         });
       });
-  }
+  });
 
-  function judge_current({
+  const judge_current = useCallback(({
     judgment = '0',
     passage = null,
     subtopics = {},
-  }) {
+  }) => {
     const docid = state.pool[state.current].docid;
 
     if (passage && (judgment === '0' || judgment === '-1'))
@@ -401,16 +409,16 @@ function App() {
         if (response.ok)
           dispatch({ type: Actions.JUDGE, payload: judge_payload });
       });
-  }
+  });
 
-  function note_passage(passage) {
+  const note_passage = useCallback((passage) => {
     let judgment = state.pool[state.current].judgment;
     if (judgment === '-1' || judgment === '0')
       judgment = '2';
     judge_current({ judgment: judgment, passage: passage });
-  }
+  });
 
-  function note_subtopic(subchecks) {
+  const note_subtopic = useCallback((subchecks) => {
     let judgment = state.pool[state.current].judgment;
 
     if (Object.values(subchecks).some(x => x === true)) {
@@ -419,7 +427,7 @@ function App() {
       }
     }
     judge_current({ judgment: judgment, subtopics: subchecks });
-  }
+  });
 
   /*
    * The judgment buttons are colored according to the key at the top,
