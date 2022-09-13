@@ -245,7 +245,7 @@ function LoadTopicModal(props) {
 function ScanTerms(props) {
   const dispatch = useContext(AssessDispatch);
   const change = useCallback((e) => {
-    props.set_scan_terms(e.target.value);
+    props.set_scan_terms(e.target.value.trim());
     e.preventDefault();
     e.stopPropagation();
   });
