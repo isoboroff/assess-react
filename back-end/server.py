@@ -15,8 +15,13 @@ app = Flask(__name__, static_folder='../front-end/build/static',
             template_folder='../front-end/build')
 app.config.from_pyfile('settings.py')
 
-es = Elasticsearch([{'host': app.config['ELASTIC_HOST'],
-                     'port': app.config['ELASTIC_PORT']}])
+ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
+es = Elasticsearch(
+    f'http://{app.config["ELASTIC_HOST"]}:{app.config["ELASTIC_PORT"]}',
+    http_auth=('elastic', ELASTIC_PW),
+    retry_on_timeout=True,
+    max_retries=10,
+    request_timeout=30)
 
 Path(app.config['SAVE']).mkdir(exist_ok=True)
 
