@@ -113,7 +113,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9]+$')),
+    't': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9.-]+$')),
     'd': fields.String()
 }
 
@@ -130,7 +130,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+$', child.name):
+            if re.match(r'^topicIR-T\d+-r\d+\.(kor|rus|zho)$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
