@@ -10,8 +10,8 @@ function Description(props) {
       <div className="border-bottom">
         <span className="h2 mr-5">Request: {props.desc['topic_id']}</span><br />
         <p><b>{desc['topic_title']}</b></p>
-        <p>{desc['topic_description']}</p>
-        <p>{desc['topic_narrative']}</p>
+        <p><b>(High-level task:</b> {desc['topic_description']})</p>
+        <p><b>Specific request: {desc['topic_narrative']}</b></p>
       </div>
     );
   } else {
