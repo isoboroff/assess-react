@@ -8,7 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='better-p3-eval'
+INDEX='better-p3-eval-t'
 
 # Password file
 PWFILE='passwd'
