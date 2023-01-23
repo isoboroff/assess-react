@@ -48,21 +48,22 @@ class Pool:
             with open(f'{filename}.log', 'r') as log:
                 for line in log:
                     log_entry = Pool.read_log_entry(line)
-                    self.last = log_entry['docid']
-                    if 'passage' in log_entry:
-                        self.pool[log_entry['docid']]['passage'] = log_entry['passage']
-                    if 'judgment' in log_entry:
-                        self.pool[log_entry['docid']]['judgment'] = log_entry['judgment']
-                    if 'subtopics' in log_entry:
-                        if 'subtopics' not in self.pool[log_entry['docid']]:
-                            self.pool[log_entry['docid']]['subtopics'] = {}
-                        for subtopic, value in log_entry['subtopics'].items():
-                            self.pool[log_entry['docid']]['subtopics'][subtopic] = value
+                    docid = log_entry['docid']
+                    try:
+                        self.last = docid
+                        if 'passage' in log_entry:
+                            self.pool[docid]['passage'] = log_entry['passage']
+                        if 'judgment' in log_entry:
+                            self.pool[docid]['judgment'] = log_entry['judgment']
+                        if 'subtopics' in log_entry:
+                            if 'subtopics' not in self.pool[docid]:
+                                self.pool[docid]['subtopics'] = {}
+                            for subtopic, value in log_entry['subtopics'].items():
+                                self.pool[docid]['subtopics'][subtopic] = value
 
+                    except KeyError:
+                        app.logger.warn(f'Log entry for topic {self.topic}: {docid} not in pool')
         except FileNotFoundError:
-            pass
-        except KeyError:
-            app.logger.debug('Bad log entry ' + topic + ': ' + docid)
             pass
 
         with open(f'{filename}.desc', 'r') as fp:
@@ -105,7 +106,7 @@ class Pool:
             return None
         log_entry = json.loads(line)
         if 'stamp' not in log_entry or 'docid' not in log_entry:
-            app.logger.debug('Bad log object: ' + json.dumps(log_entry))
+            app.logger.warn('Bad log object: ' + json.dumps(log_entry))
             return None
         return log_entry
 
@@ -137,8 +138,8 @@ def inbox(qargs):
         app.logger.debug('Got inbox for ' + user)
         return(data, 200)
     except IOError as e:
-        app.logger.debug('I/O error reading for ' + user)
-        app.logger.debug(e.strerror + ': ' + e.filename)
+        app.logger.warn('I/O error reading for ' + user)
+        app.logger.warn(e.strerror + ': ' + e.filename)
         return('', 503)
     except Exception:
         app.logger.exception('Unexpected error reading for ' + user)
@@ -155,10 +156,10 @@ def get_pool(qargs):
         pool = Pool(filename)
         return(pool.json(), 200)
     except FileNotFoundError:
-        app.logger.debug(f'Pool not found: {user} {topic} {filename}')
+        app.logger.warn(f'Pool not found: {user} {topic} {filename}')
         return('', 404)
     except IOError:
-        app.logger.debug(f'Error reading pool {user} {topic} {filename}')
+        app.logger.warn(f'Error reading pool {user} {topic} {filename}')
         return('', 503)
     except Exception:
         app.logger.exception(f'Unexpected error reading pool {user} {topic} {filename}')
