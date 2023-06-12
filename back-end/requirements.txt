@@ -9,6 +9,7 @@ MarkupSafe==2.1.2
 marshmallow==3.19.0
 packaging==23.0
 pyparsing==3.0.9
+trec-pools @ git+https://gitlab.nist.gov/soboroff/pool-package.git@340a92cf771ab6373d5a6dea4554ad3afc2cebcf
 urllib3==1.26.14
 uWSGI==2.0.21
 webargs==8.2.0
