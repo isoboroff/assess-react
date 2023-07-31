@@ -12,3 +12,6 @@ INDEX='neuclir'
 
 # Password file
 PWFILE='passwd'
+
+# Logging
+LOGLEVEL='INFO'

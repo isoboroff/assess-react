@@ -14,8 +14,9 @@ from datetime import datetime
 app = Flask(__name__, static_folder='../front-end/build/static',
             template_folder='../front-end/build')
 app.config.from_pyfile('settings.py')
+app.logger.setLevel(app.config['LOGLEVEL'])
 
-ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
+ELASTIC_PW = 'MiNp271=BMrcY7ASiEFT'
 es = Elasticsearch(
     f'http://{app.config["ELASTIC_HOST"]}:{app.config["ELASTIC_PORT"]}',
     http_auth=('elastic', ELASTIC_PW),
@@ -113,7 +114,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9]+$')),
+    't': fields.String(validate=validate.Regexp(r'^projected[0-9-]+$')),
     'd': fields.String()
 }
 
@@ -130,7 +131,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+$', child.name):
+            if re.match(r'^topicprojected-\d+-\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
