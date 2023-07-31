@@ -19,7 +19,7 @@
     "react": "^17.0.2",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
+    "react-scripts": "^5.0.1",
     "testing-library": "^0.0.2",
     "web-vitals": "^0.2.4"
   },
