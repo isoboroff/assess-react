@@ -529,28 +529,19 @@ function App() {
   const docDiv = useRef(null);
 
   // When the document is updated, scroll to the top.
-  //useEffect(() => {
-  // if (docDiv.current) {
-  //    docDiv.current.scrollTo(0, 0);
-  //  }
-  //}, [state.doc])
+  useEffect(() => {
+    if (docDiv.current) {
+      docDiv.current.scrollTo(0, 0);
+    }
+  }, [state.doc])
 
-  // useEffect(() => {
-  //   const img = document.getElementById('rawimage');
-  //   if (img) {
-  //     img.scrollIntoView({
-  //       behavior: "smooth",
-  //       block: "end",
-  //     });
-  //   }
-  // }, [state.doc]);
-
-  // useEffect(() => {
-  //   const col = document.getElementById('pool');
-  //   if (col) {
-  //     col.scrollIntoView({ behavior: "smooth", block: "center" });
-  //   }
-  // }, [state.current]);
+  // Keep the pool centered at the current item
+  useEffect(() => {
+    const item = document.querySelector(".item-" + state.current);
+    if (item) {
+      item.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [state.current]);
 
   return (
     <AssessDispatch.Provider value={dispatch}>

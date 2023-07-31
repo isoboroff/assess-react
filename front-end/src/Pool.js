@@ -16,6 +16,7 @@ function PoolItem(props) {
 
   return (
     <ListGroup.Item action
+      className={"poolitem item-" + props.seq}
       active={props.current}
       onClick={() => props.fetch_doc(props.seq)}>
       {props.seq + 1}: {props.docid.slice(0, 23)} {badge}
