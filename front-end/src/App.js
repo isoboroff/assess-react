@@ -27,6 +27,7 @@ import Pool from './Pool';
 import Description from './Description';
 import Highlightable from './Highlightable';
 import useKeyPress from './useKeyPress';
+import RawImage from './RawImage';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -528,11 +529,28 @@ function App() {
   const docDiv = useRef(null);
 
   // When the document is updated, scroll to the top.
-  useEffect(() => {
-    if (docDiv.current) {
-      docDiv.current.scrollTo(0, 0);
-    }
-  }, [state.doc])
+  //useEffect(() => {
+  // if (docDiv.current) {
+  //    docDiv.current.scrollTo(0, 0);
+  //  }
+  //}, [state.doc])
+
+  // useEffect(() => {
+  //   const img = document.getElementById('rawimage');
+  //   if (img) {
+  //     img.scrollIntoView({
+  //       behavior: "smooth",
+  //       block: "end",
+  //     });
+  //   }
+  // }, [state.doc]);
+
+  // useEffect(() => {
+  //   const col = document.getElementById('pool');
+  //   if (col) {
+  //     col.scrollIntoView({ behavior: "smooth", block: "center" });
+  //   }
+  // }, [state.current]);
 
   return (
     <AssessDispatch.Provider value={dispatch}>
@@ -573,32 +591,26 @@ function App() {
           </Col>
         </Row>
 
-        { /************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
-        <ScanTerms
-          dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
-          scan_terms={scan_terms}
-          set_scan_terms={set_scan_terms}
-        />
 
         { /************** Main: pool column and topic/document column */}
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
-            <Pool user={state.username} topic={state.topic}
+            <Pool id="pool" user={state.username} topic={state.topic}
               rel_levels={rel_levels}
               pool={state.pool} current={state.current} filter={pool_filter}
               fetch_doc={load_pool_item}
             />
           </Col>
           <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
+            <center>
+              <RawImage data={state.doc} />
+              <hr />
+            </center>
             <Description desc={state.desc}
               note_subtopic={note_subtopic}
               rel={(state.current >= 0 && state.pool[state.current].subtopics)
                 ? state.pool[state.current].subtopics : null} />
-            <Highlightable content={state.doc} scan_terms={state.scan_terms}
-              rel={(state.current >= 0 && state.pool[state.current].passage)
-                ? state.pool[state.current].passage : ''}
-              note_passage={note_passage} />
           </Col>
         </Row>
       </Container>
