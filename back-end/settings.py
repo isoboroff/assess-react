@@ -8,7 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='neuclir'
+INDEX='atomic-images'
 
 # Password file
 PWFILE='passwd'
