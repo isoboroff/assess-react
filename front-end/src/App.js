@@ -35,9 +35,8 @@ import './App.css';
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
   '0': { label: 'irrelevant', color: 'secondary' },
-  '1': { label: 'topical', color: 'info' },
-  '2': { label: 'valuable', color: 'primary' },
-  '3': { label: 'very valuable', color: 'success' },
+  '1': { label: 'ok match', color: 'info' },
+  '2': { label: 'perfect match', color: 'primary' },
 };
 
 /* This is the application state. */
