@@ -35,6 +35,7 @@ class Pool:
         self.topic = None
         self.desc = ''
         self.last = ''
+        self.last_stamp = 0
 
         with open(filename, 'r') as fp:
             for line in fp:
@@ -50,6 +51,7 @@ class Pool:
                 for line in log:
                     log_entry = Pool.read_log_entry(line)
                     self.last = log_entry['docid']
+                    self.last_stamp = log_entry['stamp']
                     if 'passage' in log_entry:
                         self.pool[log_entry['docid']]['passage'] = log_entry['passage']
                     if 'judgment' in log_entry:
@@ -65,9 +67,11 @@ class Pool:
         except KeyError:
             app.logger.debug('Bad log entry ' + topic + ': ' + docid)
             pass
-
-        with open(f'{filename}.desc', 'r') as fp:
-            self.desc = fp.read()
+        try:
+            with open(f'{filename}.desc', 'r') as fp:
+                self.desc = fp.read()
+        except FileNotFoundError:
+            self.desc = json.dumps({'text': 'No description file'})
 
     def __len__(self):
         return len(self.pool)
@@ -123,6 +127,10 @@ query_args = {
 def hello():
     return render_template('index.html')
 
+@app.route('/dashboard')
+def dashboard_front():
+    return render_template('index.html')
+
 @app.route('/inbox')
 @use_args(query_args, location='query')
 def inbox(qargs):
@@ -138,13 +146,41 @@ def inbox(qargs):
         app.logger.debug('Got inbox for ' + user)
         return(data, 200)
     except IOError as e:
-        app.logger.debug('I/O error reading for ' + user)
-        app.logger.debug(e.strerror + ': ' + e.filename)
+        app.logger.exception('I/O error reading for ' + user)
+        app.logger.exception(e.strerror + ': ' + e.filename)
         return('', 503)
     except Exception:
         app.logger.exception('Unexpected error reading for ' + user)
         return('', 503)
 
+@app.route('/dashdata')
+def dashboard():
+    data = []
+    try:
+        reldir = Path(app.config['SAVE'])
+        for relchild in reldir.iterdir():
+            if relchild.is_dir():
+                for child in relchild.iterdir():
+                    if re.match(r'^topicprojected-\d+-\d+$', child.name):
+                        p = Pool(child)
+                        pct_rel = p.num_rel() * 100 / len(p)
+                        data.append({'topic': p.topic,
+                                     'assr': child.parent.stem,
+                                     'num_docs': len(p),
+                                     'num_rel': p.num_rel(),
+                                     'pct_rel': f'{pct_rel:.1f}%',
+                                     'num_left': len(p) - p.num_judged(),
+                                     'stamp': p.last_stamp,
+                                     'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(p.last_stamp))
+                                     })
+        return(data, 200)
+    except IOError as e:
+        app.logger.exception('I/O error reading dashboard')
+        app.logger.exception(e.strerror + ': ' + e.filename)
+        return('', 503)
+    except Exception:
+        app.logger.exception('Unexpected error reading dashboard')
+        return('', 503)
 
 @app.route('/pool')
 @use_args(query_args, location='query')
