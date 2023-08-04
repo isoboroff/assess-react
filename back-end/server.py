@@ -16,10 +16,9 @@ app = Flask(__name__, static_folder='../front-end/build/static',
 app.config.from_pyfile('settings.py')
 app.logger.setLevel(app.config['LOGLEVEL'])
 
-ELASTIC_PW = 'MiNp271=BMrcY7ASiEFT'
 es = Elasticsearch(
     f'http://{app.config["ELASTIC_HOST"]}:{app.config["ELASTIC_PORT"]}',
-    http_auth=('elastic', ELASTIC_PW),
+    http_auth=('elastic', app.config['ELASTIC_PW']),
     retry_on_timeout=True,
     max_retries=10,
     request_timeout=30)
@@ -67,11 +66,12 @@ class Pool:
         except KeyError:
             app.logger.debug('Bad log entry ' + topic + ': ' + docid)
             pass
+
         try:
             with open(f'{filename}.desc', 'r') as fp:
                 self.desc = fp.read()
-        except FileNotFoundError:
-            self.desc = json.dumps({'text': 'No description file'})
+        except Exception:
+            self.desc = json.dumps({'text': 'Exception fetching desc from ES'})
 
     def __len__(self):
         return len(self.pool)
@@ -114,11 +114,12 @@ class Pool:
             return None
         return log_entry
 
+
 query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^projected[0-9-]+$')),
+    't': fields.String(validate=validate.Regexp(uuid_re)),
     'd': fields.String()
 }
 
@@ -139,7 +140,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topicprojected-\d+-\d+$', child.name):
+            if re.match(r'^topic\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
@@ -161,7 +162,7 @@ def dashboard():
         for relchild in reldir.iterdir():
             if relchild.is_dir():
                 for child in relchild.iterdir():
-                    if re.match(r'^topicprojected-\d+-\d+$', child.name):
+                    if re.match(r'^topic\d+$', child.name):
                         p = Pool(child)
                         pct_rel = p.num_rel() * 100 / len(p)
                         data.append({'topic': p.topic,
