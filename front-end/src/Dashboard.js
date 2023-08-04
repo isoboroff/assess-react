@@ -10,6 +10,7 @@ function DashboardApp(props) {
       name: 'Topic',
       selector: row => row.topic,
       sortable: true,
+      grow: 2,
     },
     {
       name: 'Assessor',
@@ -47,6 +48,16 @@ function DashboardApp(props) {
     },
   ];
 
+  const rowstyle = [
+    {
+      when: row => row.pct_rel > 40.0,
+      style: {
+        backgroundColor: 'red',
+        color: 'white',
+      },
+    },
+  ];
+
   useEffect(() => {
     fetch('dashdata')
       .then(response => response.json())
@@ -63,6 +74,7 @@ function DashboardApp(props) {
       progressPending={pending}
       striped={true}
       highlightOnHover={true}
+      conditionalRowStyles={rowstyle}
     />
   );
 };
