@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, jsonify
 from elasticsearch import Elasticsearch
 from webargs import fields, validate
 from webargs.flaskparser import use_args
@@ -173,7 +173,7 @@ def dashboard():
                                      'stamp': p.last_stamp,
                                      'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(p.last_stamp))
                                      })
-        return(data, 200)
+        return(jsonify(data), 200)
     except IOError as e:
         app.logger.exception('I/O error reading dashboard')
         app.logger.exception(e.strerror + ': ' + e.filename)
