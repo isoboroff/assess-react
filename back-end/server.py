@@ -168,7 +168,7 @@ def dashboard():
                                      'assr': child.parent.stem,
                                      'num_docs': len(p),
                                      'num_rel': p.num_rel(),
-                                     'pct_rel': f'{pct_rel:.1f}%',
+                                     'pct_rel': pct_rel,
                                      'num_left': len(p) - p.num_judged(),
                                      'stamp': p.last_stamp,
                                      'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(p.last_stamp))

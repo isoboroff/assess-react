@@ -30,6 +30,7 @@ function DashboardApp(props) {
       name: '%Relevant',
       selector: row => row.pct_rel,
       sortable: true,
+      format: row => row.pct_rel.toFixed(2).concat('%'),
     },
     {
       name: 'Left to do',
