@@ -594,10 +594,10 @@ function App() {
           </Col>
           <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
             <center>
-              <RawImage data={state.doc} />
+              <RawImage data={state.desc} />
               <hr />
             </center>
-            <Description desc={state.desc}
+            <Description desc={state.doc}
               note_subtopic={note_subtopic}
               rel={(state.current >= 0 && state.pool[state.current].subtopics)
                 ? state.pool[state.current].subtopics : null} />
