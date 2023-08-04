@@ -14,6 +14,8 @@ ap.add_argument('-w', '--words', action='store_true',
                 help='Use random words instead of random characters')
 ap.add_argument('-l', '--length', type=int, default=-1,
                 help='Password length (default 3 words or 12 chars)')
+ap.add_argument('--use-this-password', nargs=1,
+                help='Specify the password on the command line (don\'t do this please)')
 ap.add_argument('username', help='User name')
 
 args = ap.parse_args()
@@ -37,7 +39,9 @@ def password_ok(password):
             and any(c.isdigit() for c in password)
             and any(c in '!@#$%^&*(){}[]:;.,></?' for c in password))
 
-if args.random:
+if args.use_this_password:
+    password = args.use_this_password[0]
+elif args.random:
     if args.words:
         password = '-'.join(secrets.choice(words) for i in range(args.length))
     else:
