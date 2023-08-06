@@ -8,6 +8,7 @@ import sys
 import re
 import traceback
 import time
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -25,6 +26,10 @@ es = Elasticsearch(
     request_timeout=30)
 
 Path(app.config['SAVE']).mkdir(exist_ok=True)
+
+if 'TZ' in app.config:
+    os.environ['TZ'] = app.config['TZ']
+    time.tzset()
 
 class Pool:
     '''This pool reads standard TREC mastermerge pools, but the
