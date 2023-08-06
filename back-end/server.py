@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, make_response, jsonify
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 from webargs import fields, validate
 from webargs.flaskparser import use_args
 
@@ -72,11 +72,16 @@ class Pool:
         except KeyError:
             app.logger.debug('Bad log entry ' + topic + ': ' + docid)
             pass
+
         try:
             with open(f'{filename}.desc', 'r') as fp:
-                self.desc = fp.read()
+                desc_obj = json.loads(fp.read())
+                resp = es.get(index='atomic-images', id=desc_obj['image_id'])
+                self.desc = resp['_source']
         except FileNotFoundError:
             self.desc = json.dumps({'text': 'No description file'})
+        except NotFoundError:
+            self.desc = json.dumps({'text': 'Image not found'})
 
     def __len__(self):
         return len(self.pool)
@@ -123,7 +128,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^projected[0-9-]+$')),
+    't': fields.String(validate=validate.Regexp(r'^[0-9a-f-]+$')),
     'd': fields.String()
 }
 
@@ -144,7 +149,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topicprojected-\d+-\d+$', child.name):
+            if re.match(r'^topic[0-9a-f-]+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
@@ -166,7 +171,7 @@ def dashboard():
         for relchild in reldir.iterdir():
             if relchild.is_dir():
                 for child in relchild.iterdir():
-                    if re.match(r'^topicprojected-\d+-\d+$', child.name):
+                    if re.match(r'^topic[0-9a-f-]+$', child.name):
                         p = Pool(child)
                         pct_rel = p.num_rel() * 100 / len(p)
                         data.append({'topic': p.topic,
@@ -197,10 +202,10 @@ def get_pool(qargs):
         pool = Pool(filename)
         return(pool.json(), 200)
     except FileNotFoundError:
-        app.logger.debug(f'Pool not found: {user} {topic} {filename}')
+        app.logger.exception(f'Pool not found: {user} {topic} {filename}')
         return('', 404)
     except IOError:
-        app.logger.debug(f'Error reading pool {user} {topic} {filename}')
+        app.logger.exception(f'Error reading pool {user} {topic} {filename}')
         return('', 503)
     except Exception:
         app.logger.exception(f'Unexpected error reading pool {user} {topic} {filename}')

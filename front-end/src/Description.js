@@ -22,14 +22,15 @@ function Description(props) {
   }
 
   if (props.desc) {
+    const desc = JSON.parse(props.desc['orig']);
     return (
       <div className="border-bottom">
-        <p><b>{props.desc['text_id']}</b></p>
-        <Hideaway title={props.desc['page_title']}>
-          <p id='page_desc' style={{ whiteSpace: 'pre-wrap' }}>{props.desc['context_page_description']}</p>
+        <p><b>{desc['text_id']}</b></p>
+        <Hideaway title={desc['page_title']}>
+          <p id='page_desc' style={{ whiteSpace: 'pre-wrap' }}>{desc['context_page_description']}</p>
         </Hideaway>
-        <span className="h3 mr-5">{props.desc['section_title']}</span>
-        <p style={{ whiteSpace: 'pre-wrap' }}>{props.desc['context_section_description']}</p>
+        <span className="h3 mr-5">{desc['section_title']}</span>
+        <p style={{ whiteSpace: 'pre-wrap' }}>{desc['context_section_description']}</p>
       </div>
     );
   } else {

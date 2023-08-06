@@ -8,10 +8,13 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='atomic-images'
+INDEX='atomic-text'
 
 # Password file
 PWFILE='passwd'
 
 # Logging
 LOGLEVEL='INFO'
+
+# Timezone for dashboard
+TZ='US/Eastern'
