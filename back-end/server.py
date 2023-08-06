@@ -8,6 +8,8 @@ import sys
 import re
 import traceback
 import time
+import subprocess
+import io
 from pathlib import Path
 from datetime import datetime
 
@@ -119,7 +121,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(uuid_re)),
+    't': fields.String(validate=validate.Regexp(r'[0-9.]+')),
     'd': fields.String()
 }
 
@@ -265,6 +267,62 @@ def login(qargs):
                 else:
                     return('', 403)
     return('', 403)
+
+@app.route('/train')
+@use_args(query_args, location='query')
+def train_model(qargs):
+    user = qargs['u']
+    topic = qargs['t']
+
+    save_dir = Path(app.config['SAVE']) / user
+    pool_file = save_dir / f'topic{topic}'
+    qrels_file = save_dir / f'topic{topic}.qrels'
+    model_file = save_dir / f'topic{topic}.model'
+    if '.' in topic:
+        _, iter = topic.split('.')
+        iter = int(iter) + 1
+    else:
+        iter = 1
+    new_pool = save_dir / f'topic{topic}.{iter}'
+
+    # Write out pool in qrels format for mycal
+    snapshot = Pool(pool_file)
+    with open(qrels_file, 'w') as outfp:
+        for docid, jobj in snapshot.pool.items():
+            print(f'{topic} 0 {docid} {jobj["judgment"]}', file=outfp)
+
+    # Train model
+    print('training...')
+    try:
+        subprocess.run([app.config['MYCAL'],
+                        app.config['MARCO'],
+                        model_file,
+                        'train',
+                        qrels_file],
+                       text=True,
+                       check=True)
+    except subprocess.CalledProcessError as e:
+        return(e, 503)
+
+    # Run predictions
+    print('scoring...')
+    proc = subprocess.Popen([app.config['MYCAL'],
+                             app.config['MARCO'],
+                             model_file,
+                             'score'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True)
+    (out, err) = proc.communicate()
+    with open(new_pool, 'w') as poolfp:
+        for line in out.split('\n'):
+            if len(line) > 0:
+                print(f'{topic}.{iter}', line.rstrip(), file=poolfp)
+
+    return('', 200)
+
+
+
 
 if __name__ == '__main__':
     print('Starting Flask...')

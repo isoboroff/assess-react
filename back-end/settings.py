@@ -18,3 +18,9 @@ PWFILE='passwd'
 
 # Logging
 LOGLEVEL='INFO'
+
+# Path to mycal executable
+MYCAL='/Users/soboroff/mycal-project/mycal/target/release/mycal'
+
+# Path to msmarco collection for mycal
+MARCO='/Users/soboroff/mycal-project/mycal/msmarco-pass'
