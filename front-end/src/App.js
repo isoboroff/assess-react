@@ -584,7 +584,7 @@ function App() {
         { /************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
         <ScanTerms
-          dir={(state.doc && state.doc.hasOwn('lang') && state.doc['lang'] === 'fas') ? "rtl" : ""}
+          dir={(state.doc && Object.hasOwn(state.doc, 'lang') && state.doc['lang'] === 'fas') ? "rtl" : ""}
           scan_terms={scan_terms}
           set_scan_terms={set_scan_terms}
         />
