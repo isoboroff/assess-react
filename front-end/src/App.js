@@ -242,6 +242,22 @@ function LoadTopicModal(props) {
   );
 }
 
+/* A generic wait-please modal */
+function WaitforModal(props) {
+  return (
+    <Modal show={props.show}>
+      <Modal.Header>
+        <Modal.Title>
+          {props.title}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {props.message} <i className="fa fa-spinner" aria-hidden="true"></i>
+      </Modal.Body>
+    </Modal>
+  );
+}
+
 function ScanTerms(props) {
   const dispatch = useContext(AssessDispatch);
   const change = useCallback((e) => {
@@ -304,6 +320,8 @@ function App() {
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState('');
   const [pool_filter, set_pool_filter] = useState('all');
+  const [waitfor_msg, set_waitfor_msg] = useState({});
+  const [show_waitfor, set_show_waitfor] = useState(false);
 
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -500,6 +518,30 @@ function App() {
     );
   });
 
+  const commit_judgments = useCallback(() => {
+    let unjudged = false;
+    for (const j of state.pool) {
+      if (j['judgment'] == -1) {
+        unjudged = true;
+        break;
+      }
+    }
+    if (unjudged) {
+      alert("Some documents remain unjudged.");
+      set_pool_filter("unjudged");
+    } else {
+      set_waitfor_msg({
+        'title': 'Committing judgments...',
+        'message': 'Please wait (about 1 minute)'
+      });
+      set_show_waitfor(true);
+      fetch("train?u=" + state.username +
+        "&t=" + state.topic)
+        .then(set_show_waitfor(false))
+        .then(load_pool(state.username, state.topic, state.current));
+    }
+  });
+
   /*
    * Keyboard controls: number keys apply the judgment level to the
    * current document.  'n' and 'p' move to the next and previous
@@ -552,6 +594,10 @@ function App() {
           set_show_topic_dialog={set_show_topic_dialog}
           inbox={inbox}
           load_pool={load_pool_for_current_user} />
+        <WaitforModal show={show_waitfor}
+          title={Object.hasOwn(waitfor_msg, 'title') && waitfor_msg['title']}
+          message={Object.hasOwn(waitfor_msg, 'msg') && waitfor_msg['msg']}
+        />
 
         { /************** Header line: load pool, filter pool, judgment buttons, logout button */}
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
@@ -566,12 +612,18 @@ function App() {
             {state.current + 1} of {state.pool.length}
           </Col>
           <Col xs="auto">
-            <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
+            <Form.Control
+              as="select"
+              value={pool_filter}
+              onChange={(e) => set_pool_filter(e.target.value)}>
               <option>all</option>
               <option>unjudged</option>
               {Object.getOwnPropertyNames(rel_levels).map((i) =>
                 <option value={i}>{rel_levels[i].label}</option>)}
             </Form.Control>
+          </Col>
+          <Col xs="auto" className="mx-3">
+            <Button onClick={() => commit_judgments()}>Commit</Button>
           </Col>
           <Col xs="auto" className="mr-auto">
             {judgment_buttons}
