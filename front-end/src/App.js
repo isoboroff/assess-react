@@ -27,7 +27,6 @@ import Pool from './Pool';
 import Description from './Description';
 import Highlightable from './Highlightable';
 import useKeyPress from './useKeyPress';
-import RawImage from './RawImage';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -582,7 +581,13 @@ function App() {
           </Col>
         </Row>
 
+        { /************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
+        <ScanTerms
+          dir={(state.doc && state.doc.hasOwn('lang') && state.doc['lang'] === 'fas') ? "rtl" : ""}
+          scan_terms={scan_terms}
+          set_scan_terms={set_scan_terms}
+        />
 
         { /************** Main: pool column and topic/document column */}
         <Row className="mt-3 vh-full">
@@ -594,14 +599,14 @@ function App() {
             />
           </Col>
           <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
-            <center>
-              <RawImage data={state.doc} />
-              <hr />
-            </center>
             <Description desc={state.desc}
               note_subtopic={note_subtopic}
               rel={(state.current >= 0 && state.pool[state.current].subtopics)
                 ? state.pool[state.current].subtopics : null} />
+            <Highlightable content={state.doc} scan_terms={state.scan_terms}
+              rel={(state.current >= 0 && state.pool[state.current].passage)
+                ? state.pool[state.current].passage : ''}
+              note_passage={note_passage} />
           </Col>
         </Row>
       </Container>
