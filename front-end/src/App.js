@@ -19,7 +19,7 @@ import Badge from 'react-bootstrap/Badge';
 import Collapse from 'react-bootstrap/Collapse';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCoffee } from '@fortawesome/free-solid-svg-icons';
+import { faCoffee, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { sha256 } from 'hash-wasm';
 
@@ -36,7 +36,7 @@ const rel_levels = {
   '0': { label: 'irrelevant', color: 'secondary' },
   '1': { label: 'relevant', color: 'info' },
   '2': { label: 'highly relevant', color: 'primary' },
-  '3': { label: 'perfectly relevant', color: 'primary' },
+  '3': { label: 'perfectly relevant', color: 'success' },
 };
 
 /* This is the application state. */
@@ -252,7 +252,7 @@ function WaitforModal(props) {
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {props.message} <i className="fa fa-spinner" aria-hidden="true"></i>
+        {props.message} <FontAwesomeIcon icon={faSpinner} spin />
       </Modal.Body>
     </Modal>
   );
@@ -306,6 +306,8 @@ function ScanTerms(props) {
   )
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 /*
  * The "app".  The main interface pieces here are a modal for logins, selecting a
  * topic to load, and judgment buttons for judging the currently displayed doc.
@@ -322,6 +324,7 @@ function App() {
   const [pool_filter, set_pool_filter] = useState('all');
   const [waitfor_msg, set_waitfor_msg] = useState({});
   const [show_waitfor, set_show_waitfor] = useState(false);
+  const [do_train, set_do_train] = useState(false);
 
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -518,29 +521,35 @@ function App() {
     );
   });
 
-  const commit_judgments = useCallback(() => {
-    let unjudged = false;
-    for (const j of state.pool) {
-      if (j['judgment'] == -1) {
-        unjudged = true;
-        break;
+  useEffect(() => {
+    if (do_train) {
+      set_do_train(false);
+      let have_unjudged = false;
+      for (const j of state.pool) {
+        if (j.judgment === '-1') {
+          have_unjudged = true;
+          break;
+        }
       }
-    }
-    if (unjudged) {
-      alert("Some documents remain unjudged.");
-      set_pool_filter("unjudged");
-    } else {
+      if (have_unjudged) {
+        alert('There are unjudged documents, please judge them first');
+        set_pool_filter('unjudged');
+        return;
+      }
+
       set_waitfor_msg({
-        'title': 'Committing judgments...',
-        'message': 'Please wait (about 1 minute)'
+        'title': 'Committing...',
+        'msg': 'Running update cycle (about 1 minute)'
       });
       set_show_waitfor(true);
-      fetch("train?u=" + state.username +
-        "&t=" + state.topic)
-        .then(set_show_waitfor(false))
-        .then(load_pool(state.username, state.topic, state.current));
+
+      fetch('train?u=' + state.username + '&t=' + state.topic)
+        .then(response => {
+          set_show_waitfor(false);
+          load_pool(state.username, state.topic, state.current);
+        });
     }
-  });
+  }, [do_train])
 
   /*
    * Keyboard controls: number keys apply the judgment level to the
@@ -623,7 +632,7 @@ function App() {
             </Form.Control>
           </Col>
           <Col xs="auto" className="mx-3">
-            <Button onClick={() => commit_judgments()}>Commit</Button>
+            <Button onClick={() => set_do_train(true)}>Commit</Button>
           </Col>
           <Col xs="auto" className="mr-auto">
             {judgment_buttons}

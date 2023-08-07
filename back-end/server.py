@@ -289,6 +289,11 @@ def login(qargs):
                     return('', 403)
     return('', 403)
 
+@app.route('/sleep')
+def sleep():
+    time.sleep(10)
+    return('', 200);
+
 @app.route('/train')
 @use_args(query_args, location='query')
 def train_model(qargs):
@@ -299,15 +304,18 @@ def train_model(qargs):
     pool_file = save_dir / f'topic{topic}'
     qrels_file = save_dir / f'topic{topic}.qrels'
     model_file = save_dir / f'topic{topic}.model'
-    if '.' in topic:
-        _, iter = topic.split('.')
-        iter = int(iter) + 1
-    else:
-        iter = 1
-    new_pool = save_dir / f'topic{topic}.{iter}'
 
     # Write out pool in qrels format for mycal
     snapshot = Pool(pool_file)
+    if any(j['judgment'] == -1 for j in snapshot.pool.values()):
+        return('', 200)
+
+    if snapshot.last_batch.startswith('CAL.'):
+        _, last_iter = snapshot.last_batch.split('.')
+        iter = f'CAL.{int(last_iter) + 1}'
+    else:
+        iter = 'CAL.1'
+
     with open(qrels_file, 'w') as outfp:
         for docid, jobj in snapshot.pool.items():
             print(f'{topic} 0 {docid} {jobj["judgment"]}', file=outfp)
@@ -330,15 +338,17 @@ def train_model(qargs):
     proc = subprocess.Popen([app.config['MYCAL'],
                              app.config['MARCO'],
                              model_file,
-                             'score'],
+                             'score',
+                             '-n', '30',
+                             '-e', pool_file],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             text=True)
     (out, err) = proc.communicate()
-    with open(new_pool, 'w') as poolfp:
+    with open(pool_file, 'a') as poolfp:
         for line in out.split('\n'):
             if len(line) > 0:
-                print(f'{topic}.{iter}', line.rstrip(), file=poolfp)
+                print(f'{topic}', line.rstrip(), iter, file=poolfp)
 
     return('', 200)
 
