@@ -34,6 +34,17 @@ function DashboardApp(props) {
       format: row => row.pct_rel.toFixed(2).concat('%'),
     },
     {
+      name: 'Last batch',
+      selector: row => row.last_batch,
+      sortable: true,
+    },
+    {
+      name: 'Batch-%Relevant',
+      selector: row => row.batch_pct_rel,
+      sortable: true,
+      format: row => row.batch_pct_rel.toFixed(2).concat('%'),
+    },
+    {
       name: 'Left to do',
       selector: row => row.num_left,
       sortable: true,

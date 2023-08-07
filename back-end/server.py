@@ -94,7 +94,7 @@ class Pool:
             if int(judgment['judgment']) > 0:
                 num_rel[self.batch[docid]] += 1
         nr = {}
-        for batch in num_rel.keys():
+        for batch in n.keys():
             nr[batch] = num_rel[batch] / n[batch]
         return nr
 
@@ -195,7 +195,7 @@ def dashboard():
                                      'batch_pct_rel': b_pct_rel[p.last_batch],
                                      'num_left': len(p) - p.num_judged(),
                                      'stamp': p.last_stamp,
-                                     'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(p.last_stamp))
+                                     'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(int(p.last_stamp)))
                                      })
         return(jsonify(data), 200)
     except IOError as e:
