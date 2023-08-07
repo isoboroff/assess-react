@@ -10,6 +10,7 @@ import traceback
 import time
 import subprocess
 import io
+import collections
 from pathlib import Path
 from datetime import datetime
 
@@ -37,6 +38,8 @@ class Pool:
         self.desc = ''
         self.last = ''
         self.last_stamp = 0
+        self.batch = {}
+        self.last_batch = ''
 
         with open(filename, 'r') as fp:
             for line in fp:
@@ -46,6 +49,8 @@ class Pool:
                 if fields[0] != self.topic:
                     continue
                 self.pool[fields[1]] = { 'judgment': '-1' }
+                self.batch[fields[1]] = fields[-1]
+                self.last_batch = fields[-1]
 
         try:
             with open(f'{filename}.log', 'r') as log:
@@ -80,6 +85,19 @@ class Pool:
 
     def num_rel(self):
         return sum([1 for judgment in self.pool.values() if int(judgment['judgment']) > 0])
+
+    def batch_num_rel(self):
+        num_rel = collections.Counter()
+        n = collections.Counter()
+        for docid, judgment in self.pool.items():
+            n[self.batch[docid]] += 1
+            if int(judgment['judgment']) > 0:
+                num_rel[self.batch[docid]] += 1
+        nr = {}
+        for batch in num_rel.keys():
+            nr[batch] = num_rel[batch] / n[batch]
+        return nr
+
 
     def num_judged(self):
         return sum([1 for judgment in self.pool.values() if judgment['judgment'] != '-1'])
@@ -167,11 +185,14 @@ def dashboard():
                     if re.match(r'^topic\d+$', child.name):
                         p = Pool(child)
                         pct_rel = p.num_rel() * 100 / len(p)
+                        b_pct_rel = p.batch_num_rel()
                         data.append({'topic': p.topic,
                                      'assr': child.parent.stem,
                                      'num_docs': len(p),
                                      'num_rel': p.num_rel(),
                                      'pct_rel': pct_rel,
+                                     'last_batch': p.last_batch,
+                                     'batch_pct_rel': b_pct_rel[p.last_batch],
                                      'num_left': len(p) - p.num_judged(),
                                      'stamp': p.last_stamp,
                                      'timedate': time.strftime("%a %d %b %Y %H:%M", time.localtime(p.last_stamp))
