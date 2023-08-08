@@ -10,8 +10,11 @@ ELASTIC_PW = 'MiNp271=BMrcY7ASiEFT'
 # Directory for saving assessor work
 SAVE='relevance'
 
+# Directory with topics to select
+PICK='pick'
+
 # ElasticSearch index
-INDEX='msmarco-pass'
+INDEX='marco-pass'
 
 # Password file
 PWFILE='passwd'

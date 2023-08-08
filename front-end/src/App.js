@@ -34,7 +34,7 @@ import './App.css';
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
   '0': { label: 'irrelevant', color: 'secondary' },
-  '1': { label: 'relevant', color: 'info' },
+  '1': { label: 'related', color: 'info' },
   '2': { label: 'highly relevant', color: 'primary' },
   '3': { label: 'perfectly relevant', color: 'success' },
 };

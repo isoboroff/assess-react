@@ -11,6 +11,7 @@ import time
 import subprocess
 import io
 import collections
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -153,6 +154,10 @@ def hello():
 def dashboard_front():
     return render_template('index.html')
 
+@app.route('/picker')
+def pick_query():
+    return render_template('index.html')
+
 @app.route('/inbox')
 @use_args(query_args, location='query')
 def inbox(qargs):
@@ -206,6 +211,48 @@ def dashboard():
     except Exception:
         app.logger.exception('Unexpected error reading dashboard')
         return('', 503)
+
+@app.route('/pickdata')
+def pickdata():
+    try:
+        pickdir = Path(app.config['PICK'])
+        descs = []
+        for child in pickdir.iterdir():
+            if re.match(r'^topic\d+.desc$', child.name):
+                descs.append(json.load(open(child, 'r')))
+        return(jsonify(descs), 200)
+    except IOError as e:
+        app.logger.exception('I/O error reading picker')
+        app.logger.exception(e.strerror + ': ' + e.filename)
+        return('', 503)
+    except Exception:
+        app.logger.exception('Unexpected error reading picker')
+        return('', 503)
+
+@app.route('/pick')
+@use_args(query_args, location='query')
+def pick(qargs):
+    picked = qargs['t']
+    user = qargs['u']
+    try:
+        poolfile = Path(app.config['PICK']) / f'topic{picked}'
+        descfile = Path(app.config['PICK']) / f'topic{picked}.desc'
+        userdir = Path(app.config['SAVE']) / user
+
+        if poolfile.exists():
+            shutil.move(poolfile, userdir)
+        if descfile.exists():
+            shutil.move(descfile, userdir)
+        return('', 200)
+
+    except IOError as e:
+        app.logger.exception('I/O error moving picked topic')
+        app.logger.exception(e.strerror + ': ' + e.filename)
+        return('', 503)
+    except Exception:
+        app.logger.exception('Unexpected error moving picked topic')
+        return('', 503)
+
 
 @app.route('/pool')
 @use_args(query_args, location='query')
