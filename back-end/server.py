@@ -32,7 +32,7 @@ class Pool:
     '''This pool reads standard TREC mastermerge pools, but the
     logs are JSON lines.
     '''
-    def __init__(self, filename):
+    def __init__(self, filename, min_rel=1):
         self.pool = {}
         self.topic = None
         self.desc = ''
@@ -40,6 +40,7 @@ class Pool:
         self.last_stamp = 0
         self.batch = {}
         self.last_batch = ''
+        self.min_rel = min_rel
 
         with open(filename, 'r') as fp:
             for line in fp:
@@ -84,14 +85,14 @@ class Pool:
         return len(self.pool)
 
     def num_rel(self):
-        return sum([1 for judgment in self.pool.values() if int(judgment['judgment']) > 0])
+        return sum([1 for judgment in self.pool.values() if int(judgment['judgment']) >= self.min_rel])
 
     def batch_num_rel(self):
         num_rel = collections.Counter()
         n = collections.Counter()
         for docid, judgment in self.pool.items():
             n[self.batch[docid]] += 1
-            if int(judgment['judgment']) > 0:
+            if int(judgment['judgment']) >= self.min_rel:
                 num_rel[self.batch[docid]] += 1
         nr = {}
         for batch in n.keys():
@@ -161,7 +162,7 @@ def inbox(qargs):
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
             if re.match(r'^topic\d+$', child.name):
-                p = Pool(child)
+                p = Pool(child, min_rel=2)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
         app.logger.debug('Got inbox for ' + user)
@@ -183,7 +184,7 @@ def dashboard():
             if relchild.is_dir():
                 for child in relchild.iterdir():
                     if re.match(r'^topic\d+$', child.name):
-                        p = Pool(child)
+                        p = Pool(child, min_rel=2)
                         pct_rel = p.num_rel() * 100 / len(p)
                         b_pct_rel = p.batch_num_rel()
                         data.append({'topic': p.topic,
@@ -213,7 +214,7 @@ def get_pool(qargs):
     user = qargs['u']
     try:
         filename = Path(app.config['SAVE']) / user / f'topic{topic}'
-        pool = Pool(filename)
+        pool = Pool(filename, min_rel=2)
         return(pool.json(), 200)
     except FileNotFoundError:
         app.logger.debug(f'Pool not found: {user} {topic} {filename}')
@@ -327,6 +328,8 @@ def train_model(qargs):
                         app.config['MARCO'],
                         model_file,
                         'train',
+                        '-l', '2',
+                        '-n', '100',
                         qrels_file],
                        text=True,
                        check=True)
