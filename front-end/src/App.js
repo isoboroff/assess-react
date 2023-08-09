@@ -262,24 +262,24 @@ function WaitforModal(props) {
 function ScanTerms(props) {
   const dispatch = useContext(AssessDispatch);
   const change = useCallback((e) => {
-    props.set_scan_terms(e.target.value.trim());
+    props.set_scan_terms(e.target.value);
     e.preventDefault();
     e.stopPropagation();
   });
   const update = useCallback((e) => {
-    if (e.key === 'Enter') {
+    if (e.code === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
       dispatch({
         type: Actions.SAVE_SCAN_TERMS,
-        payload: { scan_terms: props.scan_terms }
+        payload: { scan_terms: props.scan_terms.trim() }
       });
     }
   });
   const apply = useCallback(() => {
     dispatch({
       type: Actions.SAVE_SCAN_TERMS,
-      payload: { scan_terms: props.scan_terms }
+      payload: { scan_terms: props.scan_terms.trim() }
     });
   });
   const clear = useCallback(() => {
@@ -297,7 +297,7 @@ function ScanTerms(props) {
           dir={props.dir}
           value={props.scan_terms}
           onChange={change}
-          onPressEnter={update} />
+          onKeyDown={update} />
         <Button variant="primary"
           onClick={apply}>Apply</Button>
         <Button variant="secondary"
