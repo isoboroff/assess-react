@@ -26,7 +26,8 @@ import { sha256 } from 'hash-wasm';
 import Pool from './Pool';
 import Description from './Description';
 import Highlightable from './Highlightable';
-import useKeyPress from './useKeyPress';
+// import useKeyPress from './useKeyPress';
+import KeyboardEventHandler from 'react-keyboard-event-handler';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -557,13 +558,13 @@ function App() {
    * pool document respectively.   The spacebar judges the current
    * document irrelevant and moves to the next document.
    */
-  const onKeyPress = (event) => {
-    switch (event.key) {
+  const onKeyPress = (key, event) => {
+    switch (key) {
       case '0':
       case '1':
       case '2':
       case '3':
-        judge_current({ judgment: event.key });
+        judge_current({ judgment: key });
         break;
       case 'n':
         load_pool_item(state.current + 1);
@@ -574,7 +575,7 @@ function App() {
     }
   };
 
-  useKeyPress(['n', 'p', '0', '1', '2', '3'], onKeyPress);
+  // useKeyPress(['n', 'p', '0', '1', '2', '3'], onKeyPress);
 
   const docDiv = useRef(null);
 
@@ -595,6 +596,10 @@ function App() {
 
   return (
     <AssessDispatch.Provider value={dispatch}>
+      <KeyboardEventHandler
+        handleKeys={['n', 'p', '0', '1', '2', '3']}
+        onKeyEvent={(key, e) => onKeyPress(key, e)}
+      />
       <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
 
         { /************** Modals */}
