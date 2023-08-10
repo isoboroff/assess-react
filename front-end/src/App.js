@@ -27,6 +27,7 @@ import Pool from './Pool';
 import Description from './Description';
 import Highlightable from './Highlightable';
 // import useKeyPress from './useKeyPress';
+import PickerApp from './Picker';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -235,6 +236,9 @@ function LoadTopicModal(props) {
         </table>
       </Modal.Body>
       <Modal.Footer>
+        <Button variant="secondary" onClick={() => props.set_show_picker_dialog(true)}>
+          Get new...
+        </Button>
         <Button variant="primary" onClick={() => props.set_show_topic_dialog(false)}>
           Cancel
         </Button>
@@ -242,6 +246,26 @@ function LoadTopicModal(props) {
     </Modal>
   );
 }
+
+function PickerModal(props) {
+  return (
+    <Modal show={props.show_picker_dialog} size="lg">
+      <Modal.Header closeLabel="Cancel"
+        closeButton={true}
+        onHide={() => props.set_show_picker_dialog(false)}>
+        <Modal.Title>
+          Pick a new query...
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <PickerApp set_show_picker_dialog={props.set_show_picker_dialog}
+          username={props.username}
+          load_pool={props.load_pool} />
+      </Modal.Body>
+    </Modal>
+  );
+}
+
 
 /* A generic wait-please modal */
 function WaitforModal(props) {
@@ -320,6 +344,7 @@ function App() {
   const [login_required, set_login_required] = useState(false);
   const [topic_requested, set_topic_requested] = useState(false);
   const [show_topic_dialog, set_show_topic_dialog] = useState(false);
+  const [show_picker_dialog, set_show_picker_dialog] = useState(false);
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState('');
   const [pool_filter, set_pool_filter] = useState('all');
@@ -606,8 +631,13 @@ function App() {
         <LoginModal login_required={login_required} set_required={set_login_required} />
         <LoadTopicModal show_topic_dialog={show_topic_dialog}
           set_show_topic_dialog={set_show_topic_dialog}
+          set_show_picker_dialog={set_show_picker_dialog}
           inbox={inbox}
           load_pool={load_pool_for_current_user} />
+        <PickerModal show_picker_dialog={show_picker_dialog}
+          set_show_picker_dialog={set_show_picker_dialog}
+          load_pool={load_pool_for_current_user}
+          username={state.username} />
         <WaitforModal show={show_waitfor}
           title={Object.hasOwn(waitfor_msg, 'title') && waitfor_msg['title']}
           message={Object.hasOwn(waitfor_msg, 'msg') && waitfor_msg['msg']}

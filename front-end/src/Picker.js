@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import DataTable from 'react-data-table-component';
-import { resolvePath } from 'react-router-dom';
 
 function PickerApp(props) {
   const [data, setData] = useState([]);
   const [pending, setPending] = useState(true);
-  const [user, setUser] = useState('');
 
   const columns = [
     {
@@ -23,19 +21,11 @@ function PickerApp(props) {
 
   const handleRowSelected = async (row, event) => {
     if (window.confirm(`Confirm selection: ${row.query}`)) {
-      await fetch('pick?u=' + user + '&t=' + row.id);
-      window.location.href = resolvePath('/').pathname;
+      await fetch('pick?u=' + props.username + '&t=' + row.id);
+      props.set_show_picker_dialog(false);
+      props.load_pool(row.id);
     }
   };
-
-  useEffect(() => {
-    const user = window.localStorage.getItem('user');
-    if (user) {
-      setUser(user);
-    } else {
-      window.location.href = resolvePath('/').pathname;
-    }
-  }, []);
 
   useEffect(() => {
     fetch('pickdata')
