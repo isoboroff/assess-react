@@ -3,14 +3,12 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import DashboardApp from './Dashboard';
-import PickerApp from './Picker';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 const routes = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/dashboard", element: <DashboardApp /> },
-  { path: "/picker", element: <PickerApp /> },
 ]);
 
 ReactDOM.render(
