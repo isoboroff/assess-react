@@ -426,6 +426,10 @@ function App() {
   }) => {
     const docid = state.pool[state.current].docid;
 
+    if (!judgment in rel_levels) {
+      return;
+    }
+
     if (passage && (judgment === '0' || judgment === '-1'))
       judgment = '2';
 
@@ -511,7 +515,9 @@ function App() {
       case '0':
       case '1':
       case '2':
-        judge_current({ judgment: event.key });
+        if (event.key in rel_levels) {
+          judge_current({ judgment: event.key });
+        }
         break;
       case 'n':
         load_pool_item(state.current + 1);
