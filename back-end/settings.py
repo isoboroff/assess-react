@@ -12,3 +12,9 @@ INDEX='neuclir'
 
 # Password file
 PWFILE='passwd'
+
+# Logging
+LOGLEVEL='INFO'
+
+# Timezone for dashboard
+TZ='US/Eastern'
