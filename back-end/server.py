@@ -143,7 +143,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+$', child.name):
+            if re.match(r'^topic\d+\.(rus|fas|zho)$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
@@ -164,8 +164,10 @@ def dashboard():
         reldir = Path(app.config['SAVE'])
         for relchild in reldir.iterdir():
             if relchild.is_dir():
+                if (relchild / 'no-dashboard').exists():
+                    continue
                 for child in relchild.iterdir():
-                    if re.match(r'^topicprojected-\d+-\d+$', child.name):
+                    if re.match(r'^topic\d+\.(rus|fas|zho)$', child.name):
                         p = Pool(child)
                         pct_rel = p.num_rel() * 100 / len(p)
                         data.append({'topic': p.topic,
