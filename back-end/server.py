@@ -169,7 +169,7 @@ def dashboard():
                 for child in relchild.iterdir():
                     if re.match(r'^topic\d+\.(rus|fas|zho)$', child.name):
                         p = Pool(child)
-                        num_valuable = sum([1 for judgment in self.pool.values() if int(judgment['judgment']) > 1])
+                        num_valuable = sum([1 for judgment in p.pool.values() if int(judgment['judgment']) > 1])
                         pct_rel = num_valuable * 100 / len(p)
                         data.append({'topic': p.topic,
                                      'assr': child.parent.stem,
