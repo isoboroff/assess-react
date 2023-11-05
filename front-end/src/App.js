@@ -245,19 +245,20 @@ function LoadTopicModal(props) {
 function ScanTerms(props) {
   const dispatch = useContext(AssessDispatch);
   const change = useCallback((e) => {
-    props.set_scan_terms(e.target.value.trim());
+    props.set_scan_terms(e.target.value);
     e.preventDefault();
     e.stopPropagation();
   });
   const update = useCallback((e) => {
     if (e.key === 'Enter') {
+      console.log('Enter pressed in scan terms');
       e.preventDefault();
-      e.stopPropagation();
       dispatch({
         type: Actions.SAVE_SCAN_TERMS,
         payload: { scan_terms: props.scan_terms }
       });
     }
+    e.stopPropagation();
   });
   const apply = useCallback(() => {
     dispatch({
@@ -280,7 +281,7 @@ function ScanTerms(props) {
           dir={props.dir}
           value={props.scan_terms}
           onChange={change}
-          onPressEnter={update} />
+          onKeyDown={update} />
         <Button variant="primary"
           onClick={apply}>Apply</Button>
         <Button variant="secondary"
