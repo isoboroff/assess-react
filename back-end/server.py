@@ -122,7 +122,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9]+$')),
+    't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
     'd': fields.String()
 }
 
