@@ -46,6 +46,7 @@ const initial_state = {
   cur_doc: '',
   topic: '',
   scan_terms: '',
+  clippings: [],
   pool: []
 };
 
@@ -56,7 +57,9 @@ const Actions = Object.freeze({
   LOAD_POOL: 'LOAD_POOL',
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
-  SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS'
+  SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS',
+  ADD_CLIP: 'ADD_CLIP',
+  REMOVE_CLIP: 'REMOVE_CLIP',
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -64,69 +67,88 @@ const Actions = Object.freeze({
  */
 function assess_reducer(state, action) {
   switch (action.type) {
-    case Actions.LOGIN:
-      window.localStorage.setItem('user', action.payload.username);
-      return {
-        ...state,
-        username: action.payload.username
-      };
+  case Actions.LOGIN:
+    window.localStorage.setItem('user', action.payload.username);
+    return {
+      ...state,
+      username: action.payload.username
+    };
 
-    case Actions.LOGOUT:
-      window.localStorage.clear();
-      return { ...initial_state };
+  case Actions.LOGOUT:
+    window.localStorage.clear();
+    return { ...initial_state };
 
-    case Actions.LOAD_POOL:
-      window.localStorage.setItem('topic', action.payload.topic);
-      return {
-        ...state,
-        topic: action.payload.topic,
-        desc: action.payload.desc,
-        current: 0,
-        pool: action.payload.pool
-      };
+  case Actions.LOAD_POOL:
+    window.localStorage.setItem('topic', action.payload.topic);
+    return {
+      ...state,
+      topic: action.payload.topic,
+      desc: action.payload.desc,
+      current: 0,
+      pool: action.payload.pool
+    };
 
-    case Actions.FETCH_DOC:
-      window.localStorage.setItem('current', action.payload.current);
-      return {
-        ...state,
-        current: action.payload.current,
-        doc: action.payload.doc
-      };
+  case Actions.FETCH_DOC:
+    window.localStorage.setItem('current', action.payload.current);
+    return {
+      ...state,
+      current: action.payload.current,
+      doc: action.payload.doc
+    };
 
-    case Actions.JUDGE:
-      // Update the judgment of the document that was judged
-      let update = { judgment: action.payload.judgment };
-      if (action.payload.hasOwnProperty('passage')) {
-        if (action.payload.passage.hasOwnProperty('clear'))
-          update.passage = null;
-        else
-          update.passage = action.payload.passage;
-      }
-      if (action.payload.hasOwnProperty('subtopics'))
-        update.subtopics = action.payload.subtopics;
-
-      let newPool = state.pool.map((entry) => {
-        if (entry.docid === action.payload.docid)
-          return { ...entry, ...update };
-        else
-          return entry;
-      });
-      return {
-        ...state,
-        pool: newPool
-      };
-
-    case Actions.SAVE_SCAN_TERMS:
-      if (action.payload.scan_terms)
-        window.localStorage.setItem('scan_terms', action.payload.scan_terms);
+  case Actions.JUDGE:
+    // Update the judgment of the document that was judged
+    let update = { judgment: action.payload.judgment };
+    if (action.payload.hasOwnProperty('passage')) {
+      if (action.payload.passage.hasOwnProperty('clear'))
+        update.passage = null;
       else
-        window.localStorage.removeItem('scan_terms');
-      return {
-        ...state,
-        scan_terms: action.payload.scan_terms
-      };
-    default:
-      return state;
+        update.passage = action.payload.passage;
+    }
+    if (action.payload.hasOwnProperty('subtopics'))
+      update.subtopics = action.payload.subtopics;
+
+    let newPool = state.pool.map((entry) => {
+      if (entry.docid === action.payload.docid)
+        return { ...entry, ...update };
+      else
+        return entry;
+    });
+    return {
+      ...state,
+      pool: newPool
+    };
+
+  case Actions.SAVE_SCAN_TERMS:
+    if (action.payload.scan_terms)
+      window.localStorage.setItem('scan_terms', action.payload.scan_terms);
+    else
+      window.localStorage.removeItem('scan_terms');
+    return {
+      ...state,
+      scan_terms: action.payload.scan_terms
+    };
+
+  case Actions.ADD_CLIP:
+    let new_clips = state.clippings;
+    let c = { ...action.payload,
+              seq: new_clips.length + 1 }
+    console.log(c);
+    new_clips.push(c);
+    return {
+      ...state,
+      clippings: new_clips,
+    };
+
+  case Actions.REMOVE_CLIP:
+    let the_clips = state.clippings.filter((clipping) => clipping.seq === action.payload);
+    return {
+      ...state,
+      clippings: the_clips,
+    };
+
+  default:
+    return state;
   }
 };
 
@@ -171,27 +193,27 @@ function LoginModal(props) {
 
   return (
     <Modal show={props.login_required} onHide={do_login}
-      backdrop="static" keyboard={false}>
+           backdrop="static" keyboard={false}>
       <Modal.Header>
         <Modal.Title>Please log in</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {error ? <p>Invalid username or password.</p> : ''}
         <Form.Control type="text"
-          placeholder="user"
-          value={username}
-          onChange={(e) => set_username(e.target.value)} />
+                      placeholder="user"
+                      value={username}
+                      onChange={(e) => set_username(e.target.value)} />
         <Form.Control type="password"
-          placeholder="password"
-          value={password}
-          onChange={(e) => set_password(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              e.stopPropagation();
-              do_login();
-            }
-          }} />
+                      placeholder="password"
+                      value={password}
+                      onChange={(e) => set_password(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          do_login();
+                        }
+                      }} />
       </Modal.Body>
       <Modal.Footer>
         <Button variant="primary" onClick={() => do_login()}>Log in</Button>
@@ -278,17 +300,42 @@ function ScanTerms(props) {
     <Col>
       <Form inline>
         <Form.Control placeholder="Scan terms" className="col-10 mx-3"
-          dir={props.dir}
-          value={props.scan_terms}
-          onChange={change}
-          onKeyDown={update} />
+                      dir={props.dir}
+                      value={props.scan_terms}
+                      onChange={change}
+                      onKeyDown={update} />
         <Button variant="primary"
-          onClick={apply}>Apply</Button>
+                onClick={apply}>Apply</Button>
         <Button variant="secondary"
-          onClick={clear}>Clear</Button>
+                onClick={clear}>Clear</Button>
       </Form>
     </Col>
   )
+}
+
+// A clipping object has:
+// docno
+// start
+// length
+// cliptext
+
+function Clipping(props) {
+  return (
+    <ListGroup.Item>
+      {props.clip.seq}: {props.clip.text}
+    </ListGroup.Item>
+  );
+}
+
+function Clippy(props) {
+  const clips = props.clips
+        .flatMap((entry, i) => {
+          return <Clipping
+                   clip={entry}
+                   seq={i}
+                 />
+        });
+  return (<ListGroup> {clips} </ListGroup>);
 }
 
 /*
@@ -371,8 +418,8 @@ function App() {
           }
         });
         return fetch('doc?u=' + username
-          + '&t=' + topic
-          + '&d=' + data.pool[current].docid);
+                     + '&t=' + topic
+                     + '&d=' + data.pool[current].docid);
       })
       .then(response => {
         if (response.ok) {
@@ -392,17 +439,17 @@ function App() {
   });
 
   const load_pool_for_current_user =
-    useCallback((topic, current = 0) => {
-      load_pool(state.username, topic, current);
-    });
+        useCallback((topic, current = 0) => {
+          load_pool(state.username, topic, current);
+        });
 
   const load_pool_item = useCallback((i) => {
     if (i < 0 || i >= state.pool.length) return;
 
     const docid = state.pool[i].docid
     fetch('doc?t=' + state.topic
-      + '&u=' + state.username
-      + '&d=' + docid)
+          + '&u=' + state.username
+          + '&d=' + docid)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -448,16 +495,23 @@ function App() {
     }
 
     fetch('judge?u=' + state.username +
-      '&t=' + state.topic +
-      '&d=' + docid, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(judge_payload)
-    })
+          '&t=' + state.topic +
+          '&d=' + docid, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(judge_payload)
+          })
       .then(response => {
         if (response.ok)
           dispatch({ type: Actions.JUDGE, payload: judge_payload });
       });
+
+    if (passage) {
+      dispatch({ type: Actions.ADD_CLIP, payload: {
+        docid: docid,
+        ...passage,}});
+    }
+
   });
 
   const note_passage = useCallback((passage) => {
@@ -485,14 +539,14 @@ function App() {
   const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
     let style = 'font-weight-normal';
     if (state.current >= 0 &&
-      state.current < state.pool.length
-      && i === state.pool[state.current].judgment) {
+        state.current < state.pool.length
+        && i === state.pool[state.current].judgment) {
       style = 'font-weight-bold';
     }
     return (
       <ButtonGroup>
         <Button variant={rel_levels[i].color}
-          onClick={() => judge_current({ judgment: i })}>
+                onClick={() => judge_current({ judgment: i })}>
           <span className={style}>
             {rel_levels[i].label}
           </span>
@@ -509,18 +563,18 @@ function App() {
    */
   const onKeyPress = (event) => {
     switch (event.key) {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-        judge_current({ judgment: event.key });
-        break;
-      case 'n':
-        load_pool_item(state.current + 1);
-        break;
-      case 'p':
-        load_pool_item(state.current - 1);
-        break;
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+      judge_current({ judgment: event.key });
+      break;
+    case 'n':
+      load_pool_item(state.current + 1);
+      break;
+    case 'p':
+      load_pool_item(state.current - 1);
+      break;
     }
   };
 
@@ -542,9 +596,9 @@ function App() {
         { /************** Modals */}
         <LoginModal login_required={login_required} set_required={set_login_required} />
         <LoadTopicModal show_topic_dialog={show_topic_dialog}
-          set_show_topic_dialog={set_show_topic_dialog}
-          inbox={inbox}
-          load_pool={load_pool_for_current_user} />
+                        set_show_topic_dialog={set_show_topic_dialog}
+                        inbox={inbox}
+                        load_pool={load_pool_for_current_user} />
 
         { /************** Header line: load pool, filter pool, judgment buttons, logout button */}
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
@@ -553,7 +607,7 @@ function App() {
           </Col>
           <Col xs="auto" className="flex-shrink-1">
             <Button variant="primary"
-              onClick={() => set_topic_requested(true)}>Load Pool</Button>
+                    onClick={() => set_topic_requested(true)}>Load Pool</Button>
           </Col>
           <Col xs="auto">
             {state.current + 1} of {state.pool.length}
@@ -586,20 +640,28 @@ function App() {
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
             <Pool user={state.username} topic={state.topic}
-              rel_levels={rel_levels}
-              pool={state.pool} current={state.current} filter={pool_filter}
-              fetch_doc={load_pool_item}
+                  rel_levels={rel_levels}
+                  pool={state.pool} current={state.current} filter={pool_filter}
+                  fetch_doc={load_pool_item}
             />
           </Col>
-          <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
-            <Description desc={state.desc}
-              note_subtopic={note_subtopic}
-              rel={(state.current >= 0 && state.pool[state.current].subtopics)
-                ? state.pool[state.current].subtopics : null} />
-            <Highlightable content={state.doc} scan_terms={state.scan_terms}
-              rel={(state.current >= 0 && state.pool[state.current].passage)
-                ? state.pool[state.current].passage : ''}
-              note_passage={note_passage} />
+          <Col ref={docDiv} xs={8} className="vh-full">
+            <Row className="h-25"><Col>
+              <Description desc={state.desc}
+                           note_subtopic={note_subtopic}
+                           rel={(state.current >= 0 && state.pool[state.current].subtopics)
+                                ? state.pool[state.current].subtopics : null} /></Col></Row>
+            <Row className="h-50 mt-5 mb-3 overflow-auto"><Col>
+              <Highlightable content={state.doc} scan_terms={state.scan_terms}
+                             rel={(state.current >= 0 && state.pool[state.current].passage)
+                                  ? state.pool[state.current].passage : ''}
+                             note_passage={note_passage} />
+            </Col></Row>
+            <Row className="h-25">
+              <Col>
+                <Clippy clips={state.clippings} />
+                </Col>
+            </Row>
           </Col>
         </Row>
       </Container>
