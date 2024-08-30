@@ -657,7 +657,7 @@ function App() {
                                   ? state.pool[state.current].passage : ''}
                              note_passage={note_passage} />
             </Col></Row>
-            <Row className="h-25">
+            <Row className="h-25 overflow-auto">
               <Col>
                 <Clippy clips={state.clippings} />
                 </Col>
