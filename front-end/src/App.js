@@ -335,7 +335,21 @@ function Clippy(props) {
                    seq={i}
                  />
         });
-  return (<ListGroup> {clips} </ListGroup>);
+  return (<>
+            <Form.Label>Clippy</Form.Label>
+            <ListGroup> {clips} </ListGroup>);
+          </>);
+}
+
+function Panel( {children} ) {
+  return (
+    <div style={{
+           height: '100%',
+           overflowY: 'auto'
+         }}>
+      {children}
+    </div>
+  );
 }
 
 /*
@@ -591,9 +605,8 @@ function App() {
 
   return (
     <AssessDispatch.Provider value={dispatch}>
-      <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
-
         { /************** Modals */}
+      <Container fluid className="d-flex flex-column vh-100 overflow-hidden">
         <LoginModal login_required={login_required} set_required={set_login_required} />
         <LoadTopicModal show_topic_dialog={show_topic_dialog}
                         set_show_topic_dialog={set_show_topic_dialog}
@@ -630,40 +643,63 @@ function App() {
 
         { /************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
-        <ScanTerms
-          dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
-          scan_terms={scan_terms}
-          set_scan_terms={set_scan_terms}
-        />
+        <Row>
+          <ScanTerms
+            dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
+            scan_terms={scan_terms}
+            set_scan_terms={set_scan_terms}
+          />
+        </Row>
 
         { /************** Main: pool column and topic/document column */}
-        <Row className="mt-3 vh-full">
-          <Col xs={4} className="vh-full overflow-auto">
-            <Pool user={state.username} topic={state.topic}
-                  rel_levels={rel_levels}
-                  pool={state.pool} current={state.current} filter={pool_filter}
-                  fetch_doc={load_pool_item}
-            />
-          </Col>
-          <Col ref={docDiv} xs={8} className="vh-full">
-            <Row className="h-25"><Col>
-              <Description desc={state.desc}
-                           note_subtopic={note_subtopic}
-                           rel={(state.current >= 0 && state.pool[state.current].subtopics)
-                                ? state.pool[state.current].subtopics : null} /></Col></Row>
-            <Row className="h-50 mt-5 mb-3 overflow-auto"><Col>
-              <Highlightable content={state.doc} scan_terms={state.scan_terms}
-                             rel={(state.current >= 0 && state.pool[state.current].passage)
-                                  ? state.pool[state.current].passage : ''}
-                             note_passage={note_passage} />
-            </Col></Row>
-            <Row className="h-25 overflow-auto">
-              <Col>
+        <Container fluid style={{ height: '100vh',
+                                  padding: 0,
+                                  'margin-top': '1em',
+                                }}>
+          <Row style={{ height: '60%' }}>
+            <Col md={4} style={{ height: '100%' }}>
+              <Panel>
+                <Pool user={state.username} topic={state.topic}
+                      rel_levels={rel_levels}
+                      pool={state.pool} current={state.current} filter={pool_filter}
+                      fetch_doc={load_pool_item}
+                />
+              </Panel>
+            </Col>
+            <Col md={8} style={{ height: '100%' }}>
+              <Panel ref={docDiv}>
+                <Description desc={state.desc}
+                             note_subtopic={note_subtopic}
+                             rel={(state.current >= 0 && state.pool[state.current].subtopics)
+                                  ? state.pool[state.current].subtopics : null} />
+                <Highlightable content={state.doc}
+                               scan_terms={state.scan_terms}
+                               rel={(state.current >= 0 && state.pool[state.current].passage)
+                                    ? state.pool[state.current].passage : ''}
+                               note_passage={note_passage} />
+              </Panel>
+            </Col>
+          </Row>
+          <Row className="mt-5 pt-2"> </Row>
+          <Row style={{ height: '40%' }}>
+            <Col md={4} style={{ height: '100%' }}>
+              <Panel>
                 <Clippy clips={state.clippings} />
-                </Col>
-            </Row>
-          </Col>
-        </Row>
+              </Panel>
+            </Col>
+            <Col md={8} style={{ height: '100%' }}>
+              <Panel>
+                <Form>
+                  <Form.Group className="mb-3"
+                              controlId="exampleForm.ControlTextarea1">
+                    <Form.Label>Summary</Form.Label>
+                    <Form.Control as="textarea" rows={6} />
+                  </Form.Group>
+                </Form>
+              </Panel>
+            </Col>
+          </Row>
+        </Container>
       </Container>
     </AssessDispatch.Provider>
   );
