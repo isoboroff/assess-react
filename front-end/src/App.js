@@ -681,7 +681,7 @@ function App() {
             </Col>
           </Row>
           <Row className="mt-5 pt-2"> </Row>
-          <Row style={{ height: '40%' }}>
+          <Row style={{ height: '30%', 'padding-bottom': '50px' }}>
             <Col md={4} style={{ height: '100%' }}>
               <Panel>
                 <Clippy clips={state.clippings} />
