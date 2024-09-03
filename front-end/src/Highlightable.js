@@ -10,12 +10,23 @@ function Highlightable(props) {
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {
     if (props.rel) {
-      const start = props.rel.start;
-      const end = start + props.rel.length;
-      const prefix = text.slice(0, start);
-      const span = text.slice(start, end);
-      const suffix = text.slice(end);
-      return prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
+      const highlights = props.rel.toSorted((a,b) => a.start - a.end);
+      let pos = 0;
+      let doc = "";
+
+      for (const hl of highlights) {
+        const start = hl.start;
+        if (start < pos) continue;
+        const end = start + hl.length;
+        const prefix = text.slice(pos, start);
+        const span = text.slice(start, end);
+        const suffix = text.slice(end);
+        doc += prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
+        pos = end;
+      }
+      doc += text.slice(pos);
+      return doc;
+
     } else {
       return text;
     }

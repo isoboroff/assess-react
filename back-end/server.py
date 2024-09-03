@@ -56,22 +56,27 @@ class Pool:
                     log_entry = Pool.read_log_entry(line)
                     self.last = log_entry['docid']
                     self.last_stamp = log_entry['stamp']
+                    pool_item = self.pool[log_entry['docid']]
+
                     if 'passage' in log_entry:
                         if 'clear' in log_entry['passage']:
-                            del self.pool[log_entry['docid']]['passage']
+                            if log_entry['passage']['clear'] == True:
+                                del pool_item['passage']
+                            else:
+                                pool_item['passage'] = (p for p in pool_item['passage'] if p != log_entry['passage']['clear'])
                         else:
-                            if 'passage' not in self.pool[log_entry['docid']]:
-                                self.pool[log_entry['docid']]['passage'] = []
-                            self.pool[log_entry['docid']]['passage'].append(log_entry['passage'])
+                            if 'passage' not in pool_item:
+                                pool_item['passage'] = []
+                            pool_item['passage'].append(log_entry['passage'])
 
 
                     if 'judgment' in log_entry:
-                        self.pool[log_entry['docid']]['judgment'] = log_entry['judgment']
+                        pool_item['judgment'] = log_entry['judgment']
                     if 'subtopics' in log_entry:
                         if 'subtopics' not in self.pool[log_entry['docid']]:
-                            self.pool[log_entry['docid']]['subtopics'] = {}
+                            pool_item['subtopics'] = {}
                         for subtopic, value in log_entry['subtopics'].items():
-                            self.pool[log_entry['docid']]['subtopics'][subtopic] = value
+                            pool_item['subtopics'][subtopic] = value
 
         except FileNotFoundError:
             pass
