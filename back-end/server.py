@@ -57,7 +57,14 @@ class Pool:
                     self.last = log_entry['docid']
                     self.last_stamp = log_entry['stamp']
                     if 'passage' in log_entry:
-                        self.pool[log_entry['docid']]['passage'] = log_entry['passage']
+                        if 'clear' in log_entry['passage']:
+                            del self.pool[log_entry['docid']]['passage']
+                        else:
+                            if 'passage' not in self.pool[log_entry['docid']]:
+                                self.pool[log_entry['docid']]['passage'] = []
+                            self.pool[log_entry['docid']]['passage'].append(log_entry['passage'])
+
+
                     if 'judgment' in log_entry:
                         self.pool[log_entry['docid']]['judgment'] = log_entry['judgment']
                     if 'subtopics' in log_entry:
