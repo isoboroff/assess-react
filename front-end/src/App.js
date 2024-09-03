@@ -20,6 +20,7 @@ import Collapse from 'react-bootstrap/Collapse';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCoffee } from '@fortawesome/free-solid-svg-icons';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 
 import { sha256 } from 'hash-wasm';
 
@@ -133,15 +134,18 @@ function assess_reducer(state, action) {
     let new_clips = state.clippings;
     let c = { ...action.payload,
               seq: new_clips.length + 1 }
-    console.log(c);
     new_clips.push(c);
+    window.localStorage.setItem('clippings', new_clips);
     return {
       ...state,
       clippings: new_clips,
     };
 
   case Actions.REMOVE_CLIP:
-    let the_clips = state.clippings.filter((clipping) => clipping.seq === action.payload);
+    let the_clips = state.clippings
+      .filter((clipping) => clipping.seq != action.payload)
+      .map((clipping, i) => { clipping.seq = i + 1; return clipping; });
+    window.localStorage.setItem('clippings', the_clips);
     return {
       ...state,
       clippings: the_clips,
@@ -320,9 +324,21 @@ function ScanTerms(props) {
 // cliptext
 
 function Clipping(props) {
+  const dispatch = useContext(AssessDispatch);
+  const delete_me = () => {
+    dispatch({ type: Actions.REMOVE_CLIP,
+               payload: props.clip.seq });
+  };
+
   return (
-    <ListGroup.Item>
+    <ListGroup.Item action
+                    onClick={() => props.fetch_doc(props.clip.docid)}>
+
       {props.clip.seq}: {props.clip.text}
+      <span className="mr-1"></span>
+      <FontAwesomeIcon icon={faCircleXmark}
+                       onClick={(e) => { delete_me() }}
+      />
     </ListGroup.Item>
   );
 }
@@ -331,13 +347,14 @@ function Clippy(props) {
   const clips = props.clips
         .flatMap((entry, i) => {
           return <Clipping
+                   fetch_doc={props.fetch_doc}
                    clip={entry}
                    seq={i}
                  />
         });
   return (<>
             <Form.Label>Clippy</Form.Label>
-            <ListGroup> {clips} </ListGroup>);
+            <ListGroup> {clips} </ListGroup>
           </>);
 }
 
@@ -349,6 +366,21 @@ function Panel( {children} ) {
          }}>
       {children}
     </div>
+  );
+}
+
+function SummaryBox(props) {
+  const [summary, set_summary] = useState('');
+  return (
+    <Form>
+      <Form.Group className="mb-3"
+                  controlId="exampleForm.ControlTextarea1">
+        <Form.Label>Summary</Form.Label>
+        <Form.Control as="textarea" rows={props.rows}
+                      onChange={(e) => {set_summary(e.target.value)}}
+        />
+      </Form.Group>
+    </Form>
   );
 }
 
@@ -479,6 +511,27 @@ function App() {
           }
         });
       });
+  });
+
+  const load_doc = useCallback((docid) => {
+    fetch('doc?t=' + state.topic
+          + '&u=' + state.username
+          + '&d=' + docid)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return '';
+      })
+      .then(data =>
+        dispatch({
+          type: Actions.FETCH_DOC,
+          payload: {
+            current: 0,
+            doc: data
+          }
+        })
+      );
   });
 
   const judge_current = useCallback(({
@@ -684,18 +737,12 @@ function App() {
           <Row style={{ height: '30%', 'padding-bottom': '50px' }}>
             <Col md={4} style={{ height: '100%' }}>
               <Panel>
-                <Clippy clips={state.clippings} />
+                <Clippy clips={state.clippings} fetch_doc={load_doc}/>
               </Panel>
             </Col>
             <Col md={8} style={{ height: '100%' }}>
               <Panel>
-                <Form>
-                  <Form.Group className="mb-3"
-                              controlId="exampleForm.ControlTextarea1">
-                    <Form.Label>Summary</Form.Label>
-                    <Form.Control as="textarea" rows={6} />
-                  </Form.Group>
-                </Form>
+                <SummaryBox rows={6} />
               </Panel>
             </Col>
           </Row>
