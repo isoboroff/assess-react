@@ -8,21 +8,28 @@ function Highlightable(props) {
 
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
-  const highlight_rel_passage = (text) => {
+  const highlight_rel_passages = (text) => {
     if (props.rel) {
-      const highlights = props.rel.toSorted((a,b) => a.start - a.end);
+      let highlights = props.rel;
+      if (!Array.isArray(highlights)) {
+        highlights = [highlights];
+      }
+      highlights = highlights.toSorted((a,b) => a.start - b.start);
       let pos = 0;
       let doc = "";
 
       for (const hl of highlights) {
+        console.log(hl);
         const start = hl.start;
         if (start < pos) continue;
         const end = start + hl.length;
         const prefix = text.slice(pos, start);
         const span = text.slice(start, end);
-        const suffix = text.slice(end);
-        doc += prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
+        console.log(prefix, span);
+        doc += prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ';
         pos = end;
+        //console.log('final:', doc);
+        console.log('final pos:', pos);
       }
       doc += text.slice(pos);
       return doc;
@@ -124,6 +131,14 @@ function Highlightable(props) {
     return result;
   }
 
+  // Clear a highlight if we clicked it.
+  function maybe_remove_highlight(sel) {
+    const [start, end] = search(sel.anchorNode.nodeValue);
+    props.del_passage({ 'start': start,
+                        'length': end - start,
+                        'text': sel.anchorNode.nodeValue });
+  }
+
   // This effect fires if highlight changes.
   // It calls props.note_passage which notes the relevance judgment.
   useEffect(() => {
@@ -140,7 +155,7 @@ function Highlightable(props) {
     const title = props.content['title'];
     let text = props.content['text'];
     if (props.rel)
-      text = highlight_rel_passage(text);
+      text = highlight_rel_passages(text);
     let textdir = '';
     let textclass = 'article-text';
     if (props.content['lang'] === 'fas') {
@@ -157,6 +172,13 @@ function Highlightable(props) {
           onMouseUp={(e) => {
             if (!e.altKey && has_selection()) {
               set_highlight(get_selected_text());
+            } else if (window.getSelection) {
+              const sel = window.getSelection();
+              if (sel.isCollapsed &&
+                  (sel.anchorNode == sel.focusNode) &&
+                  sel.anchorNode.parentNode.tagName == 'MARK') {
+                maybe_remove_highlight(sel);
+              }
             }
           }}>
           <Interweave content={text}

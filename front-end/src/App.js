@@ -95,27 +95,26 @@ function assess_reducer(state, action) {
     };
 
   case Actions.JUDGE:
+    // Payload: docid, judgment, passage, subtopics
     // Update the judgment of the document that was judged
-    let update = { judgment: action.payload.judgment };
-    if (action.payload.hasOwnProperty('passage')) {
-      if (action.payload.passage.hasOwnProperty('clear'))
-        update.passage = null;
-      else
-        update.passage = action.payload.passage;
-    }
-    if (action.payload.hasOwnProperty('subtopics'))
-      update.subtopics = action.payload.subtopics;
-
+    let update = action.payload;
     let newPool = state.pool.map((entry) => {
-      if (entry.docid === action.payload.docid)
+      if (entry.docid === update.docid) {
+        if (update.hasOwnProperty('passage')) {
+          if (update.passage.hasOwnProperty('clear')) {
+            update.passage = [];
+          } else {
+            if (entry.hasOwnProperty('passage')) {
+              update.passage = [ ...entry.passage, ...[update.passage]];
+            }
+          }
+        }
         return { ...entry, ...update };
-      else
+      } else {
         return entry;
+      }
     });
-    return {
-      ...state,
-      pool: newPool
-    };
+    return { ...state, pool: newPool };
 
   case Actions.SAVE_SCAN_TERMS:
     if (action.payload.scan_terms)
