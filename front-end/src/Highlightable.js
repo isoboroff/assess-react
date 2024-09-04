@@ -19,17 +19,13 @@ function Highlightable(props) {
       let doc = "";
 
       for (const hl of highlights) {
-        console.log(hl);
         const start = hl.start;
         if (start < pos) continue;
         const end = start + hl.length;
         const prefix = text.slice(pos, start);
         const span = text.slice(start, end);
-        console.log(prefix, span);
         doc += prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ';
         pos = end;
-        //console.log('final:', doc);
-        console.log('final pos:', pos);
       }
       doc += text.slice(pos);
       return doc;
