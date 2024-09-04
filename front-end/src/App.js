@@ -47,7 +47,6 @@ const initial_state = {
   cur_doc: '',
   topic: '',
   scan_terms: '',
-  clippings: [],
   pool: []
 };
 
@@ -59,8 +58,6 @@ const Actions = Object.freeze({
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
   SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS',
-  ADD_CLIP: 'ADD_CLIP',
-  REMOVE_CLIP: 'REMOVE_CLIP',
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -128,27 +125,6 @@ function assess_reducer(state, action) {
     return {
       ...state,
       scan_terms: action.payload.scan_terms
-    };
-
-  case Actions.ADD_CLIP:
-    let new_clips = state.clippings;
-    let c = { ...action.payload,
-              seq: new_clips.length + 1 }
-    new_clips.push(c);
-    window.localStorage.setItem('clippings', new_clips);
-    return {
-      ...state,
-      clippings: new_clips,
-    };
-
-  case Actions.REMOVE_CLIP:
-    let the_clips = state.clippings
-      .filter((clipping) => clipping.seq != action.payload)
-      .map((clipping, i) => { clipping.seq = i + 1; return clipping; });
-    window.localStorage.setItem('clippings', the_clips);
-    return {
-      ...state,
-      clippings: the_clips,
     };
 
   default:
@@ -317,40 +293,35 @@ function ScanTerms(props) {
   )
 }
 
-// A clipping object has:
-// docno
-// start
-// length
-// cliptext
+// Clippy shows the passages marked in the pool, and lets you
+// go to the passage
 
 function Clipping(props) {
-  const dispatch = useContext(AssessDispatch);
-  const delete_me = () => {
-    dispatch({ type: Actions.REMOVE_CLIP,
-               payload: props.clip.seq });
-  };
-
   return (
     <ListGroup.Item action
-                    onClick={() => props.fetch_doc(props.clip.docid)}>
+                    onClick={() => props.fetch_doc(props.docid)}>
 
-      {props.clip.seq}: {props.clip.text}
-      <span className="mr-1"></span>
-      <FontAwesomeIcon icon={faCircleXmark}
-                       onClick={(e) => { delete_me() }}
-      />
+      {props.seq}: {props.clip.text}
     </ListGroup.Item>
   );
 }
 
 function Clippy(props) {
-  const clips = props.clips
-        .flatMap((entry, i) => {
-          return <Clipping
-                   fetch_doc={props.fetch_doc}
-                   clip={entry}
-                   seq={i}
-                 />
+  let seq = 0;
+  const clips = props.pool
+        .map((entry) => {
+          if (entry.hasOwnProperty('passage')) {
+            console.log(entry);
+            for (const p of entry.passage) {
+              seq += 1;
+              return <Clipping
+                       fetch_doc={props.fetch_doc}
+                       docid={entry.docid}
+                       clip={p}
+                       seq={seq}
+                     />
+            }
+          }
         });
   return (<>
             <Form.Label>Clippy</Form.Label>
@@ -358,6 +329,8 @@ function Clippy(props) {
           </>);
 }
 
+// A useful simple widget to contain things that should be 100% of their
+// available height and scroll vertically.
 function Panel( {children} ) {
   return (
     <div style={{
@@ -369,6 +342,7 @@ function Panel( {children} ) {
   );
 }
 
+// A place for the user to type a summary or something
 function SummaryBox(props) {
   const [summary, set_summary] = useState('');
   return (
@@ -385,10 +359,11 @@ function SummaryBox(props) {
 }
 
 /*
- * The "app".  The main interface pieces here are a modal for logins, selecting a
- * topic to load, and judgment buttons for judging the currently displayed doc.
- * Wraps the Pool in one subpane and a BetterDocument in the other.  The
- * BetterDocument component handles document rendering.
+ * The "app".  The main interface pieces here are a modal for logins,
+ * selecting a topic to load, and judgment buttons for judging the
+ * currently displayed doc.  Wraps the Pool in one subpane and a
+ * document in the other.  The Highlightable component handles
+ * document rendering.
  */
 function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
@@ -449,6 +424,7 @@ function App() {
     }
   }, [topic_requested]);
 
+  // Load a pool
   const load_pool = useCallback((username, topic, current = 0) => {
     fetch('pool?u=' + username + '&t=' + topic)
       .then(response => response.json())
@@ -489,6 +465,7 @@ function App() {
           load_pool(state.username, topic, current);
         });
 
+  // This is the routine that fetches a doc by index in the pool
   const load_pool_item = useCallback((i) => {
     if (i < 0 || i >= state.pool.length) return;
 
@@ -514,24 +491,11 @@ function App() {
   });
 
   const load_doc = useCallback((docid) => {
-    fetch('doc?t=' + state.topic
-          + '&u=' + state.username
-          + '&d=' + docid)
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-        return '';
-      })
-      .then(data =>
-        dispatch({
-          type: Actions.FETCH_DOC,
-          payload: {
-            current: 0,
-            doc: data
-          }
-        })
-      );
+    for (let i = 0; i < state.pool.length; i++) {
+      if (state.pool[i].docid == docid)
+        load_pool_item(i);
+    }
+    return '';
   });
 
   const judge_current = useCallback(({
@@ -737,7 +701,7 @@ function App() {
           <Row style={{ height: '30%', 'padding-bottom': '50px' }}>
             <Col md={4} style={{ height: '100%' }}>
               <Panel>
-                <Clippy clips={state.clippings} fetch_doc={load_doc}/>
+                <Clippy pool={state.pool} fetch_doc={load_doc}/>
               </Panel>
             </Col>
             <Col md={8} style={{ height: '100%' }}>
