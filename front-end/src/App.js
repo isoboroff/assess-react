@@ -306,22 +306,21 @@ function Clipping(props) {
 }
 
 function Clippy(props) {
+  let clips = [];
   let seq = 0;
-  const clips = props.pool
-        .map((entry) => {
-          if (entry.hasOwnProperty('passage')) {
-            console.log(entry);
-            for (const p of entry.passage) {
-              seq += 1;
-              return <Clipping
-                       fetch_doc={props.fetch_doc}
-                       docid={entry.docid}
-                       clip={p}
-                       seq={seq}
-                     />
-            }
-          }
-        });
+
+  for (let i = 0; i < props.pool.length; i++) {
+    if (props.pool[i].hasOwnProperty('passage')) {
+      for (let j = 0; j < props.pool[i].passage.length; j++) {
+        seq += 1;
+        clips.push(<Clipping
+                     fetch_doc={props.fetch_doc}
+                     docid={props.pool[i].docid}
+                     clip={props.pool[i].passage[j]}
+                     seq={seq}/>);
+      }
+    }
+  }
   return (<>
             <Form.Label>Clippy</Form.Label>
             <ListGroup> {clips} </ListGroup>
