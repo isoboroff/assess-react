@@ -22,12 +22,13 @@ function Description(props) {
     );
   }
 
-  const wiki_url = "https://en.wikipedia.org/w/index.php?title=" +
-        props.desc['page_info']['page_title'] + "&oldid=" +
-        props.desc['page_info']['revision_id'] +
-        "#" + props.desc['section_info']['title']
-
   if (props.desc) {
+    const wiki_url = "https://en.wikipedia.org/w/index.php?title=" +
+          props.desc['page_info']['page_title'].replaceAll(' ', '_') +
+          "&oldid=" +
+          props.desc['page_info']['revision_id'] +
+          "#" + props.desc['section_info']['title'].replaceAll(' ', '_');
+
     return (
       <div className="border-bottom">
         <p><b>{props.desc['page_info']['page_title']}</b>{'  '}
