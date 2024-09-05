@@ -22,11 +22,16 @@ function Description(props) {
     );
   }
 
+  const wiki_url = "https://en.wikipedia.org/w/index.php?title=" +
+        props.desc['page_info']['page_title'] + "&oldid=" +
+        props.desc['page_info']['revision_id'] +
+        "#" + props.desc['section_info']['title']
+
   if (props.desc) {
     return (
       <div className="border-bottom">
-        <p><b>{props.desc['page_info']['page_title']}</b>
-        <Button variant="secondary"  href="https://en.wikipedia.org/w/index.php?title={props.desc['page_info']['page_title']}&oldid={props.desc['page_info']['revision_id']}#{props.desc['section_info']['title']}"
+        <p><b>{props.desc['page_info']['page_title']}</b>{'  '}
+        <Button variant="secondary"  href={wiki_url}
       target="_blank">Open in Wikipedia</Button></p>
         <p id='page_desc' style={{ whiteSpace: 'pre-wrap' }}>{props.desc['page_info']['description']}</p>
         <span className="h3 mr-5">
