@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Button from 'react-bootstrap/Button';
 
 // Render the task/request description
 function Description(props) {
@@ -24,8 +25,9 @@ function Description(props) {
   if (props.desc) {
     return (
       <div className="border-bottom">
-        <p><b>{props.desc['page_info']['page_id']} --
-        {props.desc['page_info']['page_title']}></b></p>
+        <p><b>{props.desc['page_info']['page_title']}</b>
+        <Button variant="secondary"  href="https://en.wikipedia.org/w/index.php?title={props.desc['page_info']['page_title']}&oldid={props.desc['page_info']['revision_id']}#{props.desc['section_info']['title']}"
+      target="_blank">Open in Wikipedia</Button></p>
         <p id='page_desc' style={{ whiteSpace: 'pre-wrap' }}>{props.desc['page_info']['description']}</p>
         <span className="h3 mr-5">
           {props.desc['section_info']['title']}
