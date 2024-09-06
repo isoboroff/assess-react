@@ -9,8 +9,8 @@ function Highlightable(props) {
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
   const highlight_rel_passages = (text) => {
-    if (props.rel) {
-      let highlights = props.rel;
+    if (props.rel && props.rel.passage) {
+      let highlights = props.rel.passage;
       if (!Array.isArray(highlights)) {
         highlights = [highlights];
       }

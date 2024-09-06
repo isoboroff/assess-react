@@ -97,24 +97,28 @@ function assess_reducer(state, action) {
   case Actions.JUDGE:
     // Payload: docid, judgment, passage, subtopics
     // Update the judgment of the document that was judged
-    let update = action.payload;
-    let newPool = state.pool.map((entry) => {
-      if (entry.docid === update.docid) {
-        if (update.hasOwnProperty('passage')) {
-          if (update.passage.hasOwnProperty('clear')) {
-            update.passage = [];
+    const update = action.payload;
+    const new_pool = state.pool.map((e) => {
+      if (e.docid === update.docid) {
+        // make sure update has all the stuff
+        let new_entry = { docid: e.docid,
+                          judgment: update.judgment}
+        if (update.passage) {
+          if (update.passage.clear) {
+            new_entry.passage = [];
+          } else if (e.passage) {
+            new_entry.passage = [...e.passage].slice()
+            new_entry.passage.push(update.passage)
           } else {
-            if (entry.hasOwnProperty('passage')) {
-              update.passage = [ ...entry.passage, ...[update.passage]];
-            }
+            new_entry.passage = [update.passage];
           }
         }
-        return { ...entry, ...update };
+        return new_entry;
       } else {
-        return entry;
+        return e;
       }
     });
-    return { ...state, pool: newPool };
+    return { ...state, pool: new_pool }
 
   case Actions.SAVE_SCAN_TERMS:
     if (action.payload.scan_terms)
@@ -252,7 +256,6 @@ function ScanTerms(props) {
   });
   const update = useCallback((e) => {
     if (e.key === 'Enter') {
-      console.log('Enter pressed in scan terms');
       e.preventDefault();
       dispatch({
         type: Actions.SAVE_SCAN_TERMS,
@@ -299,7 +302,6 @@ function Clipping(props) {
   return (
     <ListGroup.Item action
                     onClick={() => props.fetch_doc(props.docid)}>
-
       {props.seq}: {props.clip.text}
     </ListGroup.Item>
   );
@@ -308,23 +310,25 @@ function Clipping(props) {
 function Clippy(props) {
   let clips = [];
   let seq = 0;
-
-  for (let i = 0; i < props.pool.length; i++) {
-    if (props.pool[i].hasOwnProperty('passage')) {
-      for (let j = 0; j < props.pool[i].passage.length; j++) {
-        seq += 1;
-        clips.push(<Clipping
-                     fetch_doc={props.fetch_doc}
-                     docid={props.pool[i].docid}
-                     clip={props.pool[i].passage[j]}
-                     seq={seq}/>);
-      }
-    }
-  }
-  return (<>
-            <Form.Label>Clippy</Form.Label>
-            <ListGroup> {clips} </ListGroup>
-          </>);
+  return <> Clippy Will Return </>;
+  // for (const pool_entry of props.pool) {
+  //   console.log("Clippy entry " + pool_entry);
+  //   if (pool_entry.passage) {
+  //     for (const p of pool_entry.passage) {
+  //       console.log("Clippy passage " + p);
+  //       seq += 1;
+  //       clips.push(<Clipping
+  //                    fetch_doc={props.fetch_doc}
+  //                    docid={pool_entry.docid}
+  //                    clip={p}
+  //                    seq={seq}/>);
+  //     }
+  //   }
+  // }
+  // return (<>
+  //           <Form.Label>Clippy</Form.Label>
+  //           <ListGroup> {clips} </ListGroup>
+  //         </>);
 }
 
 // A useful simple widget to contain things that should be 100% of their
@@ -534,13 +538,6 @@ function App() {
         if (response.ok)
           dispatch({ type: Actions.JUDGE, payload: judge_payload });
       });
-
-    if (passage) {
-      dispatch({ type: Actions.ADD_CLIP, payload: {
-        docid: docid,
-        ...passage,}});
-    }
-
   });
 
   const note_passage = useCallback((passage) => {
@@ -689,8 +686,8 @@ function App() {
                                   ? state.pool[state.current].subtopics : null} />
                 <Highlightable content={state.doc}
                                scan_terms={state.scan_terms}
-                               rel={(state.current >= 0 && state.pool[state.current].passage)
-                                    ? state.pool[state.current].passage : ''}
+                               rel={(state.current >= 0 && state.pool[state.current])
+                                    ? state.pool[state.current] : {}}
                                note_passage={note_passage} />
               </Panel>
             </Col>
