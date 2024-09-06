@@ -39,6 +39,7 @@ class Pool:
         self.topic = None
         self.desc = ''
         self.last = ''
+        self.summary = ''
         self.last_stamp = 0
 
         with open(filename, 'r') as fp:
@@ -54,8 +55,12 @@ class Pool:
             with open(f'{filename}.log', 'r') as log:
                 for line in log:
                     log_entry = Pool.read_log_entry(line)
-                    self.last = log_entry['docid']
                     self.last_stamp = log_entry['stamp']
+                    if 'summary' in log_entry:
+                        self.summary = log_entry['summary']
+                        continue
+
+                    self.last = log_entry['docid']
                     pool_item = self.pool[log_entry['docid']]
 
                     if 'passage' in log_entry:
@@ -120,16 +125,24 @@ class Pool:
         return json.dumps({ "pool": poollist,
                             "topic": self.topic,
                             "desc": self.desc,
-                            "last": last })
+                            "last": last,
+                            "summary": self.summary })
 
     @staticmethod
     def read_log_entry(line):
         if line.startswith('#'):
             return None
         log_entry = json.loads(line)
-        if 'stamp' not in log_entry or 'docid' not in log_entry:
-            app.logger.debug('Bad log object: ' + json.dumps(log_entry))
+        if 'stamp' not in log_entry:
+            app.logger.debug('Log object with no stamp: ' +
+                             json.dumps(log_entry))
             return None
+
+        if 'summary' not in log_entry and 'docid' not in log_entry:
+            app.logger.debug('Log entry with no target: ' +
+                             json.dumps(log_entry))
+            return None
+
         return log_entry
 
 query_args = {
@@ -203,6 +216,7 @@ def dashboard():
         app.logger.exception('Unexpected error reading dashboard')
         return('', 503)
 
+
 @app.route('/pool')
 @use_args(query_args, location='query')
 def get_pool(qargs):
@@ -269,6 +283,27 @@ def set_judgment(qargs):
         print(json.dumps(log_obj), file=fp)
 
     return('', 200)
+
+
+@app.route('/summary_save', methods=['POST'])
+@use_args(query_args, location='query')
+def set_summary(qargs):
+    user = qargs['u']
+    topic = qargs['t']
+
+    payload = request.get_json()
+
+    log_obj = { 'stamp': time.time(),
+                'topic': topic,
+                'summary': payload
+               }
+
+    logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
+    with open(logfile, 'a') as fp:
+        print(json.dumps(log_obj), file=fp)
+
+    return('', 200)
+
 
 @app.route('/login')
 @use_args(query_args, location='query')
