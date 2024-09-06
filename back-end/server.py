@@ -64,6 +64,8 @@ class Pool:
                                 del pool_item['passage']
                             else:
                                 pool_item['passage'] = (p for p in pool_item['passage'] if p != log_entry['passage']['clear'])
+                        elif isinstance(log_entry['passage'], list):
+                            pool_item['passage'] = log_entry['passage']
                         else:
                             if 'passage' not in pool_item:
                                 pool_item['passage'] = []

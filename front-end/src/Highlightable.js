@@ -24,7 +24,8 @@ function Highlightable(props) {
         const end = start + hl.length;
         const prefix = text.slice(pos, start);
         const span = text.slice(start, end);
-        doc += prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ';
+        doc += prefix + ' <mark class="rel-highlight" id="'
+          + start + '"> ' + span + ' </mark> ';
         pos = end;
       }
       doc += text.slice(pos);
@@ -129,10 +130,11 @@ function Highlightable(props) {
 
   // Clear a highlight if we clicked it.
   function maybe_remove_highlight(sel) {
-    const [start, end] = search(sel.anchorNode.nodeValue);
-    props.del_passage({ 'start': start,
-                        'length': end - start,
-                        'text': sel.anchorNode.nodeValue });
+    const hl_id = sel.anchorNode.parentElement.getAttribute('id');
+    console.log('remove', hl_id);
+    if (hl_id == null)
+      return;
+    props.del_passage(hl_id);
   }
 
   // This effect fires if highlight changes.

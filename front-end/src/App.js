@@ -106,9 +106,11 @@ function assess_reducer(state, action) {
         if (update.passage) {
           if (update.passage.clear) {
             new_entry.passage = [];
+          } else if (Array.isArray(update.passage)) {
+            new_entry.passage = update.passage.slice();
           } else if (e.passage) {
-            new_entry.passage = [...e.passage].slice()
-            new_entry.passage.push(update.passage)
+            new_entry.passage = [...e.passage].slice();
+            new_entry.passage.push(update.passage);
           } else {
             new_entry.passage = [update.passage];
           }
@@ -547,6 +549,20 @@ function App() {
     judge_current({ judgment: judgment, passage: passage });
   });
 
+  const drop_passage = useCallback((pid) => {
+    pid = parseInt(pid);
+    console.log('drop', pid);
+    const jobj = state.pool[state.current];
+    let new_plist = jobj.passage.filter((e) => {
+      console.log('cur', e);
+      return (e.start !== pid);
+    });
+    if (new_plist.length == 0)
+      new_plist = { "clear": true };
+    console.log('done', new_plist);
+    judge_current({ judgment: jobj.judgment, passage: new_plist, merge: false});
+  });
+
   const note_subtopic = useCallback((subchecks) => {
     let judgment = state.pool[state.current].judgment;
 
@@ -688,7 +704,8 @@ function App() {
                                scan_terms={state.scan_terms}
                                rel={(state.current >= 0 && state.pool[state.current])
                                     ? state.pool[state.current] : {}}
-                               note_passage={note_passage} />
+                               note_passage={note_passage}
+                               del_passage={drop_passage} />
               </Panel>
             </Col>
           </Row>
