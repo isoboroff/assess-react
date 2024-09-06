@@ -131,7 +131,6 @@ function Highlightable(props) {
   // Clear a highlight if we clicked it.
   function maybe_remove_highlight(sel) {
     const hl_id = sel.anchorNode.parentElement.getAttribute('id');
-    console.log('remove', hl_id);
     if (hl_id == null)
       return;
     props.del_passage(hl_id);

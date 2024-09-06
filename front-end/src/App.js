@@ -312,25 +312,23 @@ function Clipping(props) {
 function Clippy(props) {
   let clips = [];
   let seq = 0;
-  return <> Clippy Will Return </>;
-  // for (const pool_entry of props.pool) {
-  //   console.log("Clippy entry " + pool_entry);
-  //   if (pool_entry.passage) {
-  //     for (const p of pool_entry.passage) {
-  //       console.log("Clippy passage " + p);
-  //       seq += 1;
-  //       clips.push(<Clipping
-  //                    fetch_doc={props.fetch_doc}
-  //                    docid={pool_entry.docid}
-  //                    clip={p}
-  //                    seq={seq}/>);
-  //     }
-  //   }
-  // }
-  // return (<>
-  //           <Form.Label>Clippy</Form.Label>
-  //           <ListGroup> {clips} </ListGroup>
-  //         </>);
+
+  for (const pool_entry of props.pool) {
+    if (pool_entry.passage) {
+      for (const p of pool_entry.passage) {
+        seq += 1;
+        clips.push(<Clipping
+                     fetch_doc={props.fetch_doc}
+                     docid={pool_entry.docid}
+                     clip={p}
+                     seq={seq}/>);
+      }
+    }
+  }
+  return (<>
+            <Form.Label>Clippy</Form.Label>
+            <ListGroup> {clips} </ListGroup>
+          </>);
 }
 
 // A useful simple widget to contain things that should be 100% of their
@@ -551,16 +549,11 @@ function App() {
 
   const drop_passage = useCallback((pid) => {
     pid = parseInt(pid);
-    console.log('drop', pid);
     const jobj = state.pool[state.current];
-    let new_plist = jobj.passage.filter((e) => {
-      console.log('cur', e);
-      return (e.start !== pid);
-    });
+    let new_plist = jobj.passage.filter((e) => e.start !== pid);
     if (new_plist.length == 0)
       new_plist = { "clear": true };
-    console.log('done', new_plist);
-    judge_current({ judgment: jobj.judgment, passage: new_plist, merge: false});
+    judge_current({ judgment: jobj.judgment, passage: new_plist});
   });
 
   const note_subtopic = useCallback((subchecks) => {
