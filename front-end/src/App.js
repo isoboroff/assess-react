@@ -4,7 +4,8 @@ import React, {
   useReducer,
   useContext,
   useRef,
-  useCallback
+  useCallback,
+  useLayoutEffect,
 } from 'react';
 
 import Row from 'react-bootstrap/Row';
@@ -344,22 +345,6 @@ function Panel( {children} ) {
   );
 }
 
-// A place for the user to type a summary or something
-function SummaryBox(props) {
-  const [summary, set_summary] = useState('');
-  return (
-    <Form>
-      <Form.Group className="mb-3"
-                  controlId="exampleForm.ControlTextarea1">
-        <Form.Label>Summary</Form.Label>
-        <Form.Control as="textarea" rows={props.rows}
-                      onChange={(e) => {set_summary(e.target.value)}}
-        />
-      </Form.Group>
-    </Form>
-  );
-}
-
 /*
  * The "app".  The main interface pieces here are a modal for logins,
  * selecting a topic to load, and judgment buttons for judging the
@@ -589,6 +574,63 @@ function App() {
       </ButtonGroup>
     );
   });
+
+  // A place for the user to type a summary or something
+  function SummaryBox(props) {
+    const [summary, set_summary] = useState('');
+    const [last, set_last] = useState('');
+    const saveTimeoutRef = useRef(null);
+
+    const save_summary = (text) => {
+      fetch('/summary_save?u=' + state.username +
+            '&t=' + state.topic, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(text)
+            })
+        .then(response => {
+          set_last(text);
+          if (response.ok)
+            dispatch({ type: Actions.SUMMARY, payload: text});
+        });
+    };
+
+    useEffect(() => {
+      if (summary !== last) {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        saveTimeoutRef.current = setTimeout(() => {
+          save_summary(summary);
+        }, 1000);
+      }
+
+      return () => {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+      };
+    }, [summary]);
+
+    const handle_change = (e) => {
+      set_summary(e.target.value);
+    };
+
+    return (
+      <Form>
+        <Form.Group className="mb-3"
+                    controlId="exampleForm.ControlTextarea1">
+          <Form.Label>Summary</Form.Label>
+          <Form.Control as="textarea" rows={props.rows}
+                        onChange={handle_change}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        value={summary}
+                        placeholder="Type your summary here..."
+          />
+        </Form.Group>
+      </Form>
+    );
+  }
 
   /*
    * Keyboard controls: number keys apply the judgment level to the
