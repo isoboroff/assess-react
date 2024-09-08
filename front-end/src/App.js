@@ -355,11 +355,13 @@ function Clippy(props) {
 
 // A place for the user to type a summary or something
 function SummaryBox(props) {
-  const [summary, set_summary] = useState(props.summary);
+  const [text_cache, set_text_cache] = useState('');
   const [last, set_last] = useState('');
   const saveTimeoutRef = useRef(null);
   const state = useContext(AssessState);
   const dispatch = useContext(AssessDispatch);
+
+  useEffect(() => set_text_cache(state.summary), []);
 
   const save_summary = (text) => {
     fetch('/summary_save?u=' + state.username +
@@ -370,8 +372,8 @@ function SummaryBox(props) {
           })
       .then(response => {
         set_last(text);
-        if (response.ok)
-          dispatch({ type: Actions.SUMMARY, payload: text});
+        //if (response.ok)
+        //  dispatch({ type: Actions.SUMMARY, payload: text});
       });
   };
 
@@ -380,12 +382,12 @@ function SummaryBox(props) {
   // it clears the timer and sets a new one.  This way, we only save
   // once the user stops typing.
   useEffect(() => {
-    if (summary !== last) {
+    if (text_cache !== last) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
       saveTimeoutRef.current = setTimeout(() => {
-        save_summary(summary);
+        save_summary(text_cache);
       }, 1000);
     }
 
@@ -394,10 +396,11 @@ function SummaryBox(props) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [summary]);
+  }, [text_cache]);
 
   const handle_change = (e) => {
-    set_summary(e.target.value);
+    set_text_cache(e.target.value);
+    dispatch({ type: Actions.SUMMARY, payload: e.target.value});
   };
 
   return (
@@ -408,7 +411,7 @@ function SummaryBox(props) {
         <Form.Control as="textarea" rows={props.rows}
                       onChange={handle_change}
                       onKeyDown={(e) => e.stopPropagation()}
-                      value={summary}
+                      value={state.summary}
                       placeholder="Type your summary here..."
         />
       </Form.Group>
@@ -427,6 +430,14 @@ function Panel( {children} ) {
       {children}
     </div>
   );
+}
+
+// Use this in the place of 'assess_reducer' in App's useReducer call
+// to have it print the new state on each dispatch.
+const reducer_debug = (state, action) => {
+  const new_state = assess_reducer(state, action);
+  console.log(new_state);
+  return new_state;
 }
 
 /*
