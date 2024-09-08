@@ -5,13 +5,11 @@ function Description(props) {
   const [show, setShow] = useState(false);
 
   if (props.desc) {
-    const desc = props.desc.topics[0];
+    console.log(props.desc);
     return (
-      <div className="border-bottom">
-        <span className="h2 mr-5">Request: {props.desc['topic_id']}</span><br />
-        <p><b>{desc['topic_title']}</b></p>
-        <p>{desc['topic_description']}</p>
-        <p>{desc['topic_narrative']}</p>
+        <div className="border-bottom">
+        <span className="h2 mr-5">Convo : {props.desc.number}</span><br />
+        <p><b>{props.desc.title}</b></p>
       </div>
     );
   } else {

@@ -90,10 +90,13 @@ class Pool:
             app.logger.debug(''.join(traceback.format_exception(ke)))
             pass
         try:
-            with open(f'{filename}.desc', 'r') as fp:
+            convo, turn = filename.name.replace('topic', '').split('_')
+            desc_filename = filename.with_name(f'topicdesc{convo}')
+            with open(desc_filename, 'r') as fp:
                 self.desc = fp.read()
-        except FileNotFoundError:
+        except FileNotFoundError as fnfe:
             self.desc = json.dumps({'text': 'No description file'})
+            app.logger.debug(traceback.format_exception(fnfe))
 
     def __len__(self):
         return len(self.pool)
@@ -148,7 +151,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
+    't': fields.String(validate=validate.Regexp(r'^\d+-\d+_\d+$')),
     'd': fields.String()
 }
 
@@ -169,7 +172,7 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+$', child.name):
+            if re.match(r'^topic\d+-\d+_\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
 
@@ -193,7 +196,7 @@ def dashboard():
                 if (relchild / 'no-dashboard').exists():
                     continue
                 for child in relchild.iterdir():
-                    if re.match(r'^topic\d+$', child.name):
+                    if re.match(r'^topic\d+-\d+_\d+$', child.name):
                         p = Pool(child)
                         num_valuable = sum([1 for judgment in p.pool.values() if int(judgment['judgment']) > 1])
                         pct_rel = num_valuable * 100 / len(p)

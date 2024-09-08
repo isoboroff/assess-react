@@ -8,7 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='neuclir'
+INDEX='ikat'
 
 # Password file
 PWFILE='passwd'
