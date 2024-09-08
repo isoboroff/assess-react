@@ -64,18 +64,15 @@ class Pool:
                     pool_item = self.pool[log_entry['docid']]
 
                     if 'passage' in log_entry:
-                        if 'clear' in log_entry['passage']:
-                            if log_entry['passage']['clear'] == True:
+                        if 'passage' in pool_item:
+                            if 'clear' in log_entry['passage']:
                                 del pool_item['passage']
                             else:
-                                pool_item['passage'] = (p for p in pool_item['passage'] if p != log_entry['passage']['clear'])
-                        elif isinstance(log_entry['passage'], list):
-                            pool_item['passage'] = log_entry['passage']
-                        else:
-                            if 'passage' not in pool_item:
-                                pool_item['passage'] = []
-                            pool_item['passage'].append(log_entry['passage'])
-
+                                pool_item['passage'].append(
+                                    log_entry['passage'])
+                        else: # no passage in pool_entry
+                            if 'clear' not in log_entry['passage']:
+                                pool_item['passage'] = [log_entry['passage']]
 
                     if 'judgment' in log_entry:
                         pool_item['judgment'] = log_entry['judgment']
@@ -87,8 +84,10 @@ class Pool:
 
         except FileNotFoundError:
             pass
-        except KeyError:
-            app.logger.debug('Bad log entry ' + topic + ': ' + docid)
+        except KeyError as ke:
+            app.logger.debug('Bad log entry ' + self.topic + ': ' + log_entry['docid'])
+            app.logger.debug(log_entry)
+            app.logger.debug(''.join(traceback.format_exception(ke)))
             pass
         try:
             with open(f'{filename}.desc', 'r') as fp:
