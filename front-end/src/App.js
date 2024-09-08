@@ -48,10 +48,13 @@ const initial_state = {
   cur_doc: '',
   topic: '',
   scan_terms: '',
+  summary: '',
   pool: []
 };
 
-/* These are actions which change the application state. */
+/* These are actions which change the application state.
+ * Setting them up this way lets the compiler check for typos.
+ */
 const Actions = Object.freeze({
   LOGIN: 'LOGIN',
   LOGOUT: 'LOGOUT',
@@ -59,6 +62,7 @@ const Actions = Object.freeze({
   FETCH_DOC: 'FETCH_DOC',
   JUDGE: 'JUDGE',
   SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS',
+  SUMMARY: 'SUMMARY',
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -84,7 +88,8 @@ function assess_reducer(state, action) {
       topic: action.payload.topic,
       desc: action.payload.desc,
       current: 0,
-      pool: action.payload.pool
+      pool: action.payload.pool,
+      summary: action.payload.summary ? action.payload.summary : ''
     };
 
   case Actions.FETCH_DOC:
@@ -115,7 +120,13 @@ function assess_reducer(state, action) {
           } else {
             new_entry.passage = [update.passage];
           }
+        } else {
+          if (e.passage) {
+            new_entry.passage = e.passage
+
+          }
         }
+
         return new_entry;
       } else {
         return e;
@@ -133,6 +144,13 @@ function assess_reducer(state, action) {
       scan_terms: action.payload.scan_terms
     };
 
+  case Actions.SUMMARY:
+    window.localStorage.setItem('summary', action.payload.text);
+    return {
+      ...state,
+      summary: action.payload.text
+    };
+
   default:
     return state;
   }
@@ -143,6 +161,9 @@ function assess_reducer(state, action) {
  * through the properties at each node.
  */
 const AssessDispatch = React.createContext(null);
+// only use the AssessState context for reading state.  If you want to
+// change the state, you have to dispatch an action.
+const AssessState = React.createContext(null);
 
 /* A modal dialog to force logging in.
  * This used to be in App(), but I decided to move it out to a separate
@@ -332,6 +353,69 @@ function Clippy(props) {
           </>);
 }
 
+// A place for the user to type a summary or something
+function SummaryBox(props) {
+  const [summary, set_summary] = useState(props.summary);
+  const [last, set_last] = useState('');
+  const saveTimeoutRef = useRef(null);
+  const state = useContext(AssessState);
+  const dispatch = useContext(AssessDispatch);
+
+  const save_summary = (text) => {
+    fetch('/summary_save?u=' + state.username +
+          '&t=' + state.topic, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(text)
+          })
+      .then(response => {
+        set_last(text);
+        if (response.ok)
+          dispatch({ type: Actions.SUMMARY, payload: text});
+      });
+  };
+
+  // This effect is a "debouncer".  We set a timer to save the summary
+  // every second.  It depends on the summary, so if the summary changes,
+  // it clears the timer and sets a new one.  This way, we only save
+  // once the user stops typing.
+  useEffect(() => {
+    if (summary !== last) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        save_summary(summary);
+      }, 1000);
+    }
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [summary]);
+
+  const handle_change = (e) => {
+    set_summary(e.target.value);
+  };
+
+  return (
+    <Form>
+      <Form.Group className="mb-3"
+                  controlId="exampleForm.ControlTextarea1">
+        <Form.Label>Summary</Form.Label>
+        <Form.Control as="textarea" rows={props.rows}
+                      onChange={handle_change}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      value={summary}
+                      placeholder="Type your summary here..."
+        />
+      </Form.Group>
+    </Form>
+  );
+}
+
 // A useful simple widget to contain things that should be 100% of their
 // available height and scroll vertically.
 function Panel( {children} ) {
@@ -418,12 +502,14 @@ function App() {
       .then(data => {
         if (data.last)
           current = data.last;
-        const desc_obj = JSON.parse(data.desc);
+        const desc_obj = data.desc ? JSON.parse(data.desc) : {};
+        const summ_obj = data.summary ? data.summary : "";
         dispatch({
           type: Actions.LOAD_POOL, payload: {
             topic: topic,
             pool: data.pool,
-            desc: desc_obj
+            desc: desc_obj,
+            summary: summ_obj,
           }
         });
         return fetch('doc?u=' + username
@@ -575,62 +661,6 @@ function App() {
     );
   });
 
-  // A place for the user to type a summary or something
-  function SummaryBox(props) {
-    const [summary, set_summary] = useState('');
-    const [last, set_last] = useState('');
-    const saveTimeoutRef = useRef(null);
-
-    const save_summary = (text) => {
-      fetch('/summary_save?u=' + state.username +
-            '&t=' + state.topic, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(text)
-            })
-        .then(response => {
-          set_last(text);
-          if (response.ok)
-            dispatch({ type: Actions.SUMMARY, payload: text});
-        });
-    };
-
-    useEffect(() => {
-      if (summary !== last) {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
-        }
-        saveTimeoutRef.current = setTimeout(() => {
-          save_summary(summary);
-        }, 1000);
-      }
-
-      return () => {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
-        }
-      };
-    }, [summary]);
-
-    const handle_change = (e) => {
-      set_summary(e.target.value);
-    };
-
-    return (
-      <Form>
-        <Form.Group className="mb-3"
-                    controlId="exampleForm.ControlTextarea1">
-          <Form.Label>Summary</Form.Label>
-          <Form.Control as="textarea" rows={props.rows}
-                        onChange={handle_change}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        value={summary}
-                        placeholder="Type your summary here..."
-          />
-        </Form.Group>
-      </Form>
-    );
-  }
 
   /*
    * Keyboard controls: number keys apply the judgment level to the
@@ -668,97 +698,99 @@ function App() {
 
   return (
     <AssessDispatch.Provider value={dispatch}>
+      <AssessState.Provider value={state}>
         { /************** Modals */}
-      <Container fluid className="d-flex flex-column vh-100 overflow-hidden">
-        <LoginModal login_required={login_required} set_required={set_login_required} />
-        <LoadTopicModal show_topic_dialog={show_topic_dialog}
-                        set_show_topic_dialog={set_show_topic_dialog}
-                        inbox={inbox}
-                        load_pool={load_pool_for_current_user} />
+        <Container fluid className="d-flex flex-column vh-100 overflow-hidden">
+          <LoginModal login_required={login_required} set_required={set_login_required} />
+          <LoadTopicModal show_topic_dialog={show_topic_dialog}
+                          set_show_topic_dialog={set_show_topic_dialog}
+                          inbox={inbox}
+                          load_pool={load_pool_for_current_user} />
 
-        { /************** Header line: load pool, filter pool, judgment buttons, logout button */}
-        <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
-          <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
-            <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
-          </Col>
-          <Col xs="auto" className="flex-shrink-1">
-            <Button variant="primary"
-                    onClick={() => set_topic_requested(true)}>Load Pool</Button>
-          </Col>
-          <Col xs="auto">
-            {state.current + 1} of {state.pool.length}
-          </Col>
-          <Col xs="auto">
-            <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
-              <option>all</option>
-              <option>unjudged</option>
-              {Object.getOwnPropertyNames(rel_levels).map((i) =>
-                <option value={i}>{rel_levels[i].label}</option>)}
-            </Form.Control>
-          </Col>
-          <Col xs="auto" className="mr-auto">
-            {judgment_buttons}
-          </Col>
-          <Col xs="auto" className="mx-3">
-            <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>Log out {state.username}</Button>
-          </Col>
-        </Row>
-
-        { /************** Scanterms */}
-        <Row className="mt-5 pt-2"> </Row>
-        <Row>
-          <ScanTerms
-            dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
-            scan_terms={scan_terms}
-            set_scan_terms={set_scan_terms}
-          />
-        </Row>
-
-        { /************** Main: pool column and topic/document column */}
-        <Container fluid style={{ height: '100vh',
-                                  padding: 0,
-                                  'margin-top': '1em',
-                                }}>
-          <Row style={{ height: '60%' }}>
-            <Col md={4} style={{ height: '100%' }}>
-              <Panel>
-                <Pool user={state.username} topic={state.topic}
-                      rel_levels={rel_levels}
-                      pool={state.pool} current={state.current} filter={pool_filter}
-                      fetch_doc={load_pool_item}
-                />
-              </Panel>
+          { /************** Header line: load pool, filter pool, judgment buttons, logout button */}
+          <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
+            <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
+              <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
             </Col>
-            <Col md={8} style={{ height: '100%' }}>
-              <Panel ref={docDiv}>
-                <Description desc={state.desc}
-                             note_subtopic={note_subtopic}
-                             rel={(state.current >= 0 && state.pool[state.current].subtopics)
-                                  ? state.pool[state.current].subtopics : null} />
-                <Highlightable content={state.doc}
-                               scan_terms={state.scan_terms}
-                               rel={(state.current >= 0 && state.pool[state.current])
-                                    ? state.pool[state.current] : {}}
-                               note_passage={note_passage}
-                               del_passage={drop_passage} />
-              </Panel>
+            <Col xs="auto" className="flex-shrink-1">
+              <Button variant="primary"
+                      onClick={() => set_topic_requested(true)}>Load Pool</Button>
+            </Col>
+            <Col xs="auto">
+              {state.current + 1} of {state.pool.length}
+            </Col>
+            <Col xs="auto">
+              <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
+                <option>all</option>
+                <option>unjudged</option>
+                {Object.getOwnPropertyNames(rel_levels).map((i) =>
+                  <option value={i}>{rel_levels[i].label}</option>)}
+              </Form.Control>
+            </Col>
+            <Col xs="auto" className="mr-auto">
+              {judgment_buttons}
+            </Col>
+            <Col xs="auto" className="mx-3">
+              <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>Log out {state.username}</Button>
             </Col>
           </Row>
+
+          { /************** Scanterms */}
           <Row className="mt-5 pt-2"> </Row>
-          <Row style={{ height: '30%', 'padding-bottom': '50px' }}>
-            <Col md={4} style={{ height: '100%' }}>
-              <Panel>
-                <Clippy pool={state.pool} fetch_doc={load_doc}/>
-              </Panel>
-            </Col>
-            <Col md={8} style={{ height: '100%' }}>
-              <Panel>
-                <SummaryBox rows={6} />
-              </Panel>
-            </Col>
+          <Row>
+            <ScanTerms
+              dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
+              scan_terms={scan_terms}
+              set_scan_terms={set_scan_terms}
+            />
           </Row>
+
+          { /************** Main: pool column and topic/document column */}
+          <Container fluid style={{ height: '100vh',
+                                    padding: 0,
+                                    'margin-top': '1em',
+                                  }}>
+            <Row style={{ height: '60%' }}>
+              <Col md={4} style={{ height: '100%' }}>
+                <Panel>
+                  <Pool user={state.username} topic={state.topic}
+                        rel_levels={rel_levels}
+                        pool={state.pool} current={state.current} filter={pool_filter}
+                        fetch_doc={load_pool_item}
+                  />
+                </Panel>
+              </Col>
+              <Col md={8} style={{ height: '100%' }}>
+                <Panel ref={docDiv}>
+                  <Description desc={state.desc}
+                               note_subtopic={note_subtopic}
+                               rel={(state.current >= 0 && state.pool[state.current].subtopics)
+                                    ? state.pool[state.current].subtopics : null} />
+                  <Highlightable content={state.doc}
+                                 scan_terms={state.scan_terms}
+                                 rel={(state.current >= 0 && state.pool[state.current])
+                                      ? state.pool[state.current] : {}}
+                                 note_passage={note_passage}
+                                 del_passage={drop_passage} />
+                </Panel>
+              </Col>
+            </Row>
+            <Row className="mt-5 pt-2"> </Row>
+            <Row style={{ height: '30%', 'padding-bottom': '50px' }}>
+              <Col md={4} style={{ height: '100%' }}>
+                <Panel>
+                  <Clippy pool={state.pool} fetch_doc={load_doc}/>
+                </Panel>
+              </Col>
+              <Col md={8} style={{ height: '100%' }}>
+                <Panel>
+                  <SummaryBox rows={6} summary={state.summary}/>
+                </Panel>
+              </Col>
+            </Row>
+          </Container>
         </Container>
-      </Container>
+      </AssessState.Provider>
     </AssessDispatch.Provider>
   );
 }
