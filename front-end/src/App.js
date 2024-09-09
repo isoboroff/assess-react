@@ -774,6 +774,7 @@ function App() {
               <Col md={8} style={{ height: '100%' }}>
                 <Panel ref={docDiv}>
                   <Description desc={state.desc}
+                               topic={state.topic}
                                note_subtopic={note_subtopic}
                                rel={(state.current >= 0 && state.pool[state.current].subtopics)
                                     ? state.pool[state.current].subtopics : null} />
