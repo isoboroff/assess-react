@@ -1,6 +1,11 @@
 import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
+import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+
+import Panel from "./Panel";
 
 function FullConvoModal(props) {
   const turns = props.desc.turns
@@ -32,12 +37,43 @@ function FullConvoModal(props) {
       );
     });
 
+  const ptkb = Object.getOwnPropertyNames(props.desc.ptkb)
+    .map((idx) => [parseInt(idx), props.desc.ptkb[idx]])
+    .sort(([k1, v1], [k2, v2]) => {
+      if (k1 > k2) return 1;
+      if (k1 < k2) return -1;
+      return 0;
+    })
+    .map(([k, v]) => (
+      <li>
+        {k}: {v}
+      </li>
+    ));
+
   return (
-    <Modal show={props.show} onHide={() => props.set_show(false)} size="lg">
+    <Modal
+      show={props.show}
+      onHide={() => props.set_show(false)}
+      size="lg"
+      fullscreen={true}
+    >
       <Modal.Header>
         <Modal.Title> Full conversation</Modal.Title>
       </Modal.Header>
-      <Modal.Body>{turns}</Modal.Body>
+      <Modal.Body>
+        <Container>
+          <Row>
+            <Col md={6}>
+              <Panel>{turns}</Panel>
+            </Col>
+            <Col md={6}>
+              <Panel>
+                <ul className="list-unstyled">{ptkb}</ul>
+              </Panel>
+            </Col>
+          </Row>
+        </Container>
+      </Modal.Body>
       <Modal.Footer>
         <Button variant="primary" onClick={() => props.set_show(false)}>
           Dismiss
