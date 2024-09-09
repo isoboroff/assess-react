@@ -162,9 +162,6 @@ function Highlightable(props) {
 
     return (
       <div>
-        <div dir={textdir} className={textclass}>
-          <h1>{title}</h1>
-        </div>
         <div dir={textdir} className={textclass}
           onMouseUp={(e) => {
             if (!e.altKey && has_selection()) {
