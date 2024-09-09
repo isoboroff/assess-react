@@ -313,28 +313,26 @@ function ScanTerms(props) {
   });
 
   return (
-    <Form>
-      <Row>
-        <Col xl={10}>
-          <Form.Control
-            placeholder="Scan terms"
-            className="mx-3"
-            dir={props.dir}
-            value={props.scan_terms}
-            onChange={change}
-            onKeyDown={update}
-          />
-        </Col>
-        <Col xl={2}>
-          <Button variant="primary" onClick={apply}>
-            Apply
-          </Button>
-          <Button variant="secondary" onClick={clear}>
-            Clear
-          </Button>
-        </Col>
-      </Row>
-    </Form>
+    <Stack direction="horizontal" gap={3}>
+      <div className="p-2 col-10">
+        <Form.Control
+          placeholder="Scan terms"
+          className="mx-3"
+          dir={props.dir}
+          value={props.scan_terms}
+          onChange={change}
+          onKeyDown={update}
+        />
+      </div>
+      <div className="p-2 ms-auto col-md-auto">
+        <Button variant="primary" onClick={apply}>
+          Apply
+        </Button>
+        <Button variant="secondary" onClick={clear}>
+          Clear
+        </Button>
+      </div>
+    </Stack>
   );
 }
 
@@ -732,41 +730,44 @@ function App() {
           />
 
           {/************** Header line: load pool, filter pool, judgment buttons, logout button */}
-          <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
-            <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
-              <FontAwesomeIcon icon={faCoffee} />{" "}
-              <span className="navbar-brand">Assess</span>
-            </Col>
-            <Col xs="auto" className="flex-shrink-1">
-              <Button
-                variant="primary"
-                onClick={() => set_topic_requested(true)}
-              >
-                Load Pool
-              </Button>
-            </Col>
-            <Col xs="auto">
-              {state.current + 1} of {state.pool.length}
-            </Col>
-            <Col xs="auto">
-              <Form.Control
-                as="select"
-                onChange={(e) => set_pool_filter(e.target.value)}
-              >
-                <option>all</option>
-                <option>unjudged</option>
-                {Object.getOwnPropertyNames(rel_levels).map((i) => (
-                  <option value={i}>{rel_levels[i].label}</option>
-                ))}
-              </Form.Control>
-            </Col>
-            <Col xs="auto" className="mr-auto">
-              {judgment_buttons}
-            </Col>
-            <Col xs="auto" className="mx-3">
-              <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
-                Log out {state.username}
-              </Button>
+          <Row xs={12} className="fixed-top w-100">
+            <Col>
+              <Stack direction="horizontal" gap={3}>
+                <div className="p-2">
+                  <FontAwesomeIcon icon={faCoffee} />{" "}
+                  <span className="navbar-brand">Assess</span>
+                </div>
+                <div>
+                  <Button
+                    variant="primary"
+                    onClick={() => set_topic_requested(true)}
+                  >
+                    {" "}
+                    Load Pool
+                  </Button>
+                </div>
+                <div>
+                  {state.current + 1} of {state.pool.length}
+                </div>
+                <div>
+                  <Form.Control
+                    as="select"
+                    onChange={(e) => set_pool_filter(e.target.value)}
+                  >
+                    <option>all</option>
+                    <option>unjudged</option>
+                    {Object.getOwnPropertyNames(rel_levels).map((i) => (
+                      <option value={i}>{rel_levels[i].label}</option>
+                    ))}
+                  </Form.Control>
+                </div>
+                <div>{judgment_buttons}</div>
+                <div className="ms-auto">
+                  <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
+                    Log out {state.username}
+                  </Button>
+                </div>
+              </Stack>
             </Col>
           </Row>
 
