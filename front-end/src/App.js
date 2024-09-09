@@ -29,6 +29,7 @@ import Pool from './Pool';
 import Description from './Description';
 import Highlightable from './Highlightable';
 import useKeyPress from './useKeyPress';
+import Panel from './Panel';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -416,19 +417,6 @@ function SummaryBox(props) {
         />
       </Form.Group>
     </Form>
-  );
-}
-
-// A useful simple widget to contain things that should be 100% of their
-// available height and scroll vertically.
-function Panel( {children} ) {
-  return (
-    <div style={{
-           height: '100%',
-           overflowY: 'auto'
-         }}>
-      {children}
-    </div>
   );
 }
 
