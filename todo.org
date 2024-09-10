@@ -1,3 +1,15 @@
+#+TITLE:
+#+STARTUP: indent
+#+STARTUP: showall
+
+* DONE convo limited to prior history
+CLOSED: [2024-09-09 Mon 21:55]
+* DONE show PTKB next to the convo
+CLOSED: [2024-09-09 Mon 21:55]
+* TODO do we have a summary bug
+
+
+
 Tasks for NeuCLIR assessing
 
 * TODO forward-port the password infrastructure from neuclir-test

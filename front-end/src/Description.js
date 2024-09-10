@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import Stack from "react-bootstrap/Stack";
 
 import Panel from "./Panel";
 
@@ -54,22 +55,34 @@ function FullConvoModal(props) {
     <Modal
       show={props.show}
       onHide={() => props.set_show(false)}
+      scrollable="true"
       size="lg"
-      fullscreen={true}
     >
       <Modal.Header>
-        <Modal.Title> Full conversation</Modal.Title>
+        <Modal.Title>Conversation so far...</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Container>
+        <Container fluid>
           <Row>
-            <Col md={6}>
-              <Panel>{turns}</Panel>
+            <Col
+              style={{
+                height: "calc(100vh - 300px)",
+                overflowY: "scroll",
+                borderRight: "1px solid #ccc",
+              }}
+            >
+              <h2>Turns</h2>
+              {turns}
             </Col>
-            <Col md={6}>
-              <Panel>
-                <ul className="list-unstyled">{ptkb}</ul>
-              </Panel>
+            <Col
+              md={4}
+              style={{
+                height: "calc(100vh - 300px)",
+                overflowY: "scroll",
+              }}
+            >
+              <h2>PTKB</h2>
+              <ul className="list-unstyled">{ptkb}</ul>
             </Col>
           </Row>
         </Container>
@@ -108,7 +121,7 @@ function Description(props) {
         <div className="border-bottom">
           <span className="mr-5">
             Conversation {props.desc.number}, turn {turn_id}
-          </span>
+      </span>&nbsp;
           <button variant="secondary" onClick={() => set_show(true)}>
             see conversation so far
           </button>
