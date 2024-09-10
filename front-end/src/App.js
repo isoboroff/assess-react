@@ -385,7 +385,7 @@ function SummaryBox(props) {
   useEffect(() => set_text_cache(state.summary), []);
 
   const save_summary = (text) => {
-    fetch("/summary_save?u=" + state.username + "&t=" + state.topic, {
+    fetch("summary_save?u=" + state.username + "&t=" + state.topic, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(text),
