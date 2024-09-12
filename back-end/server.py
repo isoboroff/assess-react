@@ -164,12 +164,6 @@ def hello():
 def dashboard_front():
     return render_template('index.html')
 
-turn_re = re.compile(r'^(\d+)_(\d+)$')
-def topic_sort_key(entry):
-    m = turn_re.match(entry[0])
-    v = (int(m.group(1)), int(m.group(2)))
-    return v
-
 @app.route('/inbox')
 @use_args(query_args, location='query')
 def inbox(qargs):
@@ -243,7 +237,6 @@ def get_pool(qargs):
         app.logger.exception(f'Unexpected error reading pool {user} {topic} {filename}')
         return('', 503)
 
-
 @app.route('/doc')
 @use_args(query_args, location='query')
 def get_document(qargs):
@@ -251,22 +244,38 @@ def get_document(qargs):
     topic = qargs['t']
     user = qargs['u']
 
-    try:
-        response = es.get(index=app.config['INDEX'], id=docid)
-        if response['found']:
-            if topic and user:
-                logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
-                with open(logfile, 'a') as fp:
-                    print(json.dumps({'stamp': time.time(),
-                                      'docid': docid,
-                                      'action': 'load'}), file=fp)
+    if docid.startswith('clueweb22'):
+        try:
+            response = es.get(index=app.config['INDEX'], id=docid)
+            if response['found']:
+                if topic and user:
+                    logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
+                    with open(logfile, 'a') as fp:
+                        print(json.dumps({'stamp': time.time(),
+                                          'docid': docid,
+                                          'action': 'load'}), file=fp)
 
-            return(response['_source'], 200)
+                    return(response['_source'], 200)
+            else:
+                return('', 404)
+        except Exception:
+            app.logger.exception('Unexpected error getting docid ' + docid)
+            return('', 503)
+    elif docid.startswith('ptkb'):
+        m = re.match(r'ptkb-(\d+)-(\d+)', docid)
+        if m:
+            conv, item = m.groups()
+
+        filename = Path(app.config['SAVE']) / user / f'topic{topic}'
+        p = Pool(filename)
+        desc = json.loads(p.desc)
+        if item in desc['ptkb']:
+            return(json.dumps({ 'docid': docid,
+                                'title': f'PTKB, Conversation {conv}, entry {item}',
+                                'text': desc['ptkb'][item]}), 200)
         else:
             return('', 404)
-    except Exception:
-        app.logger.exception('Unexpected error getting docid ' + docid)
-        return('', 503)
+
 
 
 @app.route('/judge', methods=['POST'])
