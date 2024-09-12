@@ -151,7 +151,7 @@ query_args = {
     'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^\d+-\d+_\d+$')),
+    't': fields.String(validate=validate.Regexp(r'^\d+_\d+$')),
     'd': fields.String()
 }
 
@@ -164,6 +164,12 @@ def hello():
 def dashboard_front():
     return render_template('index.html')
 
+turn_re = re.compile(r'^(\d+)_(\d+)$')
+def topic_sort_key(entry):
+    m = turn_re.match(entry[0])
+    v = (int(m.group(1)), int(m.group(2)))
+    return v
+
 @app.route('/inbox')
 @use_args(query_args, location='query')
 def inbox(qargs):
@@ -172,10 +178,9 @@ def inbox(qargs):
     try:
         homedir = Path(app.config['SAVE']) / user
         for child in homedir.iterdir():
-            if re.match(r'^topic\d+-\d+_\d+$', child.name):
+            if re.match(r'^topic\d+_\d+$', child.name):
                 p = Pool(child)
                 data[p.topic] = (len(p), p.num_judged(), p.num_rel())
-
         app.logger.debug('Got inbox for ' + user)
         return(data, 200)
     except IOError as e:
@@ -196,7 +201,7 @@ def dashboard():
                 if (relchild / 'no-dashboard').exists():
                     continue
                 for child in relchild.iterdir():
-                    if re.match(r'^topic\d+-\d+_\d+$', child.name):
+                    if re.match(r'^topic\d+_\d+$', child.name):
                         p = Pool(child)
                         num_valuable = sum([1 for judgment in p.pool.values() if int(judgment['judgment']) > 1])
                         pct_rel = num_valuable * 100 / len(p)
