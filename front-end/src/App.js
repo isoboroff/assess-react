@@ -426,7 +426,7 @@ function SummaryBox(props) {
   return (
     <Form>
       <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
-        <Form.Label>Summary</Form.Label>
+        <Form.Label>Manual response</Form.Label>
         <Form.Control
           as="textarea"
           rows={props.rows}
