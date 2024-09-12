@@ -245,6 +245,23 @@ function LoginModal(props) {
  * for each topic how big it is and how much is left to do.
  */
 function LoadTopicModal(props) {
+  const sort_fn = ((a, b) => {
+    let aa = a.split("_").map((x) => parseInt(x));
+    let bb = b.split("_").map((x) => parseInt(x));
+
+    if (aa[0] < bb[0])
+      return -1;
+    else if (aa[0] > bb[0])
+      return 1;
+    else {
+      if (aa[1] < bb[1])
+        return -1;
+      else if (aa[1] > bb[1])
+        return 1;
+      else return 0;
+    }
+  });
+
   return (
     <Modal show={props.show_topic_dialog}>
       <Modal.Header>
@@ -260,7 +277,9 @@ function LoadTopicModal(props) {
             </tr>
           </thead>
           <tbody>
-            {Object.getOwnPropertyNames(props.inbox).map((topic) => (
+            {Object.getOwnPropertyNames(props.inbox)
+             .sort(sort_fn)
+             .map((topic) => (
               <tr onClick={() => props.load_pool(topic)}>
                 <td>{topic}</td>
                 <td>{props.inbox[topic][0]}</td>
