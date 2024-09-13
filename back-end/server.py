@@ -60,6 +60,9 @@ class Pool:
                         self.summary = log_entry['summary']
                         continue
 
+                    if log_entry['docid'] not in self.pool:
+                        app.logger.warn(f'{log_entry["docid"]} not in pool {filename}')
+                        continue
                     self.last = log_entry['docid']
                     pool_item = self.pool[log_entry['docid']]
 
