@@ -26,6 +26,9 @@
     "testing-library": "^0.0.2",
     "web-vitals": "^0.2.4"
   },
+  "devDependencies": {
+    "@babel/plugin-transform-private-property-in-object": "^7.23.4"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
