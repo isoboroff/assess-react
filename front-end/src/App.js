@@ -4,59 +4,59 @@ import React, {
   useReducer,
   useContext,
   useRef,
-  useCallback
-} from 'react';
+  useCallback,
+} from "react";
 
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import Container from 'react-bootstrap/Container';
-import ListGroup from 'react-bootstrap/ListGroup';
-import Badge from 'react-bootstrap/Badge';
-import Collapse from 'react-bootstrap/Collapse';
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Modal from "react-bootstrap/Modal";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
+import Container from "react-bootstrap/Container";
+import ListGroup from "react-bootstrap/ListGroup";
+import Badge from "react-bootstrap/Badge";
+import Collapse from "react-bootstrap/Collapse";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCoffee } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 
-import { sha256 } from 'hash-wasm';
+import { sha256 } from "hash-wasm";
 
-import Pool from './Pool';
-import Description from './Description';
-import Highlightable from './Highlightable';
-import useKeyPress from './useKeyPress';
+import Pool from "./Pool";
+import Description from "./Description";
+import Highlightable from "./Highlightable";
+import useKeyPress from "./useKeyPress";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
 
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
-  '0': { label: 'irrelevant', color: 'secondary' },
-  '1': { label: 'topical', color: 'info' },
-  '2': { label: 'valuable', color: 'primary' },
-  '3': { label: 'very valuable', color: 'success' },
+  0: { label: "irrelevant", color: "secondary" },
+  1: { label: "topical", color: "info" },
+  2: { label: "valuable", color: "primary" },
+  3: { label: "very valuable", color: "success" },
 };
 
 /* This is the application state. */
 const initial_state = {
-  username: '',
+  username: "",
   current: -1,
-  cur_doc: '',
-  topic: '',
-  scan_terms: '',
-  pool: []
+  cur_doc: "",
+  topic: "",
+  scan_terms: "",
+  pool: [],
 };
 
 /* These are actions which change the application state. */
 const Actions = Object.freeze({
-  LOGIN: 'LOGIN',
-  LOGOUT: 'LOGOUT',
-  LOAD_POOL: 'LOAD_POOL',
-  FETCH_DOC: 'FETCH_DOC',
-  JUDGE: 'JUDGE',
-  SAVE_SCAN_TERMS: 'SAVE_SCAN_TERMS'
+  LOGIN: "LOGIN",
+  LOGOUT: "LOGOUT",
+  LOAD_POOL: "LOAD_POOL",
+  FETCH_DOC: "FETCH_DOC",
+  JUDGE: "JUDGE",
+  SAVE_SCAN_TERMS: "SAVE_SCAN_TERMS",
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -65,10 +65,10 @@ const Actions = Object.freeze({
 function assess_reducer(state, action) {
   switch (action.type) {
     case Actions.LOGIN:
-      window.localStorage.setItem('user', action.payload.username);
+      window.localStorage.setItem("user", action.payload.username);
       return {
         ...state,
-        username: action.payload.username
+        username: action.payload.username,
       };
 
     case Actions.LOGOUT:
@@ -76,59 +76,56 @@ function assess_reducer(state, action) {
       return { ...initial_state };
 
     case Actions.LOAD_POOL:
-      window.localStorage.setItem('topic', action.payload.topic);
+      window.localStorage.setItem("topic", action.payload.topic);
       return {
         ...state,
         topic: action.payload.topic,
         desc: action.payload.desc,
         current: 0,
-        pool: action.payload.pool
+        pool: action.payload.pool,
       };
 
     case Actions.FETCH_DOC:
-      window.localStorage.setItem('current', action.payload.current);
+      window.localStorage.setItem("current", action.payload.current);
       return {
         ...state,
         current: action.payload.current,
-        doc: action.payload.doc
+        doc: action.payload.doc,
       };
 
     case Actions.JUDGE:
       // Update the judgment of the document that was judged
       let update = { judgment: action.payload.judgment };
-      if (action.payload.hasOwnProperty('passage')) {
-        if (action.payload.passage.hasOwnProperty('clear'))
+      if (action.payload.hasOwnProperty("passage")) {
+        if (action.payload.passage.hasOwnProperty("clear"))
           update.passage = null;
-        else
-          update.passage = action.payload.passage;
+        else update.passage = action.payload.passage;
       }
-      if (action.payload.hasOwnProperty('subtopics'))
+      if (action.payload.hasOwnProperty("subtopics"))
         update.subtopics = action.payload.subtopics;
 
       let newPool = state.pool.map((entry) => {
         if (entry.docid === action.payload.docid)
           return { ...entry, ...update };
-        else
-          return entry;
+        else return entry;
       });
       return {
         ...state,
-        pool: newPool
+        pool: newPool,
       };
 
     case Actions.SAVE_SCAN_TERMS:
       if (action.payload.scan_terms)
-        window.localStorage.setItem('scan_terms', action.payload.scan_terms);
-      else
-        window.localStorage.removeItem('scan_terms');
+        window.localStorage.setItem("scan_terms", action.payload.scan_terms);
+      else window.localStorage.removeItem("scan_terms");
       return {
         ...state,
-        scan_terms: action.payload.scan_terms
+        scan_terms: action.payload.scan_terms,
       };
     default:
       return state;
   }
-};
+}
 
 /* React Contexts allow us to store a value and get it back down deep in
  * the DOM tree, without needing to pass the value all the way down
@@ -141,14 +138,14 @@ const AssessDispatch = React.createContext(null);
  * component.
  */
 function LoginModal(props) {
-  const [username, set_username] = useState('');
-  const [password, set_password] = useState('');
+  const [username, set_username] = useState("");
+  const [password, set_password] = useState("");
   const [error, set_error] = useState(false);
   const dispatch = useContext(AssessDispatch);
 
   async function hash(password) {
     const te = new TextEncoder();
-    const encoded = te.encode(password.normalize('NFKC'))
+    const encoded = te.encode(password.normalize("NFKC"));
     const hashval = await sha256(encoded);
     return hashval;
   }
@@ -158,8 +155,8 @@ function LoginModal(props) {
     // Server responds 200 for ok login, 403 for denied
     set_error(false);
     hash(password)
-      .then(pwhash => fetch('login?u=' + username + '&p=' + pwhash))
-      .then(response => {
+      .then((pwhash) => fetch("login?u=" + username + "&p=" + pwhash))
+      .then((response) => {
         if (response.ok) {
           dispatch({ type: Actions.LOGIN, payload: { username: username } });
           props.set_required(false);
@@ -170,31 +167,41 @@ function LoginModal(props) {
   }, [password, username]);
 
   return (
-    <Modal show={props.login_required} onHide={do_login}
-      backdrop="static" keyboard={false}>
+    <Modal
+      show={props.login_required}
+      onHide={do_login}
+      backdrop="static"
+      keyboard={false}
+    >
       <Modal.Header>
         <Modal.Title>Please log in</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {error ? <p>Invalid username or password.</p> : ''}
-        <Form.Control type="text"
+        {error ? <p>Invalid username or password.</p> : ""}
+        <Form.Control
+          type="text"
           placeholder="user"
           value={username}
-          onChange={(e) => set_username(e.target.value)} />
-        <Form.Control type="password"
+          onChange={(e) => set_username(e.target.value)}
+        />
+        <Form.Control
+          type="password"
           placeholder="password"
           value={password}
           onChange={(e) => set_password(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
               e.preventDefault();
               e.stopPropagation();
               do_login();
             }
-          }} />
+          }}
+        />
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="primary" onClick={() => do_login()}>Log in</Button>
+        <Button variant="primary" onClick={() => do_login()}>
+          Log in
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -209,9 +216,7 @@ function LoadTopicModal(props) {
   return (
     <Modal show={props.show_topic_dialog}>
       <Modal.Header>
-        <Modal.Title>
-          Select a topic to load
-        </Modal.Title>
+        <Modal.Title>Select a topic to load</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <table className="table table-hover">
@@ -223,18 +228,23 @@ function LoadTopicModal(props) {
             </tr>
           </thead>
           <tbody>
-            {Object.getOwnPropertyNames(props.inbox).map((topic) => (
-              <tr onClick={() => props.load_pool(topic)}>
-                <td>{topic}</td>
-                <td>{props.inbox[topic][0]}</td>
-                <td>{props.inbox[topic][0] - props.inbox[topic][1]}</td>
-              </tr>
-            ))}
+            {Object.getOwnPropertyNames(props.inbox)
+              .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+              .map((topic) => (
+                <tr onClick={() => props.load_pool(topic)}>
+                  <td>{topic}</td>
+                  <td>{props.inbox[topic][0]}</td>
+                  <td>{props.inbox[topic][0] - props.inbox[topic][1]}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="primary" onClick={() => props.set_show_topic_dialog(false)}>
+        <Button
+          variant="primary"
+          onClick={() => props.set_show_topic_dialog(false)}
+        >
           Cancel
         </Button>
       </Modal.Footer>
@@ -250,12 +260,12 @@ function ScanTerms(props) {
     e.stopPropagation();
   });
   const update = useCallback((e) => {
-    if (e.key === 'Enter') {
-      console.log('Enter pressed in scan terms');
+    if (e.key === "Enter") {
+      console.log("Enter pressed in scan terms");
       e.preventDefault();
       dispatch({
         type: Actions.SAVE_SCAN_TERMS,
-        payload: { scan_terms: props.scan_terms }
+        payload: { scan_terms: props.scan_terms },
       });
     }
     e.stopPropagation();
@@ -263,32 +273,37 @@ function ScanTerms(props) {
   const apply = useCallback(() => {
     dispatch({
       type: Actions.SAVE_SCAN_TERMS,
-      payload: { scan_terms: props.scan_terms }
+      payload: { scan_terms: props.scan_terms },
     });
   });
   const clear = useCallback(() => {
-    props.set_scan_terms('');
+    props.set_scan_terms("");
     dispatch({
       type: Actions.SAVE_SCAN_TERMS,
-      payload: { scan_terms: null }
+      payload: { scan_terms: null },
     });
   });
 
   return (
     <Col>
       <Form inline>
-        <Form.Control placeholder="Scan terms" className="col-10 mx-3"
+        <Form.Control
+          placeholder="Scan terms"
+          className="col-10 mx-3"
           dir={props.dir}
           value={props.scan_terms}
           onChange={change}
-          onKeyDown={update} />
-        <Button variant="primary"
-          onClick={apply}>Apply</Button>
-        <Button variant="secondary"
-          onClick={clear}>Clear</Button>
+          onKeyDown={update}
+        />
+        <Button variant="primary" onClick={apply}>
+          Apply
+        </Button>
+        <Button variant="secondary" onClick={clear}>
+          Clear
+        </Button>
       </Form>
     </Col>
-  )
+  );
 }
 
 /*
@@ -303,34 +318,38 @@ function App() {
   const [topic_requested, set_topic_requested] = useState(false);
   const [show_topic_dialog, set_show_topic_dialog] = useState(false);
   const [inbox, set_inbox] = useState({});
-  const [scan_terms, set_scan_terms] = useState('');
-  const [pool_filter, set_pool_filter] = useState('all');
+  const [scan_terms, set_scan_terms] = useState("");
+  const [pool_filter, set_pool_filter] = useState("all");
 
   /* Effect to fire just before initial render */
   useEffect(() => {
-    if (state.username === '') {
+    if (state.username === "") {
       // Try to restore state from the browser's local storage.
       // First check for a username.
-      const stored_username = window.localStorage.getItem('user');
+      const stored_username = window.localStorage.getItem("user");
       if (stored_username) {
-        dispatch({ type: Actions.LOGIN, payload: { username: stored_username } });
+        dispatch({
+          type: Actions.LOGIN,
+          payload: { username: stored_username },
+        });
 
         // check for scan terms
-        const scan_terms = window.localStorage.getItem('scan_terms');
+        const scan_terms = window.localStorage.getItem("scan_terms");
         if (scan_terms) {
-          dispatch({ type: Actions.SAVE_SCAN_TERMS, payload: { scan_terms: scan_terms } });
+          dispatch({
+            type: Actions.SAVE_SCAN_TERMS,
+            payload: { scan_terms: scan_terms },
+          });
           set_scan_terms(scan_terms);
-        };
+        }
 
         // Then, check for last topic loaded
-        const cur_topic = window.localStorage.getItem('topic');
+        const cur_topic = window.localStorage.getItem("topic");
         if (cur_topic) {
           // And last document viewed?  If not just set to 0
-          let cur_doc = window.localStorage.getItem('current');
-          if (cur_doc)
-            cur_doc = parseInt(cur_doc);
-          else
-            cur_doc = 0;
+          let cur_doc = window.localStorage.getItem("current");
+          if (cur_doc) cur_doc = parseInt(cur_doc);
+          else cur_doc = 0;
           load_pool(stored_username, cur_topic, cur_doc);
         }
       } else {
@@ -341,15 +360,15 @@ function App() {
 
   /* Load the "inbox", the list of topics to do and how much has been done. */
   const load_inbox = useCallback((username) => {
-    fetch('inbox?u=' + state.username)
-      .then(response => response.json())
-      .then(data => set_inbox(data));
+    fetch("inbox?u=" + state.username)
+      .then((response) => response.json())
+      .then((data) => set_inbox(data));
   });
 
   /* If someone clicks "Load topic", we need to refresh the inbox and
    * put up the load-topic dialog. */
   useEffect(() => {
-    if (topic_requested && state.username !== '') {
+    if (topic_requested && state.username !== "") {
       load_inbox(state.username);
       set_topic_requested(false);
       set_show_topic_dialog(true);
@@ -357,122 +376,113 @@ function App() {
   }, [topic_requested]);
 
   const load_pool = useCallback((username, topic, current = 0) => {
-    fetch('pool?u=' + username + '&t=' + topic)
-      .then(response => response.json())
-      .then(data => {
-        if (data.last)
-          current = data.last;
+    fetch("pool?u=" + username + "&t=" + topic)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.last) current = data.last;
         const desc_obj = JSON.parse(data.desc);
         dispatch({
-          type: Actions.LOAD_POOL, payload: {
+          type: Actions.LOAD_POOL,
+          payload: {
             topic: topic,
             pool: data.pool,
-            desc: desc_obj
-          }
+            desc: desc_obj,
+          },
         });
-        return fetch('doc?u=' + username
-          + '&t=' + topic
-          + '&d=' + data.pool[current].docid);
+        return fetch(
+          "doc?u=" + username + "&t=" + topic + "&d=" + data.pool[current].docid
+        );
       })
-      .then(response => {
+      .then((response) => {
         if (response.ok) {
           return response.json();
         }
         return null;
       })
-      .then(data => {
+      .then((data) => {
         dispatch({
-          type: Actions.FETCH_DOC, payload: {
+          type: Actions.FETCH_DOC,
+          payload: {
             doc: data,
-            current: current
-          }
+            current: current,
+          },
         });
         set_show_topic_dialog(false);
       });
   });
 
-  const load_pool_for_current_user =
-    useCallback((topic, current = 0) => {
-      load_pool(state.username, topic, current);
-    });
+  const load_pool_for_current_user = useCallback((topic, current = 0) => {
+    load_pool(state.username, topic, current);
+  });
 
   const load_pool_item = useCallback((i) => {
     if (i < 0 || i >= state.pool.length) return;
 
-    const docid = state.pool[i].docid
-    fetch('doc?t=' + state.topic
-      + '&u=' + state.username
-      + '&d=' + docid)
-      .then(response => {
+    const docid = state.pool[i].docid;
+    fetch("doc?t=" + state.topic + "&u=" + state.username + "&d=" + docid)
+      .then((response) => {
         if (response.ok) {
           return response.json();
         }
-        return '';
+        return "";
       })
-      .then(data => {
+      .then((data) => {
         dispatch({
           type: Actions.FETCH_DOC,
           payload: {
             current: i,
-            doc: data
-          }
+            doc: data,
+          },
         });
       });
   });
 
-  const judge_current = useCallback(({
-    judgment = '0',
-    passage = null,
-    subtopics = {},
-  }) => {
-    const docid = state.pool[state.current].docid;
+  const judge_current = useCallback(
+    ({ judgment = "0", passage = null, subtopics = {} }) => {
+      const docid = state.pool[state.current].docid;
 
-    if (passage && (judgment === '0' || judgment === '-1'))
-      judgment = '2';
+      if (passage && (judgment === "0" || judgment === "-1")) judgment = "2";
 
-    if (judgment === '0') {
-      passage = { clear: true }; // Clear any passage judgments
-      subtopics = []; // Clear any subtopic judgments
-    }
+      if (judgment === "0") {
+        passage = { clear: true }; // Clear any passage judgments
+        subtopics = []; // Clear any subtopic judgments
+      }
 
-    let judge_payload = {
-      docid: docid,
-      judgment: judgment,
-    };
+      let judge_payload = {
+        docid: docid,
+        judgment: judgment,
+      };
 
-    if (passage) {
-      judge_payload.passage = passage;
-    }
-    if (subtopics && Object.keys(subtopics).length > 0) {
-      judge_payload.subtopics = subtopics;
-    }
+      if (passage) {
+        judge_payload.passage = passage;
+      }
+      if (subtopics && Object.keys(subtopics).length > 0) {
+        judge_payload.subtopics = subtopics;
+      }
 
-    fetch('judge?u=' + state.username +
-      '&t=' + state.topic +
-      '&d=' + docid, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(judge_payload)
-    })
-      .then(response => {
+      fetch("judge?u=" + state.username + "&t=" + state.topic + "&d=" + docid, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(judge_payload),
+      }).then((response) => {
         if (response.ok)
           dispatch({ type: Actions.JUDGE, payload: judge_payload });
       });
-  });
+    }
+  );
 
   const note_passage = useCallback((passage) => {
     let judgment = state.pool[state.current].judgment;
-    if (judgment === '-1' || judgment === '0')
-      judgment = '2';
+    if (judgment === "-1" || judgment === "0") judgment = "2";
     judge_current({ judgment: judgment, passage: passage });
   });
 
   const note_subtopic = useCallback((subchecks) => {
     let judgment = state.pool[state.current].judgment;
 
-    if (Object.values(subchecks).some(x => x === true)) {
-      if (judgment === '-1' || judgment === '0') {
-        judgment = '1';
+    if (Object.values(subchecks).some((x) => x === true)) {
+      if (judgment === "-1" || judgment === "0") {
+        judgment = "1";
       }
     }
     judge_current({ judgment: judgment, subtopics: subchecks });
@@ -483,19 +493,21 @@ function App() {
    * and the judgment for the currently selected document is bolded.
    */
   const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
-    let style = 'font-weight-normal';
-    if (state.current >= 0 &&
-      state.current < state.pool.length
-      && i === state.pool[state.current].judgment) {
-      style = 'font-weight-bold';
+    let style = "font-weight-normal";
+    if (
+      state.current >= 0 &&
+      state.current < state.pool.length &&
+      i === state.pool[state.current].judgment
+    ) {
+      style = "font-weight-bold";
     }
     return (
       <ButtonGroup>
-        <Button variant={rel_levels[i].color}
-          onClick={() => judge_current({ judgment: i })}>
-          <span className={style}>
-            {rel_levels[i].label}
-          </span>
+        <Button
+          variant={rel_levels[i].color}
+          onClick={() => judge_current({ judgment: i })}
+        >
+          <span className={style}>{rel_levels[i].label}</span>
         </Button>
       </ButtonGroup>
     );
@@ -509,22 +521,22 @@ function App() {
    */
   const onKeyPress = (event) => {
     switch (event.key) {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
+      case "0":
+      case "1":
+      case "2":
+      case "3":
         judge_current({ judgment: event.key });
         break;
-      case 'n':
+      case "n":
         load_pool_item(state.current + 1);
         break;
-      case 'p':
+      case "p":
         load_pool_item(state.current - 1);
         break;
     }
   };
 
-  useKeyPress(['n', 'p', '0', '1', '2', '3'], onKeyPress);
+  useKeyPress(["n", "p", "0", "1", "2", "3"], onKeyPress);
 
   const docDiv = useRef(null);
 
@@ -533,73 +545,103 @@ function App() {
     if (docDiv.current) {
       docDiv.current.scrollTo(0, 0);
     }
-  }, [state.doc])
+  }, [state.doc]);
 
   return (
     <AssessDispatch.Provider value={dispatch}>
-      <Container fluid className="d-flex flex-column min-vh-100 overflow-hidden">
-
-        { /************** Modals */}
-        <LoginModal login_required={login_required} set_required={set_login_required} />
-        <LoadTopicModal show_topic_dialog={show_topic_dialog}
+      <Container
+        fluid
+        className="d-flex flex-column min-vh-100 overflow-hidden"
+      >
+        {/************** Modals */}
+        <LoginModal
+          login_required={login_required}
+          set_required={set_login_required}
+        />
+        <LoadTopicModal
+          show_topic_dialog={show_topic_dialog}
           set_show_topic_dialog={set_show_topic_dialog}
           inbox={inbox}
-          load_pool={load_pool_for_current_user} />
+          load_pool={load_pool_for_current_user}
+        />
 
-        { /************** Header line: load pool, filter pool, judgment buttons, logout button */}
+        {/************** Header line: load pool, filter pool, judgment buttons, logout button */}
         <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
           <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
-            <FontAwesomeIcon icon={faCoffee} /> <span className="navbar-brand">Assess</span>
+            <FontAwesomeIcon icon={faCoffee} />{" "}
+            <span className="navbar-brand">Assess</span>
           </Col>
           <Col xs="auto" className="flex-shrink-1">
-            <Button variant="primary"
-              onClick={() => set_topic_requested(true)}>Load Pool</Button>
+            <Button variant="primary" onClick={() => set_topic_requested(true)}>
+              Load Pool
+            </Button>
           </Col>
           <Col xs="auto">
             {state.current + 1} of {state.pool.length}
           </Col>
           <Col xs="auto">
-            <Form.Control as="select" onChange={(e) => set_pool_filter(e.target.value)}>
+            <Form.Control
+              as="select"
+              onChange={(e) => set_pool_filter(e.target.value)}
+            >
               <option>all</option>
               <option>unjudged</option>
-              {Object.getOwnPropertyNames(rel_levels).map((i) =>
-                <option value={i}>{rel_levels[i].label}</option>)}
+              {Object.getOwnPropertyNames(rel_levels).map((i) => (
+                <option value={i}>{rel_levels[i].label}</option>
+              ))}
             </Form.Control>
           </Col>
           <Col xs="auto" className="mr-auto">
             {judgment_buttons}
           </Col>
           <Col xs="auto" className="mx-3">
-            <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>Log out {state.username}</Button>
+            <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
+              Log out {state.username}
+            </Button>
           </Col>
         </Row>
 
-        { /************** Scanterms */}
+        {/************** Scanterms */}
         <Row className="mt-5 pt-2"> </Row>
         <ScanTerms
-          dir={(state.doc && state.doc['lang'] === 'fas') ? "rtl" : ""}
+          dir={state.doc && state.doc["lang"] === "fas" ? "rtl" : ""}
           scan_terms={scan_terms}
           set_scan_terms={set_scan_terms}
         />
 
-        { /************** Main: pool column and topic/document column */}
+        {/************** Main: pool column and topic/document column */}
         <Row className="mt-3 vh-full">
           <Col xs={4} className="vh-full overflow-auto">
-            <Pool user={state.username} topic={state.topic}
+            <Pool
+              user={state.username}
+              topic={state.topic}
               rel_levels={rel_levels}
-              pool={state.pool} current={state.current} filter={pool_filter}
+              pool={state.pool}
+              current={state.current}
+              filter={pool_filter}
               fetch_doc={load_pool_item}
             />
           </Col>
           <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
-            <Description desc={state.desc}
+            <Description
+              desc={state.desc}
               note_subtopic={note_subtopic}
-              rel={(state.current >= 0 && state.pool[state.current].subtopics)
-                ? state.pool[state.current].subtopics : null} />
-            <Highlightable content={state.doc} scan_terms={state.scan_terms}
-              rel={(state.current >= 0 && state.pool[state.current].passage)
-                ? state.pool[state.current].passage : ''}
-              note_passage={note_passage} />
+              rel={
+                state.current >= 0 && state.pool[state.current].subtopics
+                  ? state.pool[state.current].subtopics
+                  : null
+              }
+            />
+            <Highlightable
+              content={state.doc}
+              scan_terms={state.scan_terms}
+              rel={
+                state.current >= 0 && state.pool[state.current].passage
+                  ? state.pool[state.current].passage
+                  : ""
+              }
+              note_passage={note_passage}
+            />
           </Col>
         </Row>
       </Container>
@@ -608,4 +650,3 @@ function App() {
 }
 
 export default App;
-
