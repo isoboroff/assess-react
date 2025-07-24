@@ -234,7 +234,8 @@ def get_document(qargs):
                     print(json.dumps({'stamp': time.time(),
                                       'docid': docid,
                                       'action': 'load'}), file=fp)
-
+            if index == 'ragtime-mt':
+                response['_source']['lang'] = 'eng'
             return(response['_source'], 200)
         else:
             return('', 404)

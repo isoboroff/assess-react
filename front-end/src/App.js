@@ -424,7 +424,7 @@ function App() {
     fetch(
       "doc?i=" +
         index +
-        "t=" +
+        "&t=" +
         state.topic +
         "&u=" +
         state.username +
@@ -447,6 +447,15 @@ function App() {
         });
       });
   });
+
+  const handleTranslateToggle = () => {
+    set_translate(!translate);
+  };
+  useEffect(() => {
+    if (state.current > 0 && state.current < state.pool.length) {
+      load_pool_item(state.current);
+    }
+  }, [translate]);
 
   const judge_current = useCallback(
     ({ judgment = "0", passage = null, subtopics = {} }) => {
@@ -611,7 +620,7 @@ function App() {
               label="Translate"
               id="mt-switch"
               checked={translate}
-              onClick={() => set_translate(!translate)}
+              onClick={() => handleTranslateToggle()}
             />
           </Col>
           <Col xs="auto" className="mx-3">
