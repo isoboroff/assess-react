@@ -420,7 +420,17 @@ function App() {
     if (i < 0 || i >= state.pool.length) return;
 
     const docid = state.pool[i].docid;
-    fetch("doc?t=" + state.topic + "&u=" + state.username + "&d=" + docid)
+    const index = translate ? "ragtime-mt" : "ragtime";
+    fetch(
+      "doc?i=" +
+        index +
+        "t=" +
+        state.topic +
+        "&u=" +
+        state.username +
+        "&d=" +
+        docid
+    )
       .then((response) => {
         if (response.ok) {
           return response.json();

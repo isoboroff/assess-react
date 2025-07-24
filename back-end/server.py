@@ -125,7 +125,8 @@ query_args = {
                        required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
     't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
-    'd': fields.String()
+    'd': fields.String(),
+    'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
 }
 
 
@@ -216,12 +217,16 @@ def get_pool(qargs):
 @app.route('/doc')
 @use_args(query_args, location='query')
 def get_document(qargs):
+    index = qargs.get('i', None)
     docid = qargs['d']
     topic = qargs['t']
     user = qargs['u']
 
+    if not index:
+        index = app.config['INDEX']
+
     try:
-        response = es.get(index=app.config['INDEX'], id=docid)
+        response = es.get(index=index, id=docid)
         if response['found']:
             if topic and user:
                 logfile = Path(app.config['SAVE']) / user / f'topic{topic}.log'
