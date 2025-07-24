@@ -320,6 +320,7 @@ function App() {
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState("");
   const [pool_filter, set_pool_filter] = useState("all");
+  const [translate, set_translate] = useState(false);
 
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -593,6 +594,15 @@ function App() {
           </Col>
           <Col xs="auto" className="mr-auto">
             {judgment_buttons}
+          </Col>
+          <Col xs="auto" className="mr-auto">
+            <Form.Check
+              type="switch"
+              label="Translate"
+              id="mt-switch"
+              checked={translate}
+              onClick={() => set_translate(!translate)}
+            />
           </Col>
           <Col xs="auto" className="mx-3">
             <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
