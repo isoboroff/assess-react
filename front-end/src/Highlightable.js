@@ -1,7 +1,7 @@
-import { React, useState, useEffect } from 'react';
+import { React, useState, useEffect } from "react";
 
-import Interweave from 'interweave';
-import ScanTermMatcher from './ScanTermMatcher';
+import Interweave from "interweave";
+import ScanTermMatcher from "./ScanTermMatcher";
 
 function Highlightable(props) {
   const [highlight, set_highlight] = useState(null);
@@ -15,7 +15,9 @@ function Highlightable(props) {
       const prefix = text.slice(0, start);
       const span = text.slice(start, end);
       const suffix = text.slice(end);
-      return prefix + ' <mark class="rel-highlight"> ' + span + ' </mark> ' + suffix;
+      return (
+        prefix + ' <mark class="rel-highlight"> ' + span + " </mark> " + suffix
+      );
     } else {
       return text;
     }
@@ -24,16 +26,17 @@ function Highlightable(props) {
   // This is for right-to-left text in the document.  We shouldn't generally
   // need it unless we're assessing a RTL language like Arabic.
   const set_rtl = (string) => {
-    return '<div dir="rtl" class="text-right">' + string + '</div>';
+    return '<div dir="rtl" class="text-right">' + string + "</div>";
   };
 
   // Adapted from https://github.com/wooorm/is-whitespace-character (MIT license)
   // It turns out JavaScript doesn't have a proper UTF-8 compliant isSpace() #wtf
   function isSpace(char) {
-    return char && /\s/.test(
-      typeof char === 'number'
-        ? String.fromCharCode(char)
-        : char.charAt(0)
+    return (
+      char &&
+      /\s/.test(
+        typeof char === "number" ? String.fromCharCode(char) : char.charAt(0)
+      )
     );
   }
 
@@ -48,7 +51,7 @@ function Highlightable(props) {
   function search(highlight) {
     let hpos = 0; // position in highlight
     let tpos = 0; // position in text
-    let mstart = -1;  // marked start pos in text
+    let mstart = -1; // marked start pos in text
     const text = props.content.text;
     //console.log('highlight is "' + highlight + '", len ' + highlight.length);
     while (true) {
@@ -85,7 +88,7 @@ function Highlightable(props) {
 
   // Is something selected?
   function has_selection() {
-    return (window.getSelection && !window.getSelection().isCollapsed);
+    return window.getSelection && !window.getSelection().isCollapsed;
   }
 
   // Return the selection, with (block, start, len)
@@ -97,13 +100,13 @@ function Highlightable(props) {
       if (!sel.isCollapsed) {
         const hl_text = sel.toString();
         const [start, end] = search(hl_text);
-        if (start < 0 || (end - start) < hl_text.length) {
-          console.log('bad search output ' + start + ' ' + end);
+        if (start < 0 || end - start < hl_text.length) {
+          console.log("bad search output " + start + " " + end);
         } else {
           result = {
-            "start": start,
-            "length": end - start,
-            "text": hl_text
+            start: start,
+            length: end - start,
+            text: hl_text,
           };
         }
         sel.removeAllRanges();
@@ -126,15 +129,14 @@ function Highlightable(props) {
   // but with added bits to support highlighting
   //
   const display_doc = () => {
-    const title = props.content['title'];
-    let text = props.content['text'];
-    if (props.rel)
-      text = highlight_rel_passage(text);
-    let textdir = '';
-    let textclass = 'article-text';
-    if (props.content['lang'] === 'fas') {
-      textdir = 'rtl';
-      textclass = 'text-right article-text';
+    const title = props.content["title"];
+    let text = props.content["text"];
+    if (props.rel) text = highlight_rel_passage(text);
+    let textdir = "";
+    let textclass = "article-text";
+    if (props.content["lang"] === "arb" || props.content["lang"] === "fas") {
+      textdir = "rtl";
+      textclass = "text-right article-text";
     }
 
     return (
@@ -142,15 +144,23 @@ function Highlightable(props) {
         <div dir={textdir} className={textclass}>
           <h1>{title}</h1>
         </div>
-        <div dir={textdir} className={textclass}
+        <div
+          dir={textdir}
+          className={textclass}
           onMouseUp={(e) => {
             if (!e.altKey && has_selection()) {
               set_highlight(get_selected_text());
             }
-          }}>
-          <Interweave content={text}
-            matchers={[new ScanTermMatcher('scanterms',
-              { scan_terms: props.scan_terms })]} />
+          }}
+        >
+          <Interweave
+            content={text}
+            matchers={[
+              new ScanTermMatcher("scanterms", {
+                scan_terms: props.scan_terms,
+              }),
+            ]}
+          />
         </div>
       </div>
     );
@@ -161,7 +171,6 @@ function Highlightable(props) {
   } else {
     return <p>No document selected, or document is missing</p>;
   }
-
 }
 
 export { Highlightable as default };
