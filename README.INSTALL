@@ -1,0 +1,27 @@
+Front end:
+
+yarn install
+
+Check src/index.js.  If we are using ReactRouter, make sure the basename argument is there.
+
+yarn build
+
+Make sure we are group www-data all the way here and to build/, node_modules/, relevance/, public/.
+
+Back end:
+
+python3 -m venv venv
+. venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+
+If requirements get fussy, check for '==' in the requirements.txt file, and change them to '>='.
+
+Set the correct Elastic password and (if using https) the certificate fingerprint either in server.py or in settings.py, depending on which version of react-assess this is.
+
+In uwsgi.ini, set the mount point and choose an unoccupied port for the stats app.
+
+In apache2's configuration, you will need a clause for the Proxy setup, something like:
+ProxyPass /atomic-i2t unix:/home/ians/react-assess.atomic-i2t/back-end/uwsgi.sock|uwsgi://uwsgi-uds-app3/
+
+The first arg is the URL path to the app (should match the uwsgi.ini mountpoint and the basename in index.js if using ReactRouter).  The second is the full path to the uwsgi socket for the app.  The bit on the other side of the pipe needs to be unique... I just bump the number at the end, but there's no reason this counldn't just be the app name.

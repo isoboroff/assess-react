@@ -1,56 +1,40 @@
 {
-  "name": "front-end",
-  "version": "0.1.0",
+  "name": "new-front-end",
   "private": true,
-  "homepage": ".",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.35",
-    "@fortawesome/free-solid-svg-icons": "^5.15.3",
-    "@fortawesome/react-fontawesome": "^0.1.14",
-    "@testing-library/jest-dom": "^5.13.0",
-    "@testing-library/react": "^11.2.7",
-    "@testing-library/user-event": "^12.1.10",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.3",
+    "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.7",
-    "hash-wasm": "^4.9.0",
-    "interweave": "^12.7.0",
-    "jquery": "^3.6.0",
+    "interweave": "^13.1.1",
+    "jquery": "^3.7.1",
     "mark.js": "^8.11.1",
-    "popper.js": "^1.16.1",
-    "react": "^17.0.2",
-    "react-bootstrap": "^1.4.0",
-    "react-data-table-component": "^7.5.3",
-    "react-dom": "^17.0.2",
-    "react-router-dom": "^6.14.2",
-    "react-scripts": "^0.0.0",
+    "react": "^18.2.0",
+    "react-bootstrap": "1.4",
+    "react-data-table-component": "^7.7.0",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.7.1",
     "scrypt-pbkdf": "^1.1.1",
-    "styled-components": "^6.0.7",
-    "web-vitals": "^0.2.4"
+    "styled-components": "^6.1.19",
+    "web-vitals": "^5.0.3"
   },
   "devDependencies": {
-    "@babel/plugin-transform-private-property-in-object": "^7.23.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "vite": "^7.0.6"
   }
 }

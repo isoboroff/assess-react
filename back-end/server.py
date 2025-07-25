@@ -12,8 +12,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-app = Flask(__name__, static_folder='../front-end/build/static',
-            template_folder='../front-end/build')
+app = Flask(__name__, static_folder='../front-end/dist/static',
+            template_folder='../front-end/dist')
 app.config.from_pyfile('settings.py')
 if 'LOGLEVEL' in app.config:
     app.logger.setLevel(app.config['LOGLEVEL'])
