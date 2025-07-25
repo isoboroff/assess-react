@@ -132,6 +132,7 @@ function assess_reducer(state, action) {
  * through the properties at each node.
  */
 const AssessDispatch = React.createContext(null);
+const AssessState = React.createContext(null);
 
 /* A modal dialog to force logging in.
  * This used to be in App(), but I decided to move it out to a separate
@@ -569,111 +570,116 @@ function App() {
 
   return (
     <AssessDispatch.Provider value={dispatch}>
-      <Container
-        fluid
-        className="d-flex flex-column min-vh-100 overflow-hidden"
-      >
-        {/************** Modals */}
-        <LoginModal
-          login_required={login_required}
-          set_required={set_login_required}
-        />
-        <LoadTopicModal
-          show_topic_dialog={show_topic_dialog}
-          set_show_topic_dialog={set_show_topic_dialog}
-          inbox={inbox}
-          load_pool={load_pool_for_current_user}
-        />
+      <AssessState.Provider value={state}>
+        <Container
+          fluid
+          className="d-flex flex-column min-vh-100 overflow-hidden"
+        >
+          {/************** Modals */}
+          <LoginModal
+            login_required={login_required}
+            set_required={set_login_required}
+          />
+          <LoadTopicModal
+            show_topic_dialog={show_topic_dialog}
+            set_show_topic_dialog={set_show_topic_dialog}
+            inbox={inbox}
+            load_pool={load_pool_for_current_user}
+          />
 
-        {/************** Header line: load pool, filter pool, judgment buttons, logout button */}
-        <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
-          <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
-            <FontAwesomeIcon icon={faCoffee} />{" "}
-            <span className="navbar-brand">Assess</span>
-          </Col>
-          <Col xs="auto" className="flex-shrink-1">
-            <Button variant="primary" onClick={() => set_topic_requested(true)}>
-              Load Pool
-            </Button>
-          </Col>
-          <Col xs="auto">
-            {state.current + 1} of {state.pool.length}
-          </Col>
-          <Col xs="auto">
-            <Form.Control
-              as="select"
-              onChange={(e) => set_pool_filter(e.target.value)}
-            >
-              <option>all</option>
-              <option>unjudged</option>
-              {Object.getOwnPropertyNames(rel_levels).map((i) => (
-                <option value={i}>{rel_levels[i].label}</option>
-              ))}
-            </Form.Control>
-          </Col>
-          <Col xs="auto" className="mr-auto">
-            {judgment_buttons}
-          </Col>
-          <Col xs="auto" className="mr-auto">
-            <Form.Check
-              type="switch"
-              label="Translate"
-              id="mt-switch"
-              checked={translate}
-              onClick={() => handleTranslateToggle()}
-            />
-          </Col>
-          <Col xs="auto" className="mx-3">
-            <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
-              Log out {state.username}
-            </Button>
-          </Col>
-        </Row>
+          {/************** Header line: load pool, filter pool, judgment buttons, logout button */}
+          <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
+            <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
+              <FontAwesomeIcon icon={faCoffee} />{" "}
+              <span className="navbar-brand">Assess</span>
+            </Col>
+            <Col xs="auto" className="flex-shrink-1">
+              <Button
+                variant="primary"
+                onClick={() => set_topic_requested(true)}
+              >
+                Load Pool
+              </Button>
+            </Col>
+            <Col xs="auto">
+              {state.current + 1} of {state.pool.length}
+            </Col>
+            <Col xs="auto">
+              <Form.Control
+                as="select"
+                onChange={(e) => set_pool_filter(e.target.value)}
+              >
+                <option>all</option>
+                <option>unjudged</option>
+                {Object.getOwnPropertyNames(rel_levels).map((i) => (
+                  <option value={i}>{rel_levels[i].label}</option>
+                ))}
+              </Form.Control>
+            </Col>
+            <Col xs="auto" className="mr-auto">
+              {judgment_buttons}
+            </Col>
+            <Col xs="auto" className="mr-auto">
+              <Form.Check
+                type="switch"
+                label="Translate"
+                id="mt-switch"
+                checked={translate}
+                onClick={() => handleTranslateToggle()}
+              />
+            </Col>
+            <Col xs="auto" className="mx-3">
+              <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
+                Log out {state.username}
+              </Button>
+            </Col>
+          </Row>
 
-        {/************** Scanterms */}
-        <Row className="mt-5 pt-2"> </Row>
-        <ScanTerms
-          dir={state.doc && state.doc["lang"] === "fas" ? "rtl" : ""}
-          scan_terms={scan_terms}
-          set_scan_terms={set_scan_terms}
-        />
+          {/************** Scanterms */}
+          <Row className="mt-5 pt-2"> </Row>
+          <ScanTerms
+            dir={state.doc && state.doc["lang"] === "fas" ? "rtl" : ""}
+            scan_terms={scan_terms}
+            set_scan_terms={set_scan_terms}
+          />
 
-        {/************** Main: pool column and topic/document column */}
-        <Row className="mt-3 vh-full">
-          <Col xs={4} className="vh-full overflow-auto">
-            <Pool
-              user={state.username}
-              topic={state.topic}
-              rel_levels={rel_levels}
-              pool={state.pool}
-              current={state.current}
-              filter={pool_filter}
-              fetch_doc={load_pool_item}
-            />
-          </Col>
-          <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
-            <Description
-              desc={state.desc}
-              note_subtopic={note_subtopic}
-              rel={
-                state.current >= 0 && state.pool[state.current].subtopics
-                  ? state.pool[state.current].subtopics
-                  : null
-              }
-            />
-            <Highlightable
-              content={state.doc}
-              scan_terms={state.scan_terms}
-              rel={
-                state.current >= 0 && state.pool[state.current].passage
-                  ? state.pool[state.current].passage
-                  : ""
-              }
-              note_passage={note_passage}
-            />
-          </Col>
-        </Row>
-      </Container>
+          {/************** Main: pool column and topic/document column */}
+          <Row className="mt-3 vh-full">
+            <Col xs={4} className="vh-full overflow-auto">
+              <Pool
+                user={state.username}
+                topic={state.topic}
+                rel_levels={rel_levels}
+                pool={state.pool}
+                current={state.current}
+                filter={pool_filter}
+                fetch_doc={load_pool_item}
+              />
+            </Col>
+            <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
+              <Description
+                desc={state.desc}
+                note_subtopic={note_subtopic}
+                rel={
+                  state.current >= 0 && state.pool[state.current].subtopics
+                    ? state.pool[state.current].subtopics
+                    : null
+                }
+              />
+              <Highlightable
+                content={state.doc}
+                scan_terms={state.scan_terms}
+                rel={
+                  state.current >= 0 && state.pool[state.current].passage
+                    ? state.pool[state.current].passage
+                    : ""
+                }
+                note_passage={note_passage}
+              />
+            </Col>
+          </Row>
+        </Container>
+      </AssessState.Provider>
     </AssessDispatch.Provider>
   );
 }
