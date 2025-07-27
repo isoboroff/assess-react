@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-prototype-builtins */
-import React, {
+import {
   useState,
   useEffect,
   useReducer,
@@ -20,6 +20,7 @@ import Container from "react-bootstrap/Container";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 
+import { AssessState, AssessDispatch } from "./Contexts";
 import Pool from "./Pool";
 import Description from "./Description";
 import DocumentView from "./DocumentView";
@@ -115,13 +116,6 @@ function assess_reducer(state, action) {
       return state;
   }
 }
-
-/* React Contexts allow us to store a value and get it back down deep in
- * the DOM tree, without needing to pass the value all the way down
- * through the properties at each node.
- */
-const AssessDispatch = React.createContext(null);
-const AssessState = React.createContext(null);
 
 /*
  * A modal for loading the topic.  This is much nicer than typing a topic
