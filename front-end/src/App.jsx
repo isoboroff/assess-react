@@ -53,6 +53,8 @@ const Actions = Object.freeze({
   FETCH_DOC: "FETCH_DOC",
   JUDGE: "JUDGE",
   SAVE_SCAN_TERMS: "SAVE_SCAN_TERMS",
+  ADD_HIGHLIGHT: "ADD_HIGHLIGHT",
+  DELETE_HIGHLIGHT: "DELETE_HIGHLIGHT",
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -85,23 +87,65 @@ function assess_reducer(state, action) {
     case Actions.JUDGE: {
       // Update the judgment of the document that was judged
       let update = { judgment: action.payload.judgment };
-      if (action.payload.hasOwnProperty("passage")) {
-        if (action.payload.passage.hasOwnProperty("clear"))
-          update.passage = null;
+      if ('passage' in action.payload) {
+        if ('clear' in action.payload.passage)
+          update.passage = [];
         else update.passage = action.payload.passage;
       }
-      if (action.payload.hasOwnProperty("subtopics"))
+      if ('subtopics' in action.payload)
         update.subtopics = action.payload.subtopics;
 
       let newPool = state.pool.map((entry) => {
-        if (entry.docid === action.payload.docid)
+        if (entry.docid === action.payload.docid) {
+          console.log(entry, update);
+          if ('passage' in update) {
+            if ('passage' in entry) {
+              update.passage = entry.passage.concat(update.passage);
+            } else {
+              update.passage = [update.passage];
+            }
+          }
           return { ...entry, ...update };
+        }
         else return entry;
       });
       return {
         ...state,
         pool: newPool,
       };
+    }
+
+    case Actions.ADD_HIGHLIGHT: {
+      const passage = action.payload;
+      let newPool = state.pool.map((entry) => {
+        if (entry.docid == passage.docid) {
+          if ('passage' in entry) {
+            if (Array.isArray(entry.passage)) {
+              entry.passage = [...entry.passage, passage];
+            } else {
+              entry.passage = [entry.docid.passage].concat(passage);
+            }
+          } else {
+            entry.passage = [passage];
+          }
+          return { ...entry }
+        }
+        else return entry;
+      });
+      return { ...state, pool: newPool };
+    }
+
+    case Actions.DELETE_HIGHLIGHT: {
+      const passage = action.payload;
+      let newPool = state.pool.map((entry) => {
+        if (entry.docid == passage.docid) {
+          if ('passage' in entry.docid) {
+            entry.passage = entry.passage.filter((p) => p.docid != passage.docid);
+          }
+          return {...entry}
+        } else return entry;
+      })
+      return { ...state, pool: newPool };
     }
 
     case Actions.SAVE_SCAN_TERMS:
@@ -555,6 +599,7 @@ function App() {
                     ? state.pool[state.current].passage
                     : ""
                 }
+                note_passage={note_passage}
               />
            </Col>
           </Row>

@@ -6,6 +6,7 @@ import ScanTermMatcher from "./ScanTermMatcher";
 function Highlightable(props) {
   const [highlight, set_highlight] = useState(null);
 
+  console.log(props.rel);
   // If there is a corresponding highlight in props.rel,
   // highlight it in the given block of text.
   const highlight_rel_passage = (text) => {

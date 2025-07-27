@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import segment from "./sentencex";
 
-const DocSentence = ({ docid, sentence, marked, children }) => {
+const DocSentence = ({ docid, sentence, marked, children, note_passage }) => {
   const [highlight, setHighlight] = useState(false);
 
   // const me = { docid: docid, sentence: sentence, text: children };
@@ -18,7 +18,7 @@ const DocSentence = ({ docid, sentence, marked, children }) => {
   const handleClick = () => {
     if (highlight) {
       setHighlight(false);
-      // dispatch({ type: ActionType.DELETE_HIGHLIGHT, payload: me });
+      note_passage({ sentence: sentence, text: children })
     } else {
       setHighlight(true);
       // dispatch({ type: ActionType.NOTE_HIGHLIGHT, payload: me });
@@ -42,7 +42,7 @@ DocSentence.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default function DocumentView({ document, judgment }) {
+export default function DocumentView({ document, judgment, note_passage }) {
   const [sentences, setSentences] = useState([]);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function DocumentView({ document, judgment }) {
       </div>
       <div dir={textdir} className={textclass}>
         {sentences.map((sent, index) => (
-          <DocSentence key={index} index={index}>
+          <DocSentence key={index} index={index} note_passage={note_passage}>
             {sent}
           </DocSentence>
         ))}{" "}
