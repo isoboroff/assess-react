@@ -1,22 +1,43 @@
-from flask import Flask, render_template, request, make_response, jsonify
-from elasticsearch import Elasticsearch
-from webargs import fields, validate
-from webargs.flaskparser import use_args
-
 import json
+import secrets
 import sys
 import re
 import traceback
 import time
 import os
 from pathlib import Path
-from datetime import datetime
+import datetime
 
-app = Flask(__name__, static_folder='../front-end/dist/static',
-            template_folder='../front-end/dist')
+from flask import Flask, abort, redirect, render_template, render_template_string, request, make_response, jsonify, send_file, session, url_for
+from elasticsearch import Elasticsearch
+from webargs import fields, validate
+from webargs.flaskparser import use_args
+import jwt
+import requests
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from user import User
+
+
+app = Flask(__name__, static_folder='../front-end/dist', static_url_path='/')
+
 app.config.from_pyfile('settings.py')
+app.config.update({'SECRET_KEY': secrets.token_hex()})
 if 'LOGLEVEL' in app.config:
     app.logger.setLevel(app.config['LOGLEVEL'])
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(username):
+    return User.get(username)
 
 ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
 es = Elasticsearch(
@@ -121,8 +142,6 @@ class Pool:
         return log_entry
 
 query_args = {
-    'u': fields.String(validate=validate.Regexp(r'^[A-Za-z0-9]+$'),
-                       required=True),
     'p': fields.String(validate=validate.Length(equal=64)),
     't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
     'd': fields.String(),
@@ -130,20 +149,96 @@ query_args = {
 }
 
 
+# This function decrypts a message using the app's private key
+# Source: https://elc.github.io/python-security/chapters/07_Asymmetric_Encryption.html
+# In this skeleton, this is used to decrypt the username stored in the flask session
+def app_decrypt(message):
+    password = app.config.get('PRIVATE_KEY_PASSWORD', None)
+    if not password:
+        password = os.getenv('PRIVATE_KEY_PASSWORD')
+    key_pem = Path(app.config['PRIVATE_KEY_FILE']).read_bytes()
+    try:
+        key = serialization.load_pem_private_key(
+            key_pem,
+            password=password
+        )
+    except ValueError:
+        raise ValueError('Error loading private key')
+    try:
+        decrypted = key.decrypt(message,
+                                padding.OAEP(
+                                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                                    algorithm=hashes.SHA256(),
+                                    label=None)
+        )
+    except ValueError:
+        raise ValueError('Decryption failed')
+    return decrypted
+
 @app.route('/')
-def hello():
-    return render_template('index.html')
+@login_required
+def index():
+    # This sends the index.html from the compiled front-end
+    print(f'session username is {session["username"]}')
+    template = open(Path(app.static_folder) / 'index.html', 'r').read()
+    return render_template_string(template, username=current_user.email)
+
+@app.route('/login')
+@use_args({"u": fields.Str(required=True),
+           }, location="query")
+def login(args):
+    if app.debug:
+        username = args['u']
+        user = User.get(username)
+        if user:
+            login_user(user)
+            session['username'] = user.id
+            return redirect(url_for('index'))
+        else:
+            abort(401)
+        
+    # The username is put into the session by the login.gov proxy
+    try:
+        encrypted_username = bytes.fromhex(args['u'])
+        app.logger.debug(f'Got enc username {encrypted_username}')
+    except KeyError:
+        return redirect(app.config['LOGIN_PROXY_URL'])
+    
+    try:
+        username = app_decrypt(encrypted_username).decode('utf-8')
+        app.logger.debug(f'Decrypted; {username}')
+    except ValueError as e:
+        app.logger.warning(f'Login decrypt fail: {e}')
+        return redirect(app.config['LOGIN_PROXY_URL'])
+
+    user = User.get(username)
+    
+    if user:
+        app.logger.debug(f'User is {user.id}')
+        login_user(user)
+        return redirect(url_for('index'))
+    else:
+        app.logger.debug(f'No such user {username}')
+        return redirect(app.config['LOGIN_PROXY_URL'])
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(app.config['LOGIN_PROXY_URL'])
 
 @app.route('/dashboard')
+@login_required
 def dashboard_front():
     return render_template('index.html')
 
 POOL_FILE_RE = re.compile(r'^topic\d+\.(eng|rus|arb|zho)$')
 
 @app.route('/inbox')
+@login_required
 @use_args(query_args, location='query')
 def inbox(qargs):
-    user = qargs['u']
+    user = current_user.id
     data = {}
     try:
         homedir = Path(app.config['SAVE']) / user
@@ -163,6 +258,7 @@ def inbox(qargs):
         return('', 503)
 
 @app.route('/dashdata')
+@login_required
 def dashboard():
     data = []
     try:
@@ -195,10 +291,11 @@ def dashboard():
         return('', 503)
 
 @app.route('/pool')
+@login_required
 @use_args(query_args, location='query')
 def get_pool(qargs):
     topic = qargs['t']
-    user = qargs['u']
+    user = current_user.id
     try:
         filename = Path(app.config['SAVE']) / user / f'topic{topic}'
         pool = Pool(filename)
@@ -215,12 +312,13 @@ def get_pool(qargs):
 
 
 @app.route('/doc')
+@login_required
 @use_args(query_args, location='query')
 def get_document(qargs):
     index = qargs.get('i', None)
     docid = qargs['d']
     topic = qargs['t']
-    user = qargs['u']
+    user = current_user.id
 
     if not index:
         index = app.config['INDEX']
@@ -245,9 +343,10 @@ def get_document(qargs):
 
 
 @app.route('/judge', methods=['POST'])
+@login_required
 @use_args(query_args, location='query')
 def set_judgment(qargs):
-    user = qargs['u']
+    user = current_user.id
     topic = qargs['t']
     docid = qargs['d']
 
@@ -265,22 +364,6 @@ def set_judgment(qargs):
         print(json.dumps(log_obj), file=fp)
 
     return('', 200)
-
-@app.route('/login')
-@use_args(query_args, location='query')
-def login(qargs):
-    user = qargs['u']
-    pw = qargs['p']
-
-    with open(app.config['PWFILE'], 'r') as pwfile:
-        for line in pwfile:
-            username, hashpw = line.strip().split(':')
-            if username == user:
-                if pw == hashpw:
-                    return('', 200)
-                else:
-                    return('', 403)
-    return('', 403)
 
 if __name__ == '__main__':
     print('Starting Flask...')
