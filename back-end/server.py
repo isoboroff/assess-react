@@ -334,6 +334,7 @@ def get_document(qargs):
                                       'action': 'load'}), file=fp)
             if index == 'ragtime-mt':
                 response['_source']['lang'] = 'eng'
+            response['_source']['docid'] = docid
             return(response['_source'], 200)
         else:
             return('', 404)
