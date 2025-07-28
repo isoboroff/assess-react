@@ -4,14 +4,17 @@ import re
 import time
 import os
 from pathlib import Path
+import datetime
 
-from flask import Flask, abort, redirect, render_template, render_template_string, request, jsonify, session, url_for
+from flask import Flask, abort, redirect, render_template, render_template_string, request, jsonify, send_file, session, url_for
 from elasticsearch import Elasticsearch
 from webargs import fields, validate
 from webargs.flaskparser import use_args
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+import requests
+import jwt
 from flask_login import (
     LoginManager,
     current_user,
@@ -32,6 +35,8 @@ if 'LOGLEVEL' in app.config:
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+openid_conf = requests.get(app.config['LOGIN_GOV']['discovery_uri']).json()
 
 @login_manager.user_loader
 def load_user(username):
@@ -184,9 +189,160 @@ def index():
     return render_template_string(template, username=current_user.email)
 
 @app.route('/login')
+def login():
+    return send_file('index.html')
+
+
+@app.route('/do_login')
+def do_login():
+    session['app_state'] = secrets.token_urlsafe(64)
+    session['nonce'] = secrets.token_urlsafe(64)
+    session.modified = True
+
+    query_params = {
+        'acr_values': 'urn:acr.login.gov:auth-only',
+        'client_id': app.config['LOGIN_GOV']['client_id'],
+        'redirect_uri': app.config['LOGIN_GOV']['redirect_uri'],
+        'scope': 'openid email profile:name',
+        'state': session['app_state'],
+        'nonce': session['nonce'],
+        'response_type': 'code',
+        'prompt': 'select_account',
+    }
+    # build request_uri
+    request_uri = '{base_url}?{query_params}'.format(
+        base_url=openid_conf['authorization_endpoint'],
+        query_params=requests.compat.urlencode(query_params)
+    )
+
+    return redirect(request_uri)
+
+@app.route("/authorization-code/callback")
+def callback():
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    code = request.args.get("code")
+    app_state = request.args.get("state")
+
+    if app_state != session['app_state']:
+        return "The app state doesn't match"
+    if not code:
+            return "The code wasn't returned or isn't accessible", 403
+    
+    private_key = open('ssl/private.pem', 'r').read()
+    jwt_encoded = jwt.encode({'iss': app.config['LOGIN_GOV']['client_id'],
+                              'sub': app.config['LOGIN_GOV']['client_id'],
+                              'aud': openid_conf['token_endpoint'],
+                              'jti': secrets.token_urlsafe(16),
+                              'exp': int(time.time()) + 300},
+                              private_key, algorithm="RS256")
+
+    query_params = {'grant_type': 'authorization_code',
+                    'code': code,
+                    'client_assertion': jwt_encoded,
+                    'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+                    }
+    query_params = requests.compat.urlencode(query_params)
+    exchange = requests.post(
+        openid_conf["token_endpoint"],
+        headers=headers,
+        data=query_params,
+    ).json()
+
+    # Get tokens and validate
+    if not exchange.get("token_type") == 'Bearer':
+            return "Unsupported token type. Should be 'Bearer'.", 403
+    access_token = exchange["access_token"]
+    id_token = exchange["id_token"]
+
+    # token is encrypted using a JWKS key
+    jwks = requests.get(openid_conf['jwks_uri']).json()
+    public_keys = {}
+    for jwk in jwks['keys']:
+        kid = jwk['kid']
+        public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+    kid = jwt.get_unverified_header(id_token)['kid']
+    key = public_keys[kid]
+    delay = 2
+    attempts = 10
+    for attempt in range(attempts):
+        try:
+            id_token = jwt.decode(id_token, key, audience=app.config['LOGIN_GOV']['client_id'], algorithms=["RS256"])
+            break
+        except jwt.exceptions.ImmatureSignatureError:
+            print('Exception decoding token, retrying')
+            time.sleep(delay)
+    if not id_token:
+        print('Token decode failed')
+        return 'token fail', 403
+
+    # Authorization flow successful, get userinfo and sign in user
+    userinfo_response = requests.get(openid_conf["userinfo_endpoint"],
+                    headers={'Authorization': f'Bearer {access_token}'}).json()
+
+    app.logger.info(userinfo_response)
+    unique_id = userinfo_response["sub"]
+    user_email = userinfo_response["email"]
+    if 'profile:name' in userinfo_response:
+        user_name = f"{userinfo_response['given_name']} {userinfo_response['family_name']}"
+    else:
+        user_name = user_email
+
+    user = User.get(user_email)
+    if not user:
+        return 'User not authorized', 401
+   
+    login_user(user, remember=True, duration=datetime.timedelta(days=7))
+    session['username'] = user.email
+    session.modified = True
+
+    if user.destination:
+        if user.destination in app.config['APPS']:
+            dest_app = app.config['APPS'][user.destination]
+            key_pem = Path(dest_app['key_file']).read_bytes()
+            try:
+                key = serialization.load_pem_public_key(key_pem)
+            except ValueError:
+                raise ValueError('Error loading public key')
+
+            encrypted = key.encrypt(user.username.encode(),
+                                    padding.OAEP(
+                                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                                        algorithm=hashes.SHA256(),
+                                        label=None)
+            )
+            dest_uri = dest_app['destination'].replace('USER', encrypted.hex())
+            app.logger.debug(f'sending {user.email} to {dest_uri}')
+            return redirect(dest_uri)
+        else :
+            app.logger.debug(f'sending {user.email} to {user.destination}')
+            return redirect(user.destination)
+    else:
+        return redirect(url_for("index"))
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+
+    query_params = {
+        'client_id': app.config['LOGIN_GOV']['client_id'],
+        'post_logout_redirect_uri': url_for('index')
+    }
+    request_uri = '{base_url}?{query_params}'.format(
+        base_url=openid_conf['end_session_endpoint'],
+        query_params=requests.compat.urlencode(query_params)
+    )
+    return redirect(request_uri)
+
+@app.route('/secevent', methods=['POST'])
+def secevent():
+    app.logger.info(f'Secevent {request.json}')
+    return 'Success', 200
+
+# @app.route('/login')
 @use_args({"u": fields.Str(),
            }, location="query")
-def login(args):
+def tmp_login(args):
     if app.debug:
         username = 'ian'
         user = User.get(username)
@@ -221,11 +377,11 @@ def login(args):
         app.logger.debug(f'No such user {username}')
         return redirect(app.config['LOGIN_PROXY_URL'])
 
-@app.route('/logout', methods=['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(app.config['LOGIN_PROXY_URL'])
+# @app.route('/logout', methods=['GET', 'POST'])
+# @login_required
+# def logout():
+#    logout_user()
+#    return redirect(app.config['LOGIN_PROXY_URL'])
 
 @app.route('/dashboard')
 @login_required
