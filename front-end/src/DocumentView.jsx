@@ -25,7 +25,7 @@ const DocSentence = ({  key, sentence, marked, add_passage, del_passage, childre
          <Form.Control type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)}/>
          </Col>
          <Col className="col-auto">
-         <Button onClick={() => setShowNote(false)}>Done</Button>
+         <Button onClick={() => { add_passage(me); setShowNote(false) }}>Done</Button>
          </Col>
          </Form.Group>
       </Popover.Body>

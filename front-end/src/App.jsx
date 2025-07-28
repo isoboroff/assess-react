@@ -403,6 +403,7 @@ function App() {
     const docid = state.pool[state.current].docid;
     let judgment = state.pool[state.current].judgment;
     let cur_pass = ('passage' in state.pool[state.current]) ? state.pool[state.current].passage : [];
+    cur_pass = cur_pass.filter((entry) => (entry.sentence != passage.sentence));
     let new_pass = cur_pass.concat(passage);
     let log_payload = { docid: docid, judgment: judgment, passage: new_pass };
     if (judgment === "-1" || judgment === "0") {
@@ -493,7 +494,6 @@ function App() {
    * current document.  'n' and 'p' move to the next and previous
    * pool document respectively.   The spacebar judges the current
    * document irrelevant and moves to the next document.
-   */
   const onKeyPress = (event) => {
     switch (event.key) {
       case "0":
@@ -512,6 +512,7 @@ function App() {
   };
 
   useKeyPress(["n", "p", "0", "1", "2", "3"], onKeyPress);
+   */
 
   const docDiv = useRef(null);
 
