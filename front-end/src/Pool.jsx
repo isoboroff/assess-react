@@ -9,7 +9,8 @@ function PoolItem(props) {
   // Set the relevance 'badge' according to the judgment
   let badge = '';
   if (props.judgment !== '-1') {
-    badge = (<Badge variant={props.rel_levels[props.judgment].color}>
+    let classdecl = `bg-${props.rel_levels[props.judgment].color}`
+    badge = (<Badge className={classdecl}>
       {props.rel_levels[props.judgment].label}
     </Badge>);
   }

@@ -109,7 +109,7 @@ class Pool:
     def num_judged(self):
         return sum([1 for judgment in self.pool.values() if judgment['judgment'] != '-1'])
 
-    def json(self):
+    def as_object(self):
         poollist = []
         last = 0
         count = 0
@@ -125,11 +125,13 @@ class Pool:
 
             poollist.append(poolitem)
             count += 1
+        return { "pool": poollist,
+                 "topic": self.topic,
+                 "desc": self.desc,
+                 "last": last }
 
-        return json.dumps({ "pool": poollist,
-                            "topic": self.topic,
-                            "desc": self.desc,
-                            "last": last })
+    def json(self):
+        return json.dumps(self.as_object())
 
     @staticmethod
     def read_log_entry(line):
@@ -184,11 +186,11 @@ def index():
     return render_template_string(template, username=current_user.email)
 
 @app.route('/login')
-@use_args({"u": fields.Str(required=True),
+@use_args({"u": fields.Str(),
            }, location="query")
 def login(args):
     if app.debug:
-        username = args['u']
+        username = 'ian'
         user = User.get(username)
         if user:
             login_user(user)
@@ -299,7 +301,7 @@ def get_pool(qargs):
     try:
         filename = Path(app.config['SAVE']) / user / f'topic{topic}'
         pool = Pool(filename)
-        return(pool.json(), 200)
+        return(jsonify(pool.as_object()), 200)
     except FileNotFoundError:
         app.logger.debug(f'Pool not found: {user} {topic} {filename}')
         return('', 404)
@@ -334,6 +336,7 @@ def get_document(qargs):
                                       'action': 'load'}), file=fp)
             if index == 'ragtime-mt':
                 response['_source']['lang'] = 'eng'
+            response['_source']['docid'] = docid
             return(response['_source'], 200)
         else:
             return('', 404)

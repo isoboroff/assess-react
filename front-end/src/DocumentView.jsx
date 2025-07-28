@@ -1,48 +1,99 @@
 import { useState, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col"
+import Popover from "react-bootstrap/Popover";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import segment from "./sentencex";
 
-const DocSentence = ({ docid, sentence, marked, children, note_passage }) => {
-  const [highlight, setHighlight] = useState(false);
 
-  // const me = { docid: docid, sentence: sentence, text: children };
+const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_passage, children  }) => {
+  const [highlight, setHighlight] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const [noteText, setNoteText] = useState(note);
+  const [isVital, setIsVital] = useState(vital);
+  
+  const build_passage = () => {
+    return { sentence: sentence, text: children, vital: isVital, note: noteText};
+  };
+
+  const popover = (
+    <Popover 
+      id="note" 
+      onMouseEnter={() => setShowNote(true)} 
+      onMouseLeave={() => setShowNote(false)} 
+      style={{ width: '500px' }}
+      >
+      <Popover.Header as="h3">Enter note</Popover.Header>
+      <Popover.Body>
+        <Form.Group as={Row} className="align-items-center">
+          <Col>
+         <Form.Control type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)}/>
+         </Col>
+         <Col className="col-auto">
+         <Form.Check label="Vital?" checked={isVital} onClick={() => setIsVital(!isVital)}/>
+         </Col>
+         <Col className="col-auto">
+         <Button onClick={() => { add_passage(build_passage()); setShowNote(false) }}>Done</Button>
+         </Col>
+         </Form.Group>
+      </Popover.Body>
+    </Popover>
+  );
 
   useEffect(() => {
-    if (marked) {
-      setHighlight(true);
-      return;
-    }
-  }, [children, marked]);
+    setHighlight(marked);
+    setNoteText(note);
+    setIsVital(vital);
+  }, [marked]);
 
   const handleClick = () => {
     if (highlight) {
       setHighlight(false);
-      note_passage({ sentence: sentence, text: children })
+      setShowNote(false);
+      setIsVital(false);
+      setNoteText("");
+      del_passage(build_passage());
     } else {
       setHighlight(true);
-      // dispatch({ type: ActionType.NOTE_HIGHLIGHT, payload: me });
+      setShowNote(true);
+      add_passage(build_passage());
     }
   };
 
   return (
-    <span
-      style={{ backgroundColor: highlight ? "yellow" : "inherit" }}
-      onClick={handleClick}
-    >
-      {children}
-    </span>
+    <OverlayTrigger 
+      trigger={undefined} 
+      show={showNote} 
+      placement="auto"
+      overlay={popover}>
+      <span
+        style={{ backgroundColor: highlight ? "yellow" : "inherit" }}
+        onClick={handleClick}
+        onMouseEnter={() => { if (highlight && !showNote) setShowNote(true) }}
+        onMouseLeave={() => { if (highlight && showNote) setShowNote(false)}}
+      >
+        {children}
+      </span>
+    </OverlayTrigger>
   );
 };
 
 DocSentence.propTypes = {
-  docid: PropTypes.string.isRequired,
+  key: PropTypes.number,
   sentence: PropTypes.string.isRequired,
   marked: PropTypes.bool,
-  children: PropTypes.node.isRequired,
+  note: PropTypes.string,
+  vital: PropTypes.bool,
+  add_passage: PropTypes.func,
+  del_passage: PropTypes.func,
+  children: PropTypes.node,
 };
 
-export default function DocumentView({ document, judgment, note_passage }) {
+export default function DocumentView({ document, judgment, add_passage, del_passage }) {
   const [sentences, setSentences] = useState([]);
 
   useEffect(() => {
@@ -65,6 +116,17 @@ export default function DocumentView({ document, judgment, note_passage }) {
     textclass = "text-right article-text";
   }
 
+  let highlights = {};
+  let notes = {};
+  let vital = {};
+  if (judgment) {
+    if (Array.isArray(judgment)) {
+      judgment.forEach((e) => { highlights[e.sentence] = true; notes[e.sentence] = e.note; vital[e.sentence] = e.vital });
+    } else {
+      highlights[judgment.sentence] = true;
+    }
+  }
+
   return (
     <div>
       <div dir={textdir} className={textclass}>
@@ -72,7 +134,10 @@ export default function DocumentView({ document, judgment, note_passage }) {
       </div>
       <div dir={textdir} className={textclass}>
         {sentences.map((sent, index) => (
-          <DocSentence key={index} index={index} note_passage={note_passage}>
+          <DocSentence key={index} sentence={index} marked={index in highlights} 
+            note={index in notes ? notes[index] : ""} 
+            vital={index in vital ? vital[index] : false}
+            add_passage={add_passage} del_passage={del_passage}>
             {sent}
           </DocSentence>
         ))}{" "}
@@ -85,4 +150,7 @@ export default function DocumentView({ document, judgment, note_passage }) {
 DocumentView.propTypes = {
   document: PropTypes.object,
   judgment: PropTypes.object,
+  add_passage: PropTypes.func,
+  del_passage: PropTypes.func,
 };
+  

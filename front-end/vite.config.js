@@ -8,5 +8,6 @@ export default defineConfig({
   build: {
     sourcemap: true,
     assetsDir: "static",
+    sourcemap: true,
   },
 });

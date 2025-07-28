@@ -26,3 +26,8 @@ span.scan-term {
     padding-bottom: 24px;
     white-space: pre-wrap;
 }
+
+.popover {
+    width: auto;
+    max-width: none;
+}
