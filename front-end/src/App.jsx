@@ -362,7 +362,7 @@ function App() {
       };
 
       if (passage) {
-        judge_payload.passage = passage;
+        judge_payload.passage = [passage];
       }
       if (subtopics && Object.keys(subtopics).length > 0) {
         judge_payload.subtopics = subtopics;
@@ -379,11 +379,11 @@ function App() {
     }
   );
 
-  const note_passage = useCallback((passage) => {
+  const add_passage = (passage) => {
     let judgment = state.pool[state.current].judgment;
     if (judgment === "-1" || judgment === "0") judgment = "2";
     judge_current({ judgment: judgment, passage: passage });
-  });
+  };
 
   const note_subtopic = useCallback((subchecks) => {
     let judgment = state.pool[state.current].judgment;
@@ -550,11 +550,14 @@ function App() {
                     : null
                 }
               />
-              <DocumentView document={state.doc} judgment={
+              <DocumentView 
+                document={state.doc} 
+                judgment={
                   state.current >= 0 && state.pool[state.current].passage
                     ? state.pool[state.current].passage
                     : ""
                 }
+                add_passage={add_passage}
               />
            </Col>
           </Row>
