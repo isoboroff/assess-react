@@ -363,6 +363,9 @@ function App() {
 
       if (passage) {
         judge_payload.passage = [passage];
+        if (state.pool[state.current].passage) {
+          judge_payload.passage = state.pool[state.current].passage.concat(judge_payload.passage);
+        }
       }
       if (subtopics && Object.keys(subtopics).length > 0) {
         judge_payload.subtopics = subtopics;
