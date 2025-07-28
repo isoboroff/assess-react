@@ -47,12 +47,14 @@ const initial_state = {
 };
 
 /* These are actions which change the application state. */
-const Actions = Object.freeze({
+export const Actions = Object.freeze({
   LOGOUT: "LOGOUT",
   LOAD_POOL: "LOAD_POOL",
   FETCH_DOC: "FETCH_DOC",
   JUDGE: "JUDGE",
   SAVE_SCAN_TERMS: "SAVE_SCAN_TERMS",
+  SET_JUDGMENT: "SET_JUDGMENT",
+  SET_PASSAGES: "SET_PASSAGES",
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -112,6 +114,29 @@ function assess_reducer(state, action) {
         ...state,
         scan_terms: action.payload.scan_terms,
       };
+
+    case Actions.SET_JUDGMENT: {
+      let newPool = state.pool.map((entry) => {
+        if (entry.docid === action.payload.docid) {
+          return { ...entry, judgment: action.payload.judgment };
+        } else {
+          return entry;
+        }
+      });
+      return { ...state, pool: newPool };
+    }
+
+    case Actions.SET_PASSAGES: {
+      let newPool = state.pool.map((entry) => {
+        if (entry.docid === action.payload.docid) {
+          return { ...entry, passage: action.payload.passage }
+        } else {
+          return entry;
+        }
+      });
+      return { ...state, pool: newPool };
+    }
+
     default:
       return state;
   }
@@ -345,59 +370,98 @@ function App() {
     }
   }, [translate]);
 
-  const judge_current = useCallback(
-    ({ judgment = "0", passage = null, subtopics = {} }) => {
-      const docid = state.pool[state.current].docid;
 
-      if (passage && (judgment === "0" || judgment === "-1")) judgment = "2";
-
-      if (judgment === "0") {
-        passage = { clear: true }; // Clear any passage judgments
-        subtopics = []; // Clear any subtopic judgments
-      }
-
-      let judge_payload = {
-        docid: docid,
-        judgment: judgment,
-      };
-
-      if (passage) {
-        judge_payload.passage = [passage];
-        if (state.pool[state.current].passage) {
-          judge_payload.passage = state.pool[state.current].passage.concat(judge_payload.passage);
+  const judge = (judgment) => {
+    const docid = state.pool[state.current].docid;
+    let log_payload = { docid: docid, judgment: judgment };
+    if (judgment == "0") {
+      log_payload.passage = [];
+    } else if ('passage' in state.pool[state.current]) {
+      log_payload.passage = state.pool[state.current].passage;
+    }
+    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(log_payload) 
+    }).then((response) => {
+      if (response.ok) {
+        dispatch({ 
+          type: Actions.SET_JUDGMENT, 
+          payload: { docid: docid, judgment: judgment }
+        });
+        if (judgment == "0") {
+          dispatch({ 
+            type: Actions.SET_PASSAGES,
+            payload: { docid: docid, passage: [] }
+           });
         }
       }
-      if (subtopics && Object.keys(subtopics).length > 0) {
-        judge_payload.subtopics = subtopics;
-      }
-
-      fetch("judge?t=" + state.topic + "&d=" + docid, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(judge_payload),
-      }).then((response) => {
-        if (response.ok)
-          dispatch({ type: Actions.JUDGE, payload: judge_payload });
-      });
-    }
-  );
+    });
+  }
 
   const add_passage = (passage) => {
+    const docid = state.pool[state.current].docid;
     let judgment = state.pool[state.current].judgment;
-    if (judgment === "-1" || judgment === "0") judgment = "2";
-    judge_current({ judgment: judgment, passage: passage });
+    let cur_pass = ('passage' in state.pool[state.current]) ? state.pool[state.current].passage : [];
+    let new_pass = cur_pass.concat(passage);
+    let log_payload = { docid: docid, judgment: judgment, passage: new_pass };
+    if (judgment === "-1" || judgment === "0") {
+      log_payload.judgment = "2";
+    }
+    fetch("judge?t=" + state.topic + "&d=" + docid, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(log_payload) 
+    }).then((response) => {
+      if (response.ok) {
+        if (log_payload.judgment != judgment) {
+          dispatch({ 
+            type: Actions.SET_JUDGMENT, 
+            payload: { docid: docid, judgment: log_payload.judgment}
+          });
+        }
+        dispatch({ 
+          type: Actions.SET_PASSAGES, 
+          payload: { docid: docid, passage: new_pass }
+        });
+      }
+    });
   };
 
-  const note_subtopic = useCallback((subchecks) => {
+  const del_passage = (passage) => {
+    if (!('passage' in state.pool[state.current]) || state.pool[state.current].passage.length == 0)
+      return;
+    const docid = state.pool[state.current].docid;
     let judgment = state.pool[state.current].judgment;
-
-    if (Object.values(subchecks).some((x) => x === true)) {
-      if (judgment === "-1" || judgment === "0") {
-        judgment = "1";
-      }
+    let passages = state.pool[state.current].passage.filter((p) => p.sentence != passage.sentence);
+    let log_payload = { docid: docid, judgment: judgment, passage: passages };
+    if (passages.length == 0) {
+      log_payload.judgment = "0";
     }
-    judge_current({ judgment: judgment, subtopics: subchecks });
-  });
+    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(log_payload) 
+    }).then((response) => {
+      if (response.ok) {
+        if (log_payload.judgment == "0") {
+          dispatch({ 
+            type: Actions.SET_JUDGMENT, 
+            payload: { docid: docid, judgment: "0" }
+          });
+          dispatch({ 
+            type: Actions.SET_PASSAGES,
+            payload: { docid: docid, passage: [] }
+           });
+        } else {
+          dispatch({ 
+            type: Actions.SET_PASSAGES, 
+            payload: { docid: docid, passage: passages }
+          });
+        }
+      }
+    });
+  };
 
   /*
    * The judgment buttons are colored according to the key at the top,
@@ -416,7 +480,7 @@ function App() {
       <ButtonGroup key={i}>
         <Button
           variant={rel_levels[i].color}
-          onClick={() => judge_current({ judgment: i })}
+          onClick={() => judge(i)}
         >
           <span className={style}>{rel_levels[i].label}</span>
         </Button>
@@ -436,7 +500,7 @@ function App() {
       case "1":
       case "2":
       case "3":
-        judge_current({ judgment: event.key });
+        judge(event.key);
         break;
       case "n":
         load_pool_item(state.current + 1);
@@ -561,6 +625,7 @@ function App() {
                     : ""
                 }
                 add_passage={add_passage}
+                del_passage={del_passage}
               />
            </Col>
           </Row>

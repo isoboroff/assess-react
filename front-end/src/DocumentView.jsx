@@ -3,25 +3,21 @@ import PropTypes from "prop-types";
 
 import segment from "./sentencex";
 
-const DocSentence = ({ docid, sentence, marked, children }) => {
+const DocSentence = ({  key, sentence, marked, add_passage, del_passage, children  }) => {
   const [highlight, setHighlight] = useState(false);
-
-  // const me = { docid: docid, sentence: sentence, text: children };
+  const me = { sentence: sentence, text: children };
 
   useEffect(() => {
-    if (marked) {
-      setHighlight(true);
-      return;
-    }
-  }, [children, marked]);
+    setHighlight(marked);
+  }, [marked])
 
   const handleClick = () => {
     if (highlight) {
       setHighlight(false);
-      // dispatch({ type: ActionType.DELETE_HIGHLIGHT, payload: me });
+      del_passage(me);
     } else {
       setHighlight(true);
-      // dispatch({ type: ActionType.NOTE_HIGHLIGHT, payload: me });
+      add_passage(me);
     }
   };
 
@@ -36,13 +32,15 @@ const DocSentence = ({ docid, sentence, marked, children }) => {
 };
 
 DocSentence.propTypes = {
-  docid: PropTypes.string.isRequired,
+  key: PropTypes.number,
   sentence: PropTypes.string.isRequired,
   marked: PropTypes.bool,
-  children: PropTypes.node.isRequired,
+  add_passage: PropTypes.func,
+  del_passage: PropTypes.func,
+  children: PropTypes.node,
 };
 
-export default function DocumentView({ document, judgment }) {
+export default function DocumentView({ document, judgment, add_passage, del_passage }) {
   const [sentences, setSentences] = useState([]);
 
   useEffect(() => {
@@ -65,6 +63,15 @@ export default function DocumentView({ document, judgment }) {
     textclass = "text-right article-text";
   }
 
+  let highlights = {};
+  if (judgment) {
+    if (Array.isArray(judgment)) {
+      judgment.forEach((e) => { highlights[e.sentence] = true });
+    } else {
+      highlights[judgment.sentence] = true;
+    }
+  }
+
   return (
     <div>
       <div dir={textdir} className={textclass}>
@@ -72,7 +79,7 @@ export default function DocumentView({ document, judgment }) {
       </div>
       <div dir={textdir} className={textclass}>
         {sentences.map((sent, index) => (
-          <DocSentence key={index} index={index}>
+          <DocSentence key={index} sentence={index} marked={index in highlights} add_passage={add_passage} del_passage={del_passage}>
             {sent}
           </DocSentence>
         ))}{" "}
@@ -85,4 +92,6 @@ export default function DocumentView({ document, judgment }) {
 DocumentView.propTypes = {
   document: PropTypes.object,
   judgment: PropTypes.object,
+  add_passage: PropTypes.func,
+  del_passage: PropTypes.func,
 };
