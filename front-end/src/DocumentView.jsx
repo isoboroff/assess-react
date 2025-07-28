@@ -25,7 +25,7 @@ const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_pas
       id="note" 
       onMouseEnter={() => setShowNote(true)} 
       onMouseLeave={() => setShowNote(false)} 
-      className="w-25"
+      style={{ width: '500px' }}
       >
       <Popover.Header as="h3">Enter note</Popover.Header>
       <Popover.Body>
@@ -70,14 +70,14 @@ const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_pas
       show={showNote} 
       placement="auto"
       overlay={popover}>
-    <span
-      style={{ backgroundColor: highlight ? "yellow" : "inherit" }}
-      onClick={handleClick}
-      onMouseEnter={() => { if (highlight && !showNote) setShowNote(true) }}
-      onMouseLeave={() => { if (highlight && showNote) setShowNote(false)}}
-    >
-      {children}
-    </span>
+      <span
+        style={{ backgroundColor: highlight ? "yellow" : "inherit" }}
+        onClick={handleClick}
+        onMouseEnter={() => { if (highlight && !showNote) setShowNote(true) }}
+        onMouseLeave={() => { if (highlight && showNote) setShowNote(false)}}
+      >
+        {children}
+      </span>
     </OverlayTrigger>
   );
 };
@@ -153,3 +153,4 @@ DocumentView.propTypes = {
   add_passage: PropTypes.func,
   del_passage: PropTypes.func,
 };
+  
