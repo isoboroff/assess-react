@@ -10,14 +10,23 @@ import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import segment from "./sentencex";
 
 
-const DocSentence = ({  key, sentence, marked, add_passage, del_passage, children  }) => {
+const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_passage, children  }) => {
   const [highlight, setHighlight] = useState(false);
   const [showNote, setShowNote] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const me = { sentence: sentence, text: children };
+  const [noteText, setNoteText] = useState(note);
+  const [isVital, setIsVital] = useState(vital);
+  
+  const build_passage = () => {
+    return { sentence: sentence, text: children, vital: isVital, note: noteText};
+  };
 
   const popover = (
-    <Popover id="note" onMouseEnter={() => setShowNote(true)} className="w-25">
+    <Popover 
+      id="note" 
+      onMouseEnter={() => setShowNote(true)} 
+      onMouseLeave={() => setShowNote(false)} 
+      className="w-25"
+      >
       <Popover.Header as="h3">Enter note</Popover.Header>
       <Popover.Body>
         <Form.Group as={Row} className="align-items-center">
@@ -25,7 +34,10 @@ const DocSentence = ({  key, sentence, marked, add_passage, del_passage, childre
          <Form.Control type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)}/>
          </Col>
          <Col className="col-auto">
-         <Button onClick={() => { add_passage(me); setShowNote(false) }}>Done</Button>
+         <Form.Check label="Vital?" checked={isVital} onClick={() => setIsVital(!isVital)}/>
+         </Col>
+         <Col className="col-auto">
+         <Button onClick={() => { add_passage(build_passage()); setShowNote(false) }}>Done</Button>
          </Col>
          </Form.Group>
       </Popover.Body>
@@ -34,22 +46,21 @@ const DocSentence = ({  key, sentence, marked, add_passage, del_passage, childre
 
   useEffect(() => {
     setHighlight(marked);
-  }, [marked])
-
-  useEffect(() => {
-    me.note = noteText;
-  }, [noteText]);
+    setNoteText(note);
+    setIsVital(vital);
+  }, [marked]);
 
   const handleClick = () => {
     if (highlight) {
       setHighlight(false);
       setShowNote(false);
+      setIsVital(false);
       setNoteText("");
-      del_passage(me);
+      del_passage(build_passage());
     } else {
       setHighlight(true);
       setShowNote(true);
-      add_passage(me);
+      add_passage(build_passage());
     }
   };
 
@@ -57,7 +68,8 @@ const DocSentence = ({  key, sentence, marked, add_passage, del_passage, childre
     <OverlayTrigger 
       trigger={undefined} 
       show={showNote} 
-      placement="top" overlay={popover}>
+      placement="auto"
+      overlay={popover}>
     <span
       style={{ backgroundColor: highlight ? "yellow" : "inherit" }}
       onClick={handleClick}
@@ -74,6 +86,8 @@ DocSentence.propTypes = {
   key: PropTypes.number,
   sentence: PropTypes.string.isRequired,
   marked: PropTypes.bool,
+  note: PropTypes.string,
+  vital: PropTypes.bool,
   add_passage: PropTypes.func,
   del_passage: PropTypes.func,
   children: PropTypes.node,
@@ -103,9 +117,11 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
   }
 
   let highlights = {};
+  let notes = {};
+  let vital = {};
   if (judgment) {
     if (Array.isArray(judgment)) {
-      judgment.forEach((e) => { highlights[e.sentence] = true });
+      judgment.forEach((e) => { highlights[e.sentence] = true; notes[e.sentence] = e.note; vital[e.sentence] = e.vital });
     } else {
       highlights[judgment.sentence] = true;
     }
@@ -118,7 +134,10 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
       </div>
       <div dir={textdir} className={textclass}>
         {sentences.map((sent, index) => (
-          <DocSentence key={index} sentence={index} marked={index in highlights} add_passage={add_passage} del_passage={del_passage}>
+          <DocSentence key={index} sentence={index} marked={index in highlights} 
+            note={index in notes ? notes[index] : ""} 
+            vital={index in vital ? vital[index] : false}
+            add_passage={add_passage} del_passage={del_passage}>
             {sent}
           </DocSentence>
         ))}{" "}
