@@ -610,7 +610,7 @@ function App() {
             <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
               <Description
                 desc={state.desc}
-                note_subtopic={note_subtopic}
+                note_subtopic={() => {}}
                 rel={
                   state.current >= 0 && state.pool[state.current].subtopics
                     ? state.pool[state.current].subtopics
