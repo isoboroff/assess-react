@@ -14,7 +14,9 @@ function Description(props) {
         </p>
         <p>
           <b>Background:&nbsp;</b>
-          {props.desc["background"]}
+          <span style={{whiteSpace: "pre-wrap"}}>
+            {props.desc["background"]}
+          </span>
         </p>
         <p>
           <b>Problem statement:&nbsp;</b>
