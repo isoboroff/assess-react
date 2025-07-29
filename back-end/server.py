@@ -34,8 +34,8 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 @login_manager.user_loader
-def load_user(username):
-    return User.get(username)
+def load_user(id):
+    return User.get(id)
 
 ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
 es = Elasticsearch(
@@ -176,8 +176,12 @@ def app_decrypt(message):
     return decrypted
 
 @app.route('/')
-@login_required
+# @login_required
 def index():
+    if not current_user.is_authenticated:
+        if len(session) == 0:
+            app.logger.debug('index(): session looks empty')
+        return login_manager.unauthorized()
     # This sends the index.html from the compiled front-end
     print(f'session username is {session["username"]}')
     template = open(Path(app.static_folder) / 'index.html', 'r').read()
@@ -196,14 +200,14 @@ def login(args):
             return redirect(url_for('index'))
         else:
             abort(401)
-        
+
     # The username is put into the session by the login.gov proxy
     try:
         encrypted_username = bytes.fromhex(args['u'])
         app.logger.debug(f'Got enc username {encrypted_username}')
     except KeyError:
         return redirect(app.config['LOGIN_PROXY_URL'])
-    
+
     try:
         username = app_decrypt(encrypted_username).decode('utf-8')
         app.logger.debug(f'Decrypted; {username}')
@@ -212,7 +216,7 @@ def login(args):
         return redirect(app.config['LOGIN_PROXY_URL'])
 
     user = User.get(username)
-    
+
     if user:
         app.logger.debug(f'User is {user.id}')
         login_user(user)
