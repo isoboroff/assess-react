@@ -22,7 +22,10 @@ from flask_login import (
 from user import User
 
 
-app = Flask(__name__, static_folder='../front-end/dist', static_url_path='/')
+app = Flask(__name__, 
+            static_folder='../front-end/dist', 
+            static_url_path='/',
+            template_folder='../front-end/dist')
 
 app.config.from_pyfile('settings.py')
 app.config.update({'SECRET_KEY': secrets.token_hex()})
@@ -269,7 +272,7 @@ def dashboard():
         reldir = Path(app.config['SAVE'])
         for relchild in reldir.iterdir():
             if relchild.is_dir():
-                if (relchild / 'no-dashboard').exists():
+                if relchild.is_symlink() or (relchild / 'no-dashboard').exists():
                     continue
                 for child in relchild.iterdir():
                     if POOL_FILE_RE.match(child.name):
