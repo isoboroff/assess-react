@@ -192,7 +192,7 @@ def index():
            }, location="query")
 def login(args):
     if app.debug:
-        username = 'ian'
+        username = 'ian.soboroff@nist.gov'
         user = User.get(username)
         if user:
             login_user(user)
