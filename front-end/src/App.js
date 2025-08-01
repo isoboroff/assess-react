@@ -24,7 +24,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 
-import { sha256 } from "hash-wasm";
+import * as scrypt from "scrypt-pbkdf";
 
 import Pool from "./Pool";
 import Description from "./Description";
@@ -186,7 +186,20 @@ function LoginModal(props) {
     // Send username and hashed password to the server.
     // Server responds 200 for ok login, 403 for denied
     set_error(false);
-    hash(password)
+    const uid = username.normalize("NFKC");
+    const pw = password.normalize("NFKC");
+    const salt = scrypt.salt(26);
+    const scrypt_params = { N: 32768, r: 8, p: 1 };
+
+    scrypt
+      .scrypt(pw, salt, 64, scrypt_params)
+      .then(
+        (key) =>
+          "scrypt:32768:8:1$" +
+          Uint8Array.from(salt).toString("hex") +
+          "$" +
+          Uint8Array.from(key).toString("hex")
+      )
       .then((pwhash) => fetch("login?u=" + username + "&p=" + pwhash))
       .then((response) => {
         if (response.ok) {
