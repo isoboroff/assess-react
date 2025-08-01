@@ -24,8 +24,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 
-import * as scrypt from "scrypt-pbkdf";
-
 import Pool from "./Pool";
 import Description from "./Description";
 import Highlightable from "./Highlightable";
@@ -46,7 +44,6 @@ const rel_levels = {
 
 /* This is the application state. */
 const initial_state = {
-  username: "",
   current: -1,
   cur_doc: "",
   topic: "",
@@ -59,7 +56,6 @@ const initial_state = {
  * Setting them up this way lets the compiler check for typos.
  */
 const Actions = Object.freeze({
-  LOGIN: "LOGIN",
   LOGOUT: "LOGOUT",
   LOAD_POOL: "LOAD_POOL",
   FETCH_DOC: "FETCH_DOC",
@@ -73,13 +69,6 @@ const Actions = Object.freeze({
  */
 function assess_reducer(state, action) {
   switch (action.type) {
-    case Actions.LOGIN:
-      window.localStorage.setItem("user", action.payload.username);
-      return {
-        ...state,
-        username: action.payload.username,
-      };
-
     case Actions.LOGOUT:
       window.localStorage.clear();
       return { ...initial_state };
@@ -164,93 +153,6 @@ const AssessDispatch = React.createContext(null);
 // only use the AssessState context for reading state.  If you want to
 // change the state, you have to dispatch an action.
 const AssessState = React.createContext(null);
-
-/* A modal dialog to force logging in.
- * This used to be in App(), but I decided to move it out to a separate
- * component.
- */
-function LoginModal(props) {
-  const [username, set_username] = useState("");
-  const [password, set_password] = useState("");
-  const [error, set_error] = useState(false);
-  const dispatch = useContext(AssessDispatch);
-
-  async function hash(password) {
-    const te = new TextEncoder();
-    const encoded = te.encode(password.normalize("NFKC"));
-    const hashval = await sha256(encoded);
-    return hashval;
-  }
-
-  const do_login = useCallback(() => {
-    // Send username and hashed password to the server.
-    // Server responds 200 for ok login, 403 for denied
-    set_error(false);
-    const uid = username.normalize("NFKC");
-    const pw = password.normalize("NFKC");
-    const salt = scrypt.salt(26);
-    const scrypt_params = { N: 32768, r: 8, p: 1 };
-
-    scrypt
-      .scrypt(pw, salt, 64, scrypt_params)
-      .then(
-        (key) =>
-          "scrypt:32768:8:1$" +
-          Uint8Array.from(salt).toString("hex") +
-          "$" +
-          Uint8Array.from(key).toString("hex")
-      )
-      .then((pwhash) => fetch("login?u=" + username + "&p=" + pwhash))
-      .then((response) => {
-        if (response.ok) {
-          dispatch({ type: Actions.LOGIN, payload: { username: username } });
-          props.set_required(false);
-        } else {
-          set_error(true);
-        }
-      });
-  }, [password, username]);
-
-  return (
-    <Modal
-      show={props.login_required}
-      onHide={do_login}
-      backdrop="static"
-      keyboard={false}
-    >
-      <Modal.Header>
-        <Modal.Title>Please log in</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {error ? <p>Invalid username or password.</p> : ""}
-        <Form.Control
-          type="text"
-          placeholder="user"
-          value={username}
-          onChange={(e) => set_username(e.target.value)}
-        />
-        <Form.Control
-          type="password"
-          placeholder="password"
-          value={password}
-          onChange={(e) => set_password(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              e.stopPropagation();
-              do_login();
-            }
-          }}
-        />
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="primary" onClick={() => do_login()}>
-          Log in
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-}
 
 /*
  * A modal for loading the topic.  This is much nicer than typing a topic
@@ -418,7 +320,7 @@ function SummaryBox(props) {
   useEffect(() => set_text_cache(state.summary), []);
 
   const save_summary = (text) => {
-    fetch("summary_save?u=" + state.username + "&t=" + state.topic, {
+    fetch("summary_save?t=" + state.topic, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(text),
@@ -489,53 +391,38 @@ const reducer_debug = (state, action) => {
  */
 function App() {
   const [state, dispatch] = useReducer(assess_reducer, initial_state);
-  const [login_required, set_login_required] = useState(false);
-  const [topic_requested, set_topic_requested] = useState(false);
   const [show_topic_dialog, set_show_topic_dialog] = useState(false);
+  const [topic_requested, set_topic_requested] = useState(false);
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState("");
   const [pool_filter, set_pool_filter] = useState("all");
 
   /* Effect to fire just before initial render */
   useEffect(() => {
-    if (state.username === "") {
-      // Try to restore state from the browser's local storage.
-      // First check for a username.
-      const stored_username = window.localStorage.getItem("user");
-      if (stored_username) {
-        dispatch({
-          type: Actions.LOGIN,
-          payload: { username: stored_username },
-        });
-
-        // check for scan terms
-        const scan_terms = window.localStorage.getItem("scan_terms");
-        if (scan_terms) {
-          dispatch({
-            type: Actions.SAVE_SCAN_TERMS,
-            payload: { scan_terms: scan_terms },
-          });
-          set_scan_terms(scan_terms);
-        }
-
-        // Then, check for last topic loaded
-        const cur_topic = window.localStorage.getItem("topic");
-        if (cur_topic) {
-          // And last document viewed?  If not just set to 0
-          let cur_doc = window.localStorage.getItem("current");
-          if (cur_doc) cur_doc = parseInt(cur_doc);
-          else cur_doc = 0;
-          load_pool(stored_username, cur_topic, cur_doc);
-        }
-      } else {
-        set_login_required(true);
-      }
+    // check for scan terms
+    const scan_terms = window.localStorage.getItem("scan_terms");
+    if (scan_terms) {
+      dispatch({
+        type: Actions.SAVE_SCAN_TERMS,
+        payload: { scan_terms: scan_terms },
+      });
+      set_scan_terms(scan_terms);
     }
-  }, [state.username]);
+    
+    // Then, check for last topic loaded
+    const cur_topic = window.localStorage.getItem("topic");
+    if (cur_topic) {
+      // And last document viewed?  If not just set to 0
+      let cur_doc = window.localStorage.getItem("current");
+      if (cur_doc) cur_doc = parseInt(cur_doc);
+      else cur_doc = 0;
+      load_pool(cur_topic, cur_doc);
+    }
+  }, []);
 
   /* Load the "inbox", the list of topics to do and how much has been done. */
-  const load_inbox = useCallback((username) => {
-    fetch("inbox?u=" + state.username)
+  const load_inbox = useCallback(() => {
+    fetch("inbox")
       .then((response) => response.json())
       .then((data) => set_inbox(data));
   });
@@ -543,16 +430,16 @@ function App() {
   /* If someone clicks "Load topic", we need to refresh the inbox and
    * put up the load-topic dialog. */
   useEffect(() => {
-    if (topic_requested && state.username !== "") {
-      load_inbox(state.username);
+    if (topic_requested) {
+      load_inbox();
       set_topic_requested(false);
       set_show_topic_dialog(true);
     }
   }, [topic_requested]);
 
   // Load a pool
-  const load_pool = useCallback((username, topic, current = 0) => {
-    fetch("pool?u=" + username + "&t=" + topic)
+  const load_pool = useCallback((topic, current = 0) => {
+    fetch("pool?t=" + topic)
       .then((response) => response.json())
       .then((data) => {
         if (data.last) current = data.last;
@@ -567,14 +454,7 @@ function App() {
             summary: summ_obj,
           },
         });
-        return fetch(
-          "doc?u=" +
-            username +
-            "&t=" +
-            topic +
-            "&d=" +
-            data.pool[current].docid,
-        );
+        return fetch("doc?t=" + topic + "&d=" + data.pool[current].docid);
       })
       .then((response) => {
         if (response.ok) {
@@ -595,7 +475,7 @@ function App() {
   });
 
   const load_pool_for_current_user = useCallback((topic, current = 0) => {
-    load_pool(state.username, topic, current);
+    load_pool(topic, current);
   });
 
   // This is the routine that fetches a doc by index in the pool
@@ -603,7 +483,7 @@ function App() {
     if (i < 0 || i >= state.pool.length) return;
 
     const docid = state.pool[i].docid;
-    fetch("doc?t=" + state.topic + "&u=" + state.username + "&d=" + docid)
+    fetch("doc?t=" + state.topic + "&d=" + docid)
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -650,8 +530,7 @@ function App() {
       if (subtopics && Object.keys(subtopics).length > 0) {
         judge_payload.subtopics = subtopics;
       }
-
-      fetch("judge?u=" + state.username + "&t=" + state.topic + "&d=" + docid, {
+      fetch("judge?t=" + state.topic + "&d=" + docid, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(judge_payload),
@@ -751,10 +630,6 @@ function App() {
       <AssessState.Provider value={state}>
         {/************** Modals */}
         <Container fluid className="d-flex flex-column vh-100 overflow-hidden">
-          <LoginModal
-            login_required={login_required}
-            set_required={set_login_required}
-          />
           <LoadTopicModal
             show_topic_dialog={show_topic_dialog}
             set_show_topic_dialog={set_show_topic_dialog}
@@ -797,7 +672,7 @@ function App() {
                 <div>{judgment_buttons}</div>
                 <div className="ms-auto">
                   <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
-                    Log out {state.username}
+                    Log out
                   </Button>
                 </div>
               </Stack>
@@ -823,7 +698,6 @@ function App() {
               <Col md={4} style={{ height: "100%" }}>
                 <Panel>
                   <Pool
-                    user={state.username}
                     topic={state.topic}
                     rel_levels={rel_levels}
                     pool={state.pool}

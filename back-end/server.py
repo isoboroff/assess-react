@@ -213,12 +213,8 @@ def app_decrypt(message):
     return decrypted
 
 @app.route('/')
-# @login_required
+@login_required
 def index():
-    if not current_user.is_authenticated:
-        if len(session) == 0:
-            app.logger.debug('index(): session looks empty')
-        return login_manager.unauthorized()
     # This sends the index.html from the compiled front-end
     print(f'session username is {session["username"]}')
     template = open(Path(app.static_folder) / 'index.html', 'r').read()
