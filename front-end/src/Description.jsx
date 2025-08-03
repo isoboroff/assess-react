@@ -9,7 +9,7 @@ import Stack from "react-bootstrap/Stack";
 import Panel from "./Panel";
 
 function FullConvoModal(props) {
-  const turns = props.desc.turns
+  const turns = props.desc.responses
     .filter((turn) => {
       return turn.turn_id <= props.turn;
     })
@@ -27,7 +27,7 @@ function FullConvoModal(props) {
           <div className={text_class}>
             <p>
               {turn.turn_id}: &nbsp;
-              {turn.utterance}
+              {turn.user_utterance}
               <br />({turn.resolved_utterance})
             </p>
             {props.turn != turn.turn_id && (
@@ -38,16 +38,10 @@ function FullConvoModal(props) {
       );
     });
 
-  const ptkb = Object.getOwnPropertyNames(props.desc.ptkb)
-    .map((idx) => [parseInt(idx), props.desc.ptkb[idx]])
-    .sort(([k1, v1], [k2, v2]) => {
-      if (k1 > k2) return 1;
-      if (k1 < k2) return -1;
-      return 0;
-    })
-    .map(([k, v]) => (
+  const ptkb = props.desc.ptkb
+    .map((e, idx) => (
       <li>
-        {k}: {v}
+        {idx}: {e}
       </li>
     ));
 
@@ -104,9 +98,9 @@ function Description(props) {
     const turn_id = parseInt(props.topic.split("_")[1]);
     let utterance = null;
     let resolved;
-    for (const t of props.desc.turns) {
+    for (const t of props.desc.responses) {
       if (t.turn_id === turn_id) {
-        utterance = t.utterance;
+        utterance = t.user_utterance;
         resolved = t.resolved_utterance;
       }
     }
