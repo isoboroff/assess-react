@@ -376,14 +376,15 @@ def get_document(qargs):
             app.logger.exception('Unexpected error getting docid ' + docid)
             return('', 503)
     elif docid.startswith('ptkb'):
-        m = re.match(r'ptkb-(\d+)-(\d+)', docid)
+        m = re.match(r'ptkb-(\d+-\d+)-(\d+)', docid)
         if m:
             conv, item = m.groups()
+            item = int(item)
 
         filename = Path(app.config['SAVE']) / user / f'topic{topic}'
         p = Pool(filename)
         desc = json.loads(p.desc)
-        if item in desc['ptkb']:
+        if item >= 0 and item < len(desc['ptkb']):
             return(json.dumps({ 'docid': docid,
                                 'title': f'PTKB, Conversation {conv}, entry {item}',
                                 'text': desc['ptkb'][item]}), 200)
