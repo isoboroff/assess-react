@@ -122,7 +122,7 @@ class Pool:
             pass
         try:
             convo, turn = filename.name.replace('topic', '').split('_')
-            desc_filename = filename.with_name(f'topicdesc{convo}')
+            desc_filename = filename.with_name(f'topic{convo}.desc')
             with open(desc_filename, 'r') as fp:
                 self.desc = fp.read()
         except FileNotFoundError as fnfe:
@@ -181,7 +181,7 @@ class Pool:
 
 query_args = {
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^\d+_\d+$')),
+    't': fields.String(validate=validate.Regexp(r'^\d+-\d+_\d+$')),
     'd': fields.String()
 }
 
@@ -269,7 +269,7 @@ def logout():
 def dashboard_front():
     return render_template('index.html')
 
-POOL_FILE_RE = re.compile(r'^topic\d+_\d+$')
+POOL_FILE_RE = re.compile(r'^topic\d+-\d_\d+$')
 
 @app.route('/inbox')
 @login_required
