@@ -1,7 +1,7 @@
 # to do
 
-1. work on issues (see below)
-2. create pools (needs adaptation of the RAGTIME script, or a new one)
+1. work on issues (see below) **DONE**
+2. create pools (needs adaptation of the RAGTIME script, or a new one) **DONE**
 3. set up user.py for assessors and add those folks to bench2
 
 
@@ -14,6 +14,7 @@
 - need to make sure it all stays in the view.
 
 ## Summary not being restored
+**Done**
 
 - if I switch topics, and then switch back, the summary is not populated in the interface.  It's in the log, so it's not lost.
 
