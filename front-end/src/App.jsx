@@ -304,7 +304,9 @@ function Clippy(props) {
   return (
     <>
       <Form.Label>Clippy</Form.Label>
-      <ListGroup> {clips} </ListGroup>
+      <Panel>
+        <ListGroup> {clips} </ListGroup>
+      </Panel>
     </>
   );
 }
@@ -733,14 +735,12 @@ function App() {
                 </Panel>
               </Col>
             </Row>
-            <Row className="mt-5 pt-2"> </Row>
+            <Row className="mt-2 pt-2"> </Row>
             <Row style={{ height: "30%", "padding-bottom": "50px" }}>
-              <Col md={4} style={{ height: "100%" }}>
-                <Panel>
-                  <Clippy pool={state.pool} fetch_doc={load_doc} />
-                </Panel>
+              <Col md={4} style={{ height: "90%" }}>
+                <Clippy pool={state.pool} fetch_doc={load_doc} />
               </Col>
-              <Col md={8} style={{ height: "100%" }}>
+              <Col md={8} style={{ height: "90%" }}>
                 <Panel>
                   <SummaryBox rows={6} summary={state.summary} />
                 </Panel>
