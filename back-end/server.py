@@ -253,6 +253,8 @@ def login(args):
     if user:
         app.logger.debug(f'User is {user.id}')
         login_user(user)
+        session['username'] = user.id
+        session.modified = True
         return redirect(url_for('index'))
     else:
         app.logger.debug(f'No such user {username}')
