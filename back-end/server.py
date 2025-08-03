@@ -157,6 +157,7 @@ class Pool:
         return { "pool": poollist,
                  "topic": self.topic,
                  "desc": self.desc,
+                 "summary": self.summary,
                  "last": last }
 
     def json(self):
