@@ -32,18 +32,13 @@ class User(UserMixin):
 
 # Simulate user database
 USERS_DB = { 
-    'darrin.dimmick@nist.gov': User('darrin', 'Darrin', 'darrin.dimmick@nist.gov', 'assess'),
-    'hoa.dang@nist.gov': User('hoa', 'Hoa', 'hoa.dang@nist.gov', 'assess'),
-    'ian.soboroff@nist.gov': User('ian', 'Ian', 'ian.soboroff@nist.gov', 'assess'),
-    'pechnikova@gmail.com': User('anna', 'Anna Pechnikova', 'pechnikova@gmail.com', 'assess'),
-    'hshaobo@gmail.com': User('shaobo', 'Huang Shaobo', 'hshaobo@gmail.com', 'assess'),
-    'aassaad@comcast.net': User('aassaad', 'Aayaad Assaad', 'aassaad@comcast.net', 'assess'),
-    'emtf8009@gmail.com': User('lucy', 'Lucy Wang', 'emtf8009@gmail.com', 'assess'),
-    'elenaworksathome@gmail.com': User('elena', 'Elena Prisekin', 'elenaworksathome@gmail.com', 'assess'),
-    'lchen1965@gmail.com': User('lijun', 'Lijun Chen', 'lchen1965@gmail.com', 'assess'),
-    'natallia.jones22@gmail.com': User('natallia', 'Natallia Cherashneva', 'natallia.jones22@gmail.com', 'assess'),
-    'mvrichaud@gmail.com': User('marina', 'Marina Richaud', 'mvrichaud@gmail.com', 'assess'),
-    'nada_fayad@hotmail.com': User('nada', 'Nada Fayad', 'nada_fayad@hotmail.com', 'assess'),
-    'davewoosley@gmail.com': User('dave', 'Dave Woosley', 'davewoosley@gmail.com', 'assess'),
-    'yanbahd43@gmail.com': User('peter', 'Peter Schultz', 'yanbahd43@gmail.com', 'assess')
+    'darrin.dimmick@nist.gov': User('darrin', 'Darrin', 'darrin.dimmick@nist.gov', 'ikat'),
+    'hoa.dang@nist.gov': User('hoa', 'Hoa', 'hoa.dang@nist.gov', 'ikat'),
+    'ian.soboroff@nist.gov': User('ian', 'Ian', 'ian.soboroff@nist.gov', 'ikat'),
+    'dfmcurry@netscape.net': User('deborah', 'Deborah Curry', 'dfmcurry@netscape.net', 'ikat'),
+    'mariannelarking@verizon.net': User('marianne', 'Marianne Larkin', 'mariannelarking@verizon.net', 'ikat'),
+    'smallie2@verizon.net': User('wilson', 'Wilson Smallwood', 'smallie2@verizon.net', 'ikat'),
+    'sherrideck@comcast.net': User('sherri', 'Sherri Deck', 'sherrideck@comcast.net', 'ikat'),
+    'matlife50@gmail.com': User('marie', 'Marie Turgeon', 'matlife50@gmail.com', 'ikat'),
+    'alpieru1@yahoo.com': User('angelina', 'Angelina Pierucki', 'alpieru1@yahoo.com', 'ikat'),
 }
