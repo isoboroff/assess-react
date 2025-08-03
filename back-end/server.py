@@ -32,7 +32,6 @@ app = Flask(__name__,
 app.config.from_pyfile('settings.py')
 if 'SECRET_KEY' not in app.config:
     sys.exit('SECRET KEY not defined')
-app.config.update({'SECRET_KEY': secrets.token_hex()})
 if 'LOGLEVEL' in app.config:
     app.logger.setLevel(app.config['LOGLEVEL'])
 
