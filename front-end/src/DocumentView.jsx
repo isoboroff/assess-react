@@ -10,11 +10,11 @@ import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import segment from "./sentencex";
 
 
-const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_passage, children  }) => {
+const DocSentence = ({  key, sentence, judgment, add_passage, del_passage, children  }) => {
   const [highlight, setHighlight] = useState(false);
   const [showNote, setShowNote] = useState(false);
-  const [noteText, setNoteText] = useState(note);
-  const [isVital, setIsVital] = useState(vital);
+  const [noteText, setNoteText] = useState(judgment ? judgment.note : "");
+  const [isVital, setIsVital] = useState(judgment ? judgment.vital : false);
   
   const build_passage = () => {
     return { sentence: sentence, text: children, vital: isVital, note: noteText};
@@ -45,10 +45,10 @@ const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_pas
   );
 
   useEffect(() => {
-    setHighlight(marked);
-    setNoteText(note);
-    setIsVital(vital);
-  }, [marked]);
+    setHighlight(judgment ? true : false);
+    setNoteText(judgment ? judgment.note : "");
+    setIsVital(judgment ? judgment.vital : false);
+  }, [judgment]);
 
   const handleClick = () => {
     if (highlight) {
@@ -85,9 +85,7 @@ const DocSentence = ({  key, sentence, marked, note, vital, add_passage, del_pas
 DocSentence.propTypes = {
   key: PropTypes.number,
   sentence: PropTypes.string.isRequired,
-  marked: PropTypes.bool,
-  note: PropTypes.string,
-  vital: PropTypes.bool,
+  judgment: PropTypes.Map,
   add_passage: PropTypes.func,
   del_passage: PropTypes.func,
   children: PropTypes.node,
@@ -95,6 +93,16 @@ DocSentence.propTypes = {
 
 export default function DocumentView({ document, judgment, add_passage, del_passage }) {
   const [sentences, setSentences] = useState([]);
+  const [judgeMap, setJudgeMap] = useState(new Map());
+  
+  useEffect(() => {
+    if (judgment) {
+      const jmap = new Map();
+      judgment.forEach((j) => { jmap.set(j.sentence, j); });
+      // console.log("jmap is", jmap);
+      setJudgeMap(jmap);
+    }
+  }, [judgment]);
 
   useEffect(() => {
     const lang_map = {
@@ -105,8 +113,10 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
       zho: "zh",
     };
     const lang = (document && document["lang"] in lang_map) ? lang_map[document["lang"]] : "en";
-    const sents = document ? segment(lang, document.text).map((s) => `${s} `) : [];
-    setSentences(sents);
+    let sentences = document ? segment(lang, document.text) : [];
+    sentences = sentences.map((s) => `${s} `);
+    // console.log("sentences are", sentences);
+    setSentences(sentences);
   }, [document]);
 
   var textdir = "";
@@ -116,17 +126,6 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
     textclass = "text-right article-text";
   }
 
-  let highlights = {};
-  let notes = {};
-  let vital = {};
-  if (judgment) {
-    if (Array.isArray(judgment)) {
-      judgment.forEach((e) => { highlights[e.sentence] = true; notes[e.sentence] = e.note; vital[e.sentence] = e.vital });
-    } else {
-      highlights[judgment.sentence] = true;
-    }
-  }
-
   return (
     <div>
       <div dir={textdir} className={textclass}>
@@ -134,9 +133,8 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
       </div>
       <div dir={textdir} className={textclass}>
         {sentences.map((sent, index) => (
-          <DocSentence key={index} sentence={index} marked={index in highlights} 
-            note={index in notes ? notes[index] : ""} 
-            vital={index in vital ? vital[index] : false}
+          <DocSentence key={index} sentence={index} 
+            judgment={judgeMap.has(index) ? judgeMap.get(index) : null}
             add_passage={add_passage} del_passage={del_passage}>
             {sent}
           </DocSentence>

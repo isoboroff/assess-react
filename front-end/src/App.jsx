@@ -665,7 +665,7 @@ function App() {
                 judgment={
                   state.current >= 0 && state.pool[state.current].passage
                     ? state.pool[state.current].passage
-                    : ""
+                    : []
                 }
                 add_passage={add_passage}
                 del_passage={del_passage}
