@@ -387,7 +387,6 @@ function App() {
     if (i < 0 || i >= state.pool.length) return;
 
     const encoded_docid = encodeURIComponent(state.pool[i].docid);
-    console.log('load_pool_item', docid);
     const index = "marcov2.1";
     fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
       .then((response) => {
