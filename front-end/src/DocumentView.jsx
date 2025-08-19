@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import Row from "react-bootstrap/Row";
@@ -10,6 +10,7 @@ import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import segment from "./sentencex";
 
 
+// eslint-disable-next-line no-unused-vars
 const DocSentence = ({  key, sentence, judgment, add_passage, del_passage, children  }) => {
   const [highlight, setHighlight] = useState(false);
   const [showNote, setShowNote] = useState(false);
@@ -105,15 +106,7 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
   }, [judgment]);
 
   useEffect(() => {
-    const lang_map = {
-      eng: "en",
-      fas: "fa",
-      arb: "ar",
-      rus: "ru",
-      zho: "zh",
-    };
-    const lang = (document && document["lang"] in lang_map) ? lang_map[document["lang"]] : "en";
-    let sentences = document ? segment(lang, document.text) : [];
+    let sentences = document ? segment("en", document.text) : [];
     sentences = sentences.map((s) => `${s} `);
     // console.log("sentences are", sentences);
     setSentences(sentences);
@@ -121,7 +114,7 @@ export default function DocumentView({ document, judgment, add_passage, del_pass
 
   var textdir = "";
   var textclass = "article-text";
-  if (document && (document["lang"] === "arb" || document["lang"] === "fas")) {
+  if (document && ("lang" in document) && (document["lang"] === "arb" || document["lang"] === "fas")) {
     textdir = "rtl";
     textclass = "text-right article-text";
   }

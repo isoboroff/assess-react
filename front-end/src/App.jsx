@@ -24,7 +24,7 @@ import { AssessState, AssessDispatch } from "./Contexts";
 import Pool from "./Pool";
 import Description from "./Description";
 import DocumentView from "./DocumentView";
-import useKeyPress from "./useKeyPress";
+// import useKeyPress from "./useKeyPress";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
@@ -32,9 +32,9 @@ import "./App.css";
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
   0: { label: "irrelevant", color: "secondary" },
-  1: { label: "topical", color: "info" },
-  2: { label: "valuable", color: "primary" },
-  3: { label: "very valuable", color: "success" },
+  1: { label: "related (0)", color: "info" },
+  2: { label: "relevant (1+)", color: "primary" },
+  3: { label: "highly relevant (3+)", color: "success" },
 };
 
 /* This is the application state. */
@@ -235,7 +235,8 @@ function ScanTerms(props) {
     props.set_scan_terms(e.target.value);
     e.preventDefault();
     e.stopPropagation();
-  });
+  }, [props]);
+  
   const update = useCallback((e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -245,20 +246,22 @@ function ScanTerms(props) {
       });
     }
     e.stopPropagation();
-  });
+  }, [props, dispatch]);
+
   const apply = useCallback(() => {
     dispatch({
       type: Actions.SAVE_SCAN_TERMS,
       payload: { scan_terms: props.scan_terms },
     });
-  });
+  }, [props, dispatch]);
+
   const clear = useCallback(() => {
     props.set_scan_terms("");
     dispatch({
       type: Actions.SAVE_SCAN_TERMS,
       payload: { scan_terms: null },
     });
-  });
+  }, [props, dispatch]);
 
   return (
     <Col>
@@ -300,7 +303,6 @@ function App() {
   const [inbox, set_inbox] = useState({});
   const [scan_terms, set_scan_terms] = useState("");
   const [pool_filter, set_pool_filter] = useState("all");
-  const [translate, set_translate] = useState(false);
 
   /* Effect to fire just before initial render */
   useEffect(() => {
@@ -330,7 +332,7 @@ function App() {
     fetch("inbox")
       .then((response) => response.json())
       .then((data) => set_inbox(data));
-  });
+  }, []);
 
   /* If someone clicks "Load topic", we need to refresh the inbox and
    * put up the load-topic dialog. */
@@ -340,7 +342,7 @@ function App() {
       set_topic_requested(false);
       set_show_topic_dialog(true);
     }
-  }, [topic_requested]);
+  }, [topic_requested, load_inbox]);
 
   const load_pool = useCallback((topic, current = 0) => {
     fetch("pool?t=" + topic)
@@ -356,7 +358,7 @@ function App() {
             desc: desc_obj,
           },
         });
-        return fetch("doc?t=" + topic + "&d=" + data.pool[current].docid);
+        return fetch("doc?t=" + topic + "&d=" + encodeURIComponent(data.pool[current].docid));
       })
       .then((response) => {
         if (response.ok) {
@@ -374,18 +376,19 @@ function App() {
         });
         set_show_topic_dialog(false);
       });
-  });
+  }, []);
 
   const load_pool_for_current_user = useCallback((topic, current = 0) => {
     load_pool(topic, current);
-  });
+  }, [load_pool]);
 
   const load_pool_item = useCallback((i) => {
     if (i < 0 || i >= state.pool.length) return;
 
-    const docid = state.pool[i].docid;
-    const index = translate ? "ragtime-mt" : "ragtime";
-    fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + docid)
+    const encoded_docid = encodeURIComponent(state.pool[i].docid);
+    console.log('load_pool_item', docid);
+    const index = "marcov2.1";
+    fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -401,27 +404,18 @@ function App() {
           },
         });
       });
-  });
-
-  const handleTranslateToggle = () => {
-    set_translate(!translate);
-  };
-  useEffect(() => {
-    if (state.current > 0 && state.current < state.pool.length) {
-      load_pool_item(state.current);
-    }
-  }, [translate]);
-
+  }, [state.pool, state.topic]);
 
   const judge = (judgment) => {
-    const docid = state.pool[state.current].docid;
+    const docid = state.pool[state.current].docid
+    const encoded_docid = encodeURIComponent(docid);
     let log_payload = { docid: docid, judgment: judgment };
     if (judgment == "0") {
       log_payload.passage = [];
     } else if ('passage' in state.pool[state.current]) {
       log_payload.passage = state.pool[state.current].passage;
     }
-    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+    fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
@@ -443,6 +437,7 @@ function App() {
 
   const add_passage = (passage) => {
     const docid = state.pool[state.current].docid;
+    const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
     let cur_pass = ('passage' in state.pool[state.current]) ? state.pool[state.current].passage : [];
     cur_pass = cur_pass.filter((entry) => (entry.sentence != passage.sentence));
@@ -451,7 +446,7 @@ function App() {
     if (judgment === "-1" || judgment === "0") {
       log_payload.judgment = "2";
     }
-    fetch("judge?t=" + state.topic + "&d=" + docid, {
+    fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
@@ -475,13 +470,14 @@ function App() {
     if (!('passage' in state.pool[state.current]) || state.pool[state.current].passage.length == 0)
       return;
     const docid = state.pool[state.current].docid;
+    const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
     let passages = state.pool[state.current].passage.filter((p) => p.sentence != passage.sentence);
     let log_payload = { docid: docid, judgment: judgment, passage: passages };
     if (passages.length == 0) {
       log_payload.judgment = "0";
     }
-    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+    fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
@@ -613,15 +609,6 @@ function App() {
             </Col>
             <Col xs="auto" className="mr-auto">
               {judgment_buttons}
-            </Col>
-            <Col xs="auto" className="mr-auto">
-              <Form.Check
-                type="switch"
-                label="Translate"
-                id="mt-switch"
-                checked={translate}
-                onClick={() => handleTranslateToggle()}
-              />
             </Col>
             <Col xs="auto" className="mx-3 mr-auto">
               <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>

@@ -40,10 +40,10 @@ login_manager.login_view = 'login'
 def load_user(id):
     return User.get(id)
 
-ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
+#ELASTIC_PW = 'xWdaVo-josy6fjE*TS9e'
 es = Elasticsearch(
     f'http://{app.config["ELASTIC_HOST"]}:{app.config["ELASTIC_PORT"]}',
-    http_auth=('elastic', ELASTIC_PW),
+#    http_auth=('elastic', ELASTIC_PW),
     retry_on_timeout=True,
     max_retries=10,
     request_timeout=30)
@@ -144,13 +144,15 @@ class Pool:
             return None
         return log_entry
 
-query_args = {
-    'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
-    'd': fields.String(),
-    'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
-}
-
+#query_args = {
+#    'p': fields.String(validate=validate.Length(equal=64)),
+#    't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
+#    'd': fields.String(),
+#    'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
+#}
+topic_regex = r'^[0-9a-z.]+$'
+indexes = ['marcov2.1']
+docid_regex = r'msmarco_v2\.1_doc_\d{2}_\d+#[\d_#]+'
 
 # This function decrypts a message using the app's private key
 # Source: https://elc.github.io/python-security/chapters/07_Asymmetric_Encryption.html
@@ -239,12 +241,11 @@ def logout():
 def dashboard_front():
     return render_template('index.html')
 
-POOL_FILE_RE = re.compile(r'^topic\d+\.(eng|rus|arb|zho)$')
+POOL_FILE_RE = re.compile(r'^topic\d+$')
 
 @app.route('/inbox')
 @login_required
-@use_args(query_args, location='query')
-def inbox(qargs):
+def inbox():
     user = current_user.id
     data = {}
     try:
@@ -299,7 +300,7 @@ def dashboard():
 
 @app.route('/pool')
 @login_required
-@use_args(query_args, location='query')
+@use_args({'t': fields.Str(validate=validate.Regexp(topic_regex))}, location='query')
 def get_pool(qargs):
     topic = qargs['t']
     user = current_user.id
@@ -320,7 +321,10 @@ def get_pool(qargs):
 
 @app.route('/doc')
 @login_required
-@use_args(query_args, location='query')
+@use_args({'i': fields.String(validate=validate.OneOf(indexes)),
+           'd': fields.String(validate=validate.Regexp(docid_regex), required=True),
+           't': fields.String(validate=validate.Regexp(topic_regex))}, 
+          location='query')
 def get_document(qargs):
     index = qargs.get('i', None)
     docid = qargs['d']
@@ -339,8 +343,6 @@ def get_document(qargs):
                     print(json.dumps({'stamp': time.time(),
                                       'docid': docid,
                                       'action': 'load'}), file=fp)
-            if index == 'ragtime-mt':
-                response['_source']['lang'] = 'eng'
             response['_source']['docid'] = docid
             return(response['_source'], 200)
         else:
@@ -352,7 +354,9 @@ def get_document(qargs):
 
 @app.route('/judge', methods=['POST'])
 @login_required
-@use_args(query_args, location='query')
+@use_args({'t': fields.Str(validate=validate.Regexp(topic_regex), required=True),
+           'd': fields.Str(validate=validate.Regexp(docid_regex), required=True)},
+          location='query')
 def set_judgment(qargs):
     user = current_user.id
     topic = qargs['t']

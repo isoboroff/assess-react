@@ -1,26 +1,14 @@
-import { useState } from "react";
+import PropTypes from "prop-types";
 
 // Render the task/request description
 function Description(props) {
-  const [show, setShow] = useState(false);
-
   if (props.desc) {
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Request: {props.desc["request_id"]}</span>
+        <span className="h2 mr-5">Request: {props.desc["id"]}</span>
         <br />
         <p>
-          <b>{props.desc["title"]}</b>
-        </p>
-        <p>
-          <b>Background:&nbsp;</b>
-          <span style={{whiteSpace: "pre-wrap"}}>
-            {props.desc["background"]}
-          </span>
-        </p>
-        <p>
-          <b>Problem statement:&nbsp;</b>
-          {props.desc["problem_statement"]}
+          <b>{props.desc["narrative"]}</b>
         </p>
       </div>
     );
@@ -29,5 +17,9 @@ function Description(props) {
   }
   // <p style={{whiteSpace: 'pre-wrap'}}>{desc}</p>
 }
+
+Description.propTypes = {
+  desc: PropTypes.number,
+};
 
 export default Description;
