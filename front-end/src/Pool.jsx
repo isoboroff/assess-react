@@ -15,11 +15,14 @@ function PoolItem(props) {
     </Badge>);
   }
 
+  const docid_parts = props.docid.match(/msmarco_v2.1_doc_(\d{2}_\d+)#([\d_]+)/);
+  const show_docid = `doc ${docid_parts[1]} : pass ${docid_parts[2]}`
+
   return (
     <ListGroup.Item action
       active={props.current}
       onClick={() => props.fetch_doc(props.seq)}>
-      {props.seq + 1}: {props.docid.slice(0, 23)} {badge}
+      {props.seq + 1}: {show_docid} {badge}
     </ListGroup.Item>
   );
 }
