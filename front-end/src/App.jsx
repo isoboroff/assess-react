@@ -617,14 +617,14 @@ function App() {
             </Col>
           </Row>
 
-          {/************** Scanterms */}
           <Row className="mt-5 pt-2"> </Row>
+          {/************** Scanterms 
           <ScanTerms
             dir={state.doc && state.doc["lang"] === "fas" ? "rtl" : ""}
             scan_terms={scan_terms}
             set_scan_terms={set_scan_terms}
           />
-
+          */}
           {/************** Main: pool column and topic/document column */}
           <Row className="mt-3 vh-full">
             <Col xs={4} className="vh-full overflow-auto">
