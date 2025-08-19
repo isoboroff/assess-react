@@ -578,11 +578,11 @@ function App() {
 
           {/************** Header line: load pool, filter pool, judgment buttons, logout button */}
           <Row xs={12} className="fixed-top align-items-center flex-shrink-0">
-            <Col xs="auto" className="flex-row flex-shrink-0 mx-3">
+            <Col xs="auto" className="flex-row mx-3">
               <FontAwesomeIcon icon={faCoffee} />{" "}
               <span className="navbar-brand">Assess</span>
             </Col>
-            <Col xs="auto" className="flex-shrink-1">
+            <Col xs="auto">
               <Button
                 variant="primary"
                 onClick={() => set_topic_requested(true)}
@@ -607,10 +607,10 @@ function App() {
                 ))}
               </Form.Control>
             </Col>
-            <Col xs="auto" className="mr-auto">
+            <Col xs="auto">
               {judgment_buttons}
             </Col>
-            <Col xs="auto" className="mx-3 mr-auto">
+            <Col xs="auto" className="mx-3 ms-auto">
               <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
                 Log out
               </Button>
