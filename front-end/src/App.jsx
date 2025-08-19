@@ -33,8 +33,9 @@ import "./App.css";
 const rel_levels = {
   0: { label: "irrelevant", color: "secondary" },
   1: { label: "related (0)", color: "info" },
-  2: { label: "relevant (1+)", color: "primary" },
-  3: { label: "highly relevant (3+)", color: "success" },
+  2: { label: "relevant (1)", color: "primary" },
+  3: { label: "highly relevant (2-3)", color: "success" },
+  4: { label: "perfectly relevant (4+)"}
 };
 
 /* This is the application state. */
