@@ -8,10 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='ragtime'
-
-# Password file
-PWFILE='passwd'
+INDEX='marcov2.1'
 
 # Logging
 LOGLEVEL='DEBUG'
