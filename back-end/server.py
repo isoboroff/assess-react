@@ -146,7 +146,8 @@ class Pool:
 
 query_args = {
     'p': fields.String(validate=validate.Length(equal=64)),
-    't': fields.String(validate=validate.Regexp(r'^[0-9a-z.]+$')),
+    #'t': fields.String(validate=validate.Regexp(r'^[0-9a-z.%B]+$')),
+    't': fields.String(),
     'd': fields.String(),
     'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
 }
@@ -239,7 +240,7 @@ def logout():
 def dashboard_front():
     return render_template('index.html')
 
-POOL_FILE_RE = re.compile(r'^topic\d+\.(eng|rus|arb|zho)$')
+POOL_FILE_RE = re.compile(r'^topic[\d+]+\.(eng|rus|arb|zho)$')
 
 @app.route('/inbox')
 @login_required

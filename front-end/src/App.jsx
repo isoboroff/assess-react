@@ -343,7 +343,7 @@ function App() {
   }, [topic_requested]);
 
   const load_pool = useCallback((topic, current = 0) => {
-    fetch("pool?t=" + topic)
+    fetch("pool?t=" + encodeURIComponent(topic))
       .then((response) => response.json())
       .then((data) => {
         if (data.last) current = data.last;
@@ -356,7 +356,7 @@ function App() {
             desc: desc_obj,
           },
         });
-        return fetch("doc?t=" + topic + "&d=" + data.pool[current].docid);
+        return fetch("doc?t=" + encodeURIComponent(topic) + "&d=" + data.pool[current].docid);
       })
       .then((response) => {
         if (response.ok) {
@@ -385,7 +385,7 @@ function App() {
 
     const docid = state.pool[i].docid;
     const index = translate ? "ragtime-mt" : "ragtime";
-    fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + docid)
+    fetch("doc?i=" + index + "&t=" + encodeURIComponent(state.topic) + "&d=" + docid)
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -421,7 +421,7 @@ function App() {
     } else if ('passage' in state.pool[state.current]) {
       log_payload.passage = state.pool[state.current].passage;
     }
-    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+    fetch("judge?t=" + encodeURIComponent(state.topic) + "&d=" + state.pool[state.current].docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
@@ -451,7 +451,7 @@ function App() {
     if (judgment === "-1" || judgment === "0") {
       log_payload.judgment = "2";
     }
-    fetch("judge?t=" + state.topic + "&d=" + docid, {
+    fetch("judge?t=" + encodeURIComponent(state.topic) + "&d=" + docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
@@ -481,7 +481,7 @@ function App() {
     if (passages.length == 0) {
       log_payload.judgment = "0";
     }
-    fetch("judge?t=" + state.topic + "&d=" + state.pool[state.current].docid, {
+    fetch("judge?t=" + encodeURIComponent(state.topic) + "&d=" + state.pool[state.current].docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(log_payload) 
