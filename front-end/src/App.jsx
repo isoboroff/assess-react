@@ -27,9 +27,25 @@ import useKeyPress from "./useKeyPress";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+import JudgmentButtons from "./JudgmentButtons";
+
+const rel_levels = {
+  "Substitute": {
+    "S2": { label: "Full", color: "success" },
+    "S1": { label: "Conceptual", color: "info" },
+    "S0": { label: "Related but not a substitute", color: "secondary" },
+  },
+  "Complement": {
+    "C2": { label: "Full complement", color: "success" },
+    "C1": { label: "Complementary but unknown compatibility", color: "info" },
+    "C0": { label: "Complementary but incompatible", color: "secondary" },
+  },
+  "NR": { label: "Not Related", color: "secondary" },
+  "UA": { label: "Unable to Assess", color: "secondary" },
+};
 
 /* Mapping relevance levels to labels to colors in the interface */
-const rel_levels = {
+const old_rel_levels = {
   0: { label: "not relevant", color: "secondary" },
   1: { label: "somewhat relevant", color: "info" },
   2: { label: "highly relevant", color: "success" },
@@ -445,31 +461,6 @@ function App() {
   };
 
   /*
-   * The judgment buttons are colored according to the key at the top,
-   * and the judgment for the currently selected document is bolded.
-   */
-  const judgment_buttons = Object.getOwnPropertyNames(rel_levels).map((i) => {
-    let style = "font-weight-normal";
-    if (
-      state.current >= 0 &&
-      state.current < state.pool.length &&
-      i === state.pool[state.current].judgment
-    ) {
-      style = "font-weight-bold";
-    }
-    return (
-      <ButtonGroup key={i}>
-        <Button
-          variant={rel_levels[i].color}
-          onClick={() => judge(i)}
-        >
-          <span className={style}>{rel_levels[i].label}</span>
-        </Button>
-      </ButtonGroup>
-    );
-  });
-
-  /*
    * Keyboard controls: number keys apply the judgment level to the
    * current document.  'n' and 'p' move to the next and previous
    * pool document respectively.   The spacebar judges the current
@@ -551,7 +542,7 @@ function App() {
               </Form.Control>
             </Col>
             <Col xs="auto">
-              {judgment_buttons}
+              <JudgmentButtons levels={rel_levels} judge={judge} />
             </Col>
             <Col xs="auto" className="mx-3 ms-auto">
               <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>

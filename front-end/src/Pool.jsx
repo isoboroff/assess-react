@@ -1,17 +1,35 @@
 import ListGroup from 'react-bootstrap/ListGroup';
 import Badge from 'react-bootstrap/Badge';
 
+function inner_flatmap(complex_obj, field_name, flat_obj) {
+  for (const [key, value] of Object.entries(complex_obj)) {
+    if (field_name in value) {
+      flat_obj[key] = value[field_name];
+    } else {
+      inner_flatmap(value, field_name, flat_obj)
+    }
+  }
+}
+
+function flatmap(complex_obj, field_name) {
+  const flat_obj = {};
+  inner_flatmap(complex_obj, field_name, flat_obj);
+  return flat_obj;
+}
+
 /*
  * A pool item interface component.  Clicking a pool item causes it to
  * load into the document pane.
  */
 function PoolItem(props) {
+  const colors = flatmap(props.rel_levels, "color");
+  const labels = flatmap(props.rel_levels, "label");
   // Set the relevance 'badge' according to the judgment
   let badge = '';
   if (props.judgment !== '-1') {
-    let classdecl = `bg-${props.rel_levels[props.judgment].color}`
+    let classdecl = `bg-${colors[props.judgment]}`
     badge = (<Badge className={classdecl}>
-      {props.rel_levels[props.judgment].label}
+      {labels[props.judgment]}
     </Badge>);
   }
 
