@@ -15,8 +15,7 @@ function PoolItem(props) {
     </Badge>);
   }
 
-  const docid_parts = props.docid.match(/msmarco_v2.1_doc_(\d{2}_\d+)#([\d_]+)/);
-  const show_docid = `doc ${docid_parts[1]} : pass ${docid_parts[2]}`
+  const show_docid = props.docid;
 
   return (
     <ListGroup.Item action

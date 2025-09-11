@@ -8,7 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='marcov2.1'
+INDEX='product'
 
 # Logging
 LOGLEVEL='DEBUG'

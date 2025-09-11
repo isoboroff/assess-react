@@ -22,6 +22,7 @@
     "react-bootstrap": "^2.10.10",
     "react-data-table-component": "^7.7.0",
     "react-dom": "^19.1.1",
+    "react-json-view-lite": "^2.5.0",
     "react-router-dom": "^7.7.1",
     "scrypt-pbkdf": "^1.1.1",
     "styled-components": "^6.1.19",

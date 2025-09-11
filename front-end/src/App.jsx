@@ -4,7 +4,6 @@ import {
   useState,
   useEffect,
   useReducer,
-  useContext,
   useRef,
   useCallback,
 } from "react";
@@ -23,19 +22,18 @@ import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import { AssessState, AssessDispatch } from "./Contexts";
 import Pool from "./Pool";
 import Description from "./Description";
-import DocumentView from "./DocumentView";
-// import useKeyPress from "./useKeyPress";
+import SimpleJsonDocumentView from "./SimpleJsonDocumentView";
+import useKeyPress from "./useKeyPress";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
-  0: { label: "irrelevant", color: "secondary" },
-  1: { label: "related (0)", color: "info" },
-  2: { label: "relevant (1)", color: "primary" },
-  3: { label: "highly relevant (2-3)", color: "success" },
-  4: { label: "perfectly relevant (4+)"}
+  0: { label: "not relevant", color: "secondary" },
+  1: { label: "somewhat relevant", color: "info" },
+  2: { label: "highly relevant", color: "success" },
+  3: { label: "essential"}
 };
 
 /* This is the application state. */
@@ -56,6 +54,8 @@ export const Actions = Object.freeze({
   SAVE_SCAN_TERMS: "SAVE_SCAN_TERMS",
   SET_JUDGMENT: "SET_JUDGMENT",
   SET_PASSAGES: "SET_PASSAGES",
+  ADD_HIGHLIGHT: "ADD_HIGHLIGHT",
+  DELETE_HIGHLIGHT: "DELETE_HIGHLIGHT"
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -230,67 +230,6 @@ function LoadTopicModal(props) {
   );
 }
 
-function ScanTerms(props) {
-  const dispatch = useContext(AssessDispatch);
-  const change = useCallback((e) => {
-    props.set_scan_terms(e.target.value);
-    e.preventDefault();
-    e.stopPropagation();
-  }, [props]);
-  
-  const update = useCallback((e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      dispatch({
-        type: Actions.SAVE_SCAN_TERMS,
-        payload: { scan_terms: props.scan_terms },
-      });
-    }
-    e.stopPropagation();
-  }, [props, dispatch]);
-
-  const apply = useCallback(() => {
-    dispatch({
-      type: Actions.SAVE_SCAN_TERMS,
-      payload: { scan_terms: props.scan_terms },
-    });
-  }, [props, dispatch]);
-
-  const clear = useCallback(() => {
-    props.set_scan_terms("");
-    dispatch({
-      type: Actions.SAVE_SCAN_TERMS,
-      payload: { scan_terms: null },
-    });
-  }, [props, dispatch]);
-
-  return (
-    <Col>
-      <Form>
-        <Row className="align-items-center">
-          <Col xs={10}>
-        <Form.Control
-          placeholder="Scan terms"
-          dir={props.dir}
-          value={props.scan_terms}
-          onChange={change}
-          onKeyDown={update}
-        />
-          </Col>
-          <Col>
-            <Button className="mx-3" variant="primary" onClick={apply}>
-          Apply
-        </Button>
-        <Button variant="secondary" onClick={clear}>
-          Clear
-        </Button>
-          </Col>
-        </Row>
-      </Form>
-    </Col>
-  );
-}
-
 /*
  * The "app".  The main interface pieces here are a modal for logins, selecting a
  * topic to load, and judgment buttons for judging the currently displayed doc.
@@ -302,6 +241,7 @@ function App() {
   const [topic_requested, set_topic_requested] = useState(false);
   const [show_topic_dialog, set_show_topic_dialog] = useState(false);
   const [inbox, set_inbox] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [scan_terms, set_scan_terms] = useState("");
   const [pool_filter, set_pool_filter] = useState("all");
 
@@ -350,7 +290,7 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         if (data.last) current = data.last;
-        const desc_obj = JSON.parse(data.desc);
+        const desc_obj = data.desc;
         dispatch({
           type: Actions.LOAD_POOL,
           payload: {
@@ -387,7 +327,7 @@ function App() {
     if (i < 0 || i >= state.pool.length) return;
 
     const encoded_docid = encodeURIComponent(state.pool[i].docid);
-    const index = "marcov2.1";
+    const index = "product";
     fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
       .then((response) => {
         if (response.ok) {
@@ -435,6 +375,7 @@ function App() {
     });
   }
 
+  // eslint-disable-next-line no-unused-vars
   const add_passage = (passage) => {
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
@@ -466,6 +407,7 @@ function App() {
     });
   };
 
+  // eslint-disable-next-line no-unused-vars
   const del_passage = (passage) => {
     if (!('passage' in state.pool[state.current]) || state.pool[state.current].passage.length == 0)
       return;
@@ -532,6 +474,8 @@ function App() {
    * current document.  'n' and 'p' move to the next and previous
    * pool document respectively.   The spacebar judges the current
    * document irrelevant and moves to the next document.
+   */
+
   const onKeyPress = (event) => {
     switch (event.key) {
       case "0":
@@ -550,7 +494,6 @@ function App() {
   };
 
   useKeyPress(["n", "p", "0", "1", "2", "3"], onKeyPress);
-   */
 
   const docDiv = useRef(null);
 
@@ -647,15 +590,13 @@ function App() {
                     : null
                 }
               />
-              <DocumentView 
+              <SimpleJsonDocumentView 
                 document={state.doc} 
                 judgment={
                   state.current >= 0 && state.pool[state.current].passage
                     ? state.pool[state.current].passage
                     : []
                 }
-                add_passage={add_passage}
-                del_passage={del_passage}
               />
            </Col>
           </Row>
