@@ -29,27 +29,12 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import JudgmentButtons from "./JudgmentButtons";
 
-const rel_levels = {
-  "Substitute": {
-    "S2": { label: "Full", color: "success" },
-    "S1": { label: "Conceptual", color: "info" },
-    "S0": { label: "Related but not a substitute", color: "secondary" },
-  },
-  "Complement": {
-    "C2": { label: "Full complement", color: "success" },
-    "C1": { label: "Complementary but unknown compatibility", color: "info" },
-    "C0": { label: "Complementary but incompatible", color: "secondary" },
-  },
-  "NR": { label: "Not Related", color: "secondary" },
-  "UA": { label: "Unable to Assess", color: "secondary" },
-};
-
 /* Mapping relevance levels to labels to colors in the interface */
-const old_rel_levels = {
+const rel_levels = {
   0: { label: "not relevant", color: "secondary" },
   1: { label: "somewhat relevant", color: "info" },
   2: { label: "highly relevant", color: "success" },
-  3: { label: "essential"}
+  3: { label: "essential", color: "primary"}
 };
 
 /* This is the application state. */
