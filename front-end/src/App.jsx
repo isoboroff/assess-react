@@ -5,15 +5,14 @@ import { useState, useEffect, useReducer, useRef, useCallback } from "react";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Container from "react-bootstrap/Container";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 
 import { AssessState, AssessDispatch } from "./Contexts";
-import Pool from "./Pool";
 import Description from "./Description";
 import MarkdownDocumentView from "./MarkdownDocumentView";
 import useKeyPress from "./useKeyPress";
@@ -357,6 +356,32 @@ function App() {
     [state.pool, state.topic]
   );
 
+  const next_pool_item = () => {
+    load_pool_item(state.current + 1);
+  };
+  const prev_pool_item = () => {
+    load_pool_item(state.current - 1);
+  };
+
+  const go_to_unjudged = (direction) => {
+    let i = state.current + direction;
+    while (
+      state.pool[i] &&
+      state.pool[i].judgment &&
+      state.pool[i].judgment != "-1"
+    ) {
+      if (i < 0) {
+        i = 0;
+        break;
+      } else if (i >= state.pool.length) {
+        i = state.pool.length - 1;
+        break;
+      }
+      i += direction;
+    }
+    load_pool_item(i);
+  };
+
   const judge = (judgment) => {
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
@@ -531,21 +556,17 @@ function App() {
               {state.current + 1} of {state.pool.length}
             </Col>
             <Col xs="auto">
-              <Form.Control
-                as="select"
-                onChange={(e) => set_pool_filter(e.target.value)}
-              >
-                <option>all</option>
-                <option>unjudged</option>
-                {Object.getOwnPropertyNames(rel_levels).map((i) => (
-                  <option key={i} value={i}>
-                    {rel_levels[i].label}
-                  </option>
-                ))}
-              </Form.Control>
-            </Col>
-            <Col xs="auto">
               <JudgmentButtons levels={rel_levels} judge={judge} />
+            </Col>
+            <Col>
+              <ButtonGroup>
+                <Button onClick={() => go_to_unjudged(-1)}>
+                  Prev Unjudged
+                </Button>
+                <Button onClick={() => prev_pool_item()}>Prev</Button>
+                <Button onClick={() => next_pool_item()}>Next</Button>
+                <Button onClick={() => go_to_unjudged(1)}>Next Unjudged</Button>
+              </ButtonGroup>
             </Col>
             <Col xs="auto" className="mx-3 ms-auto">
               <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
@@ -564,17 +585,7 @@ function App() {
           */}
           {/************** Main: pool column and topic/document column */}
           <Row className="mt-3 vh-full">
-            <Col xs={4} className="vh-full overflow-auto">
-              <Pool
-                topic={state.topic}
-                rel_levels={rel_levels}
-                pool={state.pool}
-                current={state.current}
-                filter={pool_filter}
-                fetch_doc={load_pool_item}
-              />
-            </Col>
-            <Col ref={docDiv} xs={8} className="vh-full overflow-auto">
+            <Col xs={6} className="vh-full overflow-auto">
               <Description
                 desc={state.desc}
                 note_subtopic={() => {}}
@@ -584,12 +595,20 @@ function App() {
                     : null
                 }
               />
+            </Col>
+            <Col ref={docDiv} xs={6} className="vh-full overflow-auto">
               <MarkdownDocumentView
                 document={state.doc}
+                docid={
+                  state.pool[state.current]
+                    ? state.pool[state.current].docid
+                    : ""
+                }
+                rel_levels={rel_levels}
                 judgment={
-                  state.current >= 0 && state.pool[state.current].passage
-                    ? state.pool[state.current].passage
-                    : []
+                  state.current >= 0 &&
+                  state.pool[state.current] &&
+                  state.pool[state.current].judgment
                 }
               />
             </Col>
@@ -599,18 +618,5 @@ function App() {
     </AssessDispatch.Provider>
   );
 }
-
-/*
-              <Highlightable
-                content={state.doc}
-                scan_terms={state.scan_terms}
-                rel={
-                  state.current >= 0 && state.pool[state.current].passage
-                    ? state.pool[state.current].passage
-                    : ""
-                }
-                note_passage={note_passage}
-              />
- */
 
 export default App;
