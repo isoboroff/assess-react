@@ -106,7 +106,8 @@ class Pool:
         return len(self.pool)
 
     def num_rel(self):
-        return sum([1 for judgment in self.pool.values() if int(judgment['judgment']) > 0])
+        rels = set(['S1','S2','C1','C2'])
+        return sum([1 for judgment in self.pool.values() if judgment['judgment'] in rels])
 
     def num_judged(self):
         return sum([1 for judgment in self.pool.values() if judgment['judgment'] != '-1'])
