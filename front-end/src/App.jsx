@@ -1,19 +1,12 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-prototype-builtins */
-import {
-  useState,
-  useEffect,
-  useReducer,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, useReducer, useRef, useCallback } from "react";
 
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Container from "react-bootstrap/Container";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,7 +15,7 @@ import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import { AssessState, AssessDispatch } from "./Contexts";
 import Pool from "./Pool";
 import Description from "./Description";
-import SimpleJsonDocumentView from "./SimpleJsonDocumentView";
+import MarkdownDocumentView from "./MarkdownDocumentView";
 import useKeyPress from "./useKeyPress";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -30,26 +23,18 @@ import "./App.css";
 import JudgmentButtons from "./JudgmentButtons";
 
 const rel_levels = {
-  "Substitute": {
-    "S2": { label: "Full", color: "success" },
-    "S1": { label: "Conceptual", color: "info" },
-    "S0": { label: "Related but not a substitute", color: "secondary" },
+  Substitute: {
+    S2: { label: "Full", color: "success" },
+    S1: { label: "Conceptual", color: "info" },
+    S0: { label: "Related but not a substitute", color: "secondary" },
   },
-  "Complement": {
-    "C2": { label: "Full complement", color: "success" },
-    "C1": { label: "Complementary but unknown compatibility", color: "info" },
-    "C0": { label: "Complementary but incompatible", color: "secondary" },
+  Complement: {
+    C2: { label: "Full complement", color: "success" },
+    C1: { label: "Complementary but unknown compatibility", color: "info" },
+    C0: { label: "Complementary but incompatible", color: "secondary" },
   },
-  "NR": { label: "Not Related", color: "secondary" },
-  "UA": { label: "Unable to Assess", color: "secondary" },
-};
-
-/* Mapping relevance levels to labels to colors in the interface */
-const old_rel_levels = {
-  0: { label: "not relevant", color: "secondary" },
-  1: { label: "somewhat relevant", color: "info" },
-  2: { label: "highly relevant", color: "success" },
-  3: { label: "essential"}
+  NR: { label: "Not Related", color: "secondary" },
+  UA: { label: "Unable to Assess", color: "secondary" },
 };
 
 /* This is the application state. */
@@ -71,7 +56,7 @@ export const Actions = Object.freeze({
   SET_JUDGMENT: "SET_JUDGMENT",
   SET_PASSAGES: "SET_PASSAGES",
   ADD_HIGHLIGHT: "ADD_HIGHLIGHT",
-  DELETE_HIGHLIGHT: "DELETE_HIGHLIGHT"
+  DELETE_HIGHLIGHT: "DELETE_HIGHLIGHT",
 });
 
 /* And this function, called a "reducer", updates the application state
@@ -104,27 +89,25 @@ function assess_reducer(state, action) {
     case Actions.JUDGE: {
       // Update the judgment of the document that was judged
       let update = { judgment: action.payload.judgment };
-      if ('passage' in action.payload) {
-        if ('clear' in action.payload.passage)
-          update.passage = [];
+      if ("passage" in action.payload) {
+        if ("clear" in action.payload.passage) update.passage = [];
         else update.passage = action.payload.passage;
       }
-      if ('subtopics' in action.payload)
+      if ("subtopics" in action.payload)
         update.subtopics = action.payload.subtopics;
 
       let newPool = state.pool.map((entry) => {
         if (entry.docid === action.payload.docid) {
           console.log(entry, update);
-          if ('passage' in update) {
-            if ('passage' in entry) {
+          if ("passage" in update) {
+            if ("passage" in entry) {
               update.passage = entry.passage.concat(update.passage);
             } else {
               update.passage = [update.passage];
             }
           }
           return { ...entry, ...update };
-        }
-        else return entry;
+        } else return entry;
       });
       return {
         ...state,
@@ -136,7 +119,7 @@ function assess_reducer(state, action) {
       const passage = action.payload;
       let newPool = state.pool.map((entry) => {
         if (entry.docid == passage.docid) {
-          if ('passage' in entry) {
+          if ("passage" in entry) {
             if (Array.isArray(entry.passage)) {
               entry.passage = [...entry.passage, passage];
             } else {
@@ -145,9 +128,8 @@ function assess_reducer(state, action) {
           } else {
             entry.passage = [passage];
           }
-          return { ...entry }
-        }
-        else return entry;
+          return { ...entry };
+        } else return entry;
       });
       return { ...state, pool: newPool };
     }
@@ -156,12 +138,14 @@ function assess_reducer(state, action) {
       const passage = action.payload;
       let newPool = state.pool.map((entry) => {
         if (entry.docid == passage.docid) {
-          if ('passage' in entry.docid) {
-            entry.passage = entry.passage.filter((p) => p.docid != passage.docid);
+          if ("passage" in entry.docid) {
+            entry.passage = entry.passage.filter(
+              (p) => p.docid != passage.docid
+            );
           }
-          return {...entry}
+          return { ...entry };
         } else return entry;
-      })
+      });
       return { ...state, pool: newPool };
     }
 
@@ -188,7 +172,7 @@ function assess_reducer(state, action) {
     case Actions.SET_PASSAGES: {
       let newPool = state.pool.map((entry) => {
         if (entry.docid === action.payload.docid) {
-          return { ...entry, passage: action.payload.passage }
+          return { ...entry, passage: action.payload.passage };
         } else {
           return entry;
         }
@@ -263,23 +247,23 @@ function App() {
 
   /* Effect to fire just before initial render */
   useEffect(() => {
-        // check for scan terms
-        const scan_terms = window.localStorage.getItem("scan_terms");
-        if (scan_terms) {
-          dispatch({
-            type: Actions.SAVE_SCAN_TERMS,
-            payload: { scan_terms: scan_terms },
-          });
-          set_scan_terms(scan_terms);
-        }
+    // check for scan terms
+    const scan_terms = window.localStorage.getItem("scan_terms");
+    if (scan_terms) {
+      dispatch({
+        type: Actions.SAVE_SCAN_TERMS,
+        payload: { scan_terms: scan_terms },
+      });
+      set_scan_terms(scan_terms);
+    }
 
-        // Then, check for last topic loaded
-        const cur_topic = window.localStorage.getItem("topic");
-        if (cur_topic) {
-          // And last document viewed?  If not just set to 0
-          let cur_doc = window.localStorage.getItem("current");
-          if (cur_doc) cur_doc = parseInt(cur_doc);
-          else cur_doc = 0;
+    // Then, check for last topic loaded
+    const cur_topic = window.localStorage.getItem("topic");
+    if (cur_topic) {
+      // And last document viewed?  If not just set to 0
+      let cur_doc = window.localStorage.getItem("current");
+      if (cur_doc) cur_doc = parseInt(cur_doc);
+      else cur_doc = 0;
       load_pool(cur_topic, cur_doc);
     }
   }, []);
@@ -315,7 +299,12 @@ function App() {
             desc: desc_obj,
           },
         });
-        return fetch("doc?t=" + topic + "&d=" + encodeURIComponent(data.pool[current].docid));
+        return fetch(
+          "doc?t=" +
+            topic +
+            "&d=" +
+            encodeURIComponent(data.pool[current].docid)
+        );
       })
       .then((response) => {
         if (response.ok) {
@@ -335,69 +324,78 @@ function App() {
       });
   }, []);
 
-  const load_pool_for_current_user = useCallback((topic, current = 0) => {
-    load_pool(topic, current);
-  }, [load_pool]);
+  const load_pool_for_current_user = useCallback(
+    (topic, current = 0) => {
+      load_pool(topic, current);
+    },
+    [load_pool]
+  );
 
-  const load_pool_item = useCallback((i) => {
-    if (i < 0 || i >= state.pool.length) return;
+  const load_pool_item = useCallback(
+    (i) => {
+      if (i < 0 || i >= state.pool.length) return;
 
-    const encoded_docid = encodeURIComponent(state.pool[i].docid);
-    const index = "product";
-    fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-        return "";
-      })
-      .then((data) => {
-        dispatch({
-          type: Actions.FETCH_DOC,
-          payload: {
-            current: i,
-            doc: data,
-          },
+      const encoded_docid = encodeURIComponent(state.pool[i].docid);
+      const index = "product-md";
+      fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          return "";
+        })
+        .then((data) => {
+          dispatch({
+            type: Actions.FETCH_DOC,
+            payload: {
+              current: i,
+              doc: data,
+            },
+          });
         });
-      });
-  }, [state.pool, state.topic]);
+    },
+    [state.pool, state.topic]
+  );
 
   const judge = (judgment) => {
-    const docid = state.pool[state.current].docid
+    const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let log_payload = { docid: docid, judgment: judgment };
     if (judgment == "0") {
       log_payload.passage = [];
-    } else if ('passage' in state.pool[state.current]) {
+    } else if ("passage" in state.pool[state.current]) {
       log_payload.passage = state.pool[state.current].passage;
     }
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
-        dispatch({ 
-          type: Actions.SET_JUDGMENT, 
-          payload: { docid: docid, judgment: judgment }
+        dispatch({
+          type: Actions.SET_JUDGMENT,
+          payload: { docid: docid, judgment: judgment },
         });
         if (judgment == "0") {
-          dispatch({ 
+          dispatch({
             type: Actions.SET_PASSAGES,
-            payload: { docid: docid, passage: [] }
-           });
+            payload: { docid: docid, passage: [] },
+          });
         }
       }
     });
-  }
+  };
 
   // eslint-disable-next-line no-unused-vars
   const add_passage = (passage) => {
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
-    let cur_pass = ('passage' in state.pool[state.current]) ? state.pool[state.current].passage : [];
-    cur_pass = cur_pass.filter((entry) => (entry.sentence != passage.sentence));
+    let cur_pass =
+      "passage" in state.pool[state.current]
+        ? state.pool[state.current].passage
+        : [];
+    cur_pass = cur_pass.filter((entry) => entry.sentence != passage.sentence);
     let new_pass = cur_pass.concat(passage);
     let log_payload = { docid: docid, judgment: judgment, passage: new_pass };
     if (judgment === "-1" || judgment === "0") {
@@ -406,18 +404,18 @@ function App() {
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
         if (log_payload.judgment != judgment) {
-          dispatch({ 
-            type: Actions.SET_JUDGMENT, 
-            payload: { docid: docid, judgment: log_payload.judgment}
+          dispatch({
+            type: Actions.SET_JUDGMENT,
+            payload: { docid: docid, judgment: log_payload.judgment },
           });
         }
-        dispatch({ 
-          type: Actions.SET_PASSAGES, 
-          payload: { docid: docid, passage: new_pass }
+        dispatch({
+          type: Actions.SET_PASSAGES,
+          payload: { docid: docid, passage: new_pass },
         });
       }
     });
@@ -425,12 +423,17 @@ function App() {
 
   // eslint-disable-next-line no-unused-vars
   const del_passage = (passage) => {
-    if (!('passage' in state.pool[state.current]) || state.pool[state.current].passage.length == 0)
+    if (
+      !("passage" in state.pool[state.current]) ||
+      state.pool[state.current].passage.length == 0
+    )
       return;
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
-    let passages = state.pool[state.current].passage.filter((p) => p.sentence != passage.sentence);
+    let passages = state.pool[state.current].passage.filter(
+      (p) => p.sentence != passage.sentence
+    );
     let log_payload = { docid: docid, judgment: judgment, passage: passages };
     if (passages.length == 0) {
       log_payload.judgment = "0";
@@ -438,22 +441,22 @@ function App() {
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
         if (log_payload.judgment == "0") {
-          dispatch({ 
-            type: Actions.SET_JUDGMENT, 
-            payload: { docid: docid, judgment: "0" }
+          dispatch({
+            type: Actions.SET_JUDGMENT,
+            payload: { docid: docid, judgment: "0" },
           });
-          dispatch({ 
+          dispatch({
             type: Actions.SET_PASSAGES,
-            payload: { docid: docid, passage: [] }
-           });
+            payload: { docid: docid, passage: [] },
+          });
         } else {
-          dispatch({ 
-            type: Actions.SET_PASSAGES, 
-            payload: { docid: docid, passage: passages }
+          dispatch({
+            type: Actions.SET_PASSAGES,
+            payload: { docid: docid, passage: passages },
           });
         }
       }
@@ -581,15 +584,15 @@ function App() {
                     : null
                 }
               />
-              <SimpleJsonDocumentView 
-                document={state.doc} 
+              <MarkdownDocumentView
+                document={state.doc}
                 judgment={
                   state.current >= 0 && state.pool[state.current].passage
                     ? state.pool[state.current].passage
                     : []
                 }
               />
-           </Col>
+            </Col>
           </Row>
         </Container>
       </AssessState.Provider>

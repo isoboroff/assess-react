@@ -1,18 +1,15 @@
 import PropTypes from "prop-types";
+import ReactMarkdown from "react-markdown";
 
 // Render the task/request description
 function Description(props) {
   if (props.desc) {
-    const desc = JSON.parse(props.desc);
+    const desc_obj = JSON.parse(props.desc);
     return (
-      <div className="border-bottom">
-        <span className="mr-5">Topic {desc.id}</span>
-        <br />
-        <p><span className="h2">
-          {desc.query}
-          </span>
-        </p>
-     </div>
+      <>
+        <ReactMarkdown>{desc_obj.query}</ReactMarkdown>
+        <hr />
+      </>
     );
   } else {
     return null;
