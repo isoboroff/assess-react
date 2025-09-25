@@ -96,7 +96,7 @@ class Pool:
             app.logger.debug('Bad log entry ' + self.topic + ': ' + log_entry)
             pass
         try:
-            with open(f'{filename}.desc', 'r') as fp:
+            with open(f'{filename}.md', 'r') as fp:
                 text = fp.read()
                 self.desc = json.dumps({ "id": self.topic, "query": text })
         except FileNotFoundError:
@@ -151,9 +151,9 @@ class Pool:
 #    'd': fields.String(),
 #    'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
 #}
-topic_regex = r'^PSRT_Search_\d{3}$'
-indexes = ['product']
-docid_regex = r'\d+'
+topic_regex = r'^PSRT_Recs_\d{3}$'
+indexes = ['product-md']
+docid_regex = r'[A-Z0-9]+'
 
 # This function decrypts a message using the app's private key
 # Source: https://elc.github.io/python-security/chapters/07_Asymmetric_Encryption.html
@@ -242,7 +242,7 @@ def logout():
 def dashboard_front():
     return render_template('index.html')
 
-POOL_FILE_RE = re.compile(r'^topicPSRT_Search_\d{3}$')
+POOL_FILE_RE = re.compile(r'^topicPSRT_Recs_\d{3}$')
 
 @app.route('/inbox')
 @login_required
