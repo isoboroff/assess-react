@@ -523,6 +523,13 @@ function App() {
     }
   }, [state.doc]);
 
+  let num_unjudged = 0;
+  if (state.pool.length > 0) {
+    for (const item of state.pool) {
+      if (!item.judgment || item.judgment === "-1") num_unjudged += 1;
+    }
+  }
+
   return (
     <AssessDispatch.Provider value={dispatch}>
       <AssessState.Provider value={state}>
@@ -553,7 +560,8 @@ function App() {
               </Button>
             </Col>
             <Col xs="auto">
-              {state.current + 1} of {state.pool.length}
+              {state.current + 1} of {state.pool.length} ({num_unjudged} left to
+              do)
             </Col>
             <Col xs="auto">
               <JudgmentButtons levels={rel_levels} judge={judge} />
