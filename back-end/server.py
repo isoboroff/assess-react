@@ -150,9 +150,9 @@ class Pool:
 #    'd': fields.String(),
 #    'i': fields.String(validate=validate.OneOf(['ragtime', 'ragtime-mt']))
 #}
-topic_regex = r'^[0-9a-z.]+$'
-indexes = ['marcov2.1']
-docid_regex = r'msmarco_v2\.1_doc_\d{2}_\d+#[\d_#]+'
+topic_regex = r'^MLLM_\d{3}$'
+indexes = ['mllm']
+docid_regex = r'^MLLM_\d{3}:llm_\d{4}$'
 
 # This function decrypts a message using the app's private key
 # Source: https://elc.github.io/python-security/chapters/07_Asymmetric_Encryption.html
