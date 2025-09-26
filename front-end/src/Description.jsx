@@ -5,9 +5,9 @@ function Description(props) {
   if (props.desc) {
     return (
       <div className="border-bottom">
-        <span className="h2 mr-5">Request: {props.desc["id"]}</span>
+        <span className="h2 mr-5">Request: {props.desc["topic_id"]}</span>
         <br />
-        <p>{props.desc["question"]}</p>
+        <div className="question-text">{props.desc["question"]}</div>
       </div>
     );
   } else {

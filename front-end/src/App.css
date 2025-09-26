@@ -19,6 +19,11 @@ span.scan-term {
     background-color: #fff36d;
 }
 
+.question-text {
+    white-space: pre-wrap;
+    padding-bottom: 24px;
+}
+
 .article-text {
     font-size: 1.25rem;
     font-family: georgia,Times New Roman,serif;
