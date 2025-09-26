@@ -241,7 +241,7 @@ def logout():
 def dashboard_front():
     return render_template('index.html')
 
-POOL_FILE_RE = re.compile(r'^topic\d+$')
+POOL_FILE_RE = re.compile(r'^topicMLLM_\d{3}$')
 
 @app.route('/inbox')
 @login_required

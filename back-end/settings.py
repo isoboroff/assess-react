@@ -8,7 +8,7 @@ ELASTIC_PORT=9200
 SAVE='relevance'
 
 # ElasticSearch index
-INDEX='marcov2.1'
+INDEX='mllm'
 
 # Logging
 LOGLEVEL='DEBUG'
@@ -20,4 +20,4 @@ from pathlib import Path
 
 LOGIN_PROXY_URL = 'http://127.0.0.1:8080/login'
 # LOGIN_PROXY_URL = 'https://ir.nist.gov/bench2/login'
-PRIVATE_KEY_FILE = 'assess.private.pem'
+PRIVATE_KEY_FILE = 'mllm.private.pem'

@@ -24,18 +24,16 @@ import { AssessState, AssessDispatch } from "./Contexts";
 import Pool from "./Pool";
 import Description from "./Description";
 import DocumentView from "./DocumentView";
-// import useKeyPress from "./useKeyPress";
+import useKeyPress from "./useKeyPress";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
 /* Mapping relevance levels to labels to colors in the interface */
 const rel_levels = {
-  0: { label: "irrelevant", color: "secondary" },
-  1: { label: "related (0)", color: "info" },
-  2: { label: "relevant (1)", color: "primary" },
-  3: { label: "highly relevant (2-3)", color: "success" },
-  4: { label: "perfectly relevant (4+)"}
+  0: { label: "wrong", color: "secondary" },
+  1: { label: "somewhat right", color: "info" },
+  2: { label: "right answer", color: "primary" },
 };
 
 /* This is the application state. */
@@ -88,27 +86,25 @@ function assess_reducer(state, action) {
     case Actions.JUDGE: {
       // Update the judgment of the document that was judged
       let update = { judgment: action.payload.judgment };
-      if ('passage' in action.payload) {
-        if ('clear' in action.payload.passage)
-          update.passage = [];
+      if ("passage" in action.payload) {
+        if ("clear" in action.payload.passage) update.passage = [];
         else update.passage = action.payload.passage;
       }
-      if ('subtopics' in action.payload)
+      if ("subtopics" in action.payload)
         update.subtopics = action.payload.subtopics;
 
       let newPool = state.pool.map((entry) => {
         if (entry.docid === action.payload.docid) {
           console.log(entry, update);
-          if ('passage' in update) {
-            if ('passage' in entry) {
+          if ("passage" in update) {
+            if ("passage" in entry) {
               update.passage = entry.passage.concat(update.passage);
             } else {
               update.passage = [update.passage];
             }
           }
           return { ...entry, ...update };
-        }
-        else return entry;
+        } else return entry;
       });
       return {
         ...state,
@@ -120,7 +116,7 @@ function assess_reducer(state, action) {
       const passage = action.payload;
       let newPool = state.pool.map((entry) => {
         if (entry.docid == passage.docid) {
-          if ('passage' in entry) {
+          if ("passage" in entry) {
             if (Array.isArray(entry.passage)) {
               entry.passage = [...entry.passage, passage];
             } else {
@@ -129,9 +125,8 @@ function assess_reducer(state, action) {
           } else {
             entry.passage = [passage];
           }
-          return { ...entry }
-        }
-        else return entry;
+          return { ...entry };
+        } else return entry;
       });
       return { ...state, pool: newPool };
     }
@@ -140,12 +135,14 @@ function assess_reducer(state, action) {
       const passage = action.payload;
       let newPool = state.pool.map((entry) => {
         if (entry.docid == passage.docid) {
-          if ('passage' in entry.docid) {
-            entry.passage = entry.passage.filter((p) => p.docid != passage.docid);
+          if ("passage" in entry.docid) {
+            entry.passage = entry.passage.filter(
+              (p) => p.docid != passage.docid
+            );
           }
-          return {...entry}
+          return { ...entry };
         } else return entry;
-      })
+      });
       return { ...state, pool: newPool };
     }
 
@@ -172,7 +169,7 @@ function assess_reducer(state, action) {
     case Actions.SET_PASSAGES: {
       let newPool = state.pool.map((entry) => {
         if (entry.docid === action.payload.docid) {
-          return { ...entry, passage: action.payload.passage }
+          return { ...entry, passage: action.payload.passage };
         } else {
           return entry;
         }
@@ -232,22 +229,28 @@ function LoadTopicModal(props) {
 
 function ScanTerms(props) {
   const dispatch = useContext(AssessDispatch);
-  const change = useCallback((e) => {
-    props.set_scan_terms(e.target.value);
-    e.preventDefault();
-    e.stopPropagation();
-  }, [props]);
-  
-  const update = useCallback((e) => {
-    if (e.key === "Enter") {
+  const change = useCallback(
+    (e) => {
+      props.set_scan_terms(e.target.value);
       e.preventDefault();
-      dispatch({
-        type: Actions.SAVE_SCAN_TERMS,
-        payload: { scan_terms: props.scan_terms },
-      });
-    }
-    e.stopPropagation();
-  }, [props, dispatch]);
+      e.stopPropagation();
+    },
+    [props]
+  );
+
+  const update = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        dispatch({
+          type: Actions.SAVE_SCAN_TERMS,
+          payload: { scan_terms: props.scan_terms },
+        });
+      }
+      e.stopPropagation();
+    },
+    [props, dispatch]
+  );
 
   const apply = useCallback(() => {
     dispatch({
@@ -269,21 +272,21 @@ function ScanTerms(props) {
       <Form>
         <Row className="align-items-center">
           <Col xs={10}>
-        <Form.Control
-          placeholder="Scan terms"
-          dir={props.dir}
-          value={props.scan_terms}
-          onChange={change}
-          onKeyDown={update}
-        />
+            <Form.Control
+              placeholder="Scan terms"
+              dir={props.dir}
+              value={props.scan_terms}
+              onChange={change}
+              onKeyDown={update}
+            />
           </Col>
           <Col>
             <Button className="mx-3" variant="primary" onClick={apply}>
-          Apply
-        </Button>
-        <Button variant="secondary" onClick={clear}>
-          Clear
-        </Button>
+              Apply
+            </Button>
+            <Button variant="secondary" onClick={clear}>
+              Clear
+            </Button>
           </Col>
         </Row>
       </Form>
@@ -307,23 +310,23 @@ function App() {
 
   /* Effect to fire just before initial render */
   useEffect(() => {
-        // check for scan terms
-        const scan_terms = window.localStorage.getItem("scan_terms");
-        if (scan_terms) {
-          dispatch({
-            type: Actions.SAVE_SCAN_TERMS,
-            payload: { scan_terms: scan_terms },
-          });
-          set_scan_terms(scan_terms);
-        }
+    // check for scan terms
+    const scan_terms = window.localStorage.getItem("scan_terms");
+    if (scan_terms) {
+      dispatch({
+        type: Actions.SAVE_SCAN_TERMS,
+        payload: { scan_terms: scan_terms },
+      });
+      set_scan_terms(scan_terms);
+    }
 
-        // Then, check for last topic loaded
-        const cur_topic = window.localStorage.getItem("topic");
-        if (cur_topic) {
-          // And last document viewed?  If not just set to 0
-          let cur_doc = window.localStorage.getItem("current");
-          if (cur_doc) cur_doc = parseInt(cur_doc);
-          else cur_doc = 0;
+    // Then, check for last topic loaded
+    const cur_topic = window.localStorage.getItem("topic");
+    if (cur_topic) {
+      // And last document viewed?  If not just set to 0
+      let cur_doc = window.localStorage.getItem("current");
+      if (cur_doc) cur_doc = parseInt(cur_doc);
+      else cur_doc = 0;
       load_pool(cur_topic, cur_doc);
     }
   }, []);
@@ -359,7 +362,12 @@ function App() {
             desc: desc_obj,
           },
         });
-        return fetch("doc?t=" + topic + "&d=" + encodeURIComponent(data.pool[current].docid));
+        return fetch(
+          "doc?t=" +
+            topic +
+            "&d=" +
+            encodeURIComponent(data.pool[current].docid)
+        );
       })
       .then((response) => {
         if (response.ok) {
@@ -379,68 +387,77 @@ function App() {
       });
   }, []);
 
-  const load_pool_for_current_user = useCallback((topic, current = 0) => {
-    load_pool(topic, current);
-  }, [load_pool]);
+  const load_pool_for_current_user = useCallback(
+    (topic, current = 0) => {
+      load_pool(topic, current);
+    },
+    [load_pool]
+  );
 
-  const load_pool_item = useCallback((i) => {
-    if (i < 0 || i >= state.pool.length) return;
+  const load_pool_item = useCallback(
+    (i) => {
+      if (i < 0 || i >= state.pool.length) return;
 
-    const encoded_docid = encodeURIComponent(state.pool[i].docid);
-    const index = "marcov2.1";
-    fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-        return "";
-      })
-      .then((data) => {
-        dispatch({
-          type: Actions.FETCH_DOC,
-          payload: {
-            current: i,
-            doc: data,
-          },
+      const encoded_docid = encodeURIComponent(state.pool[i].docid);
+      const index = "mllm";
+      fetch("doc?i=" + index + "&t=" + state.topic + "&d=" + encoded_docid)
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          }
+          return "";
+        })
+        .then((data) => {
+          dispatch({
+            type: Actions.FETCH_DOC,
+            payload: {
+              current: i,
+              doc: data,
+            },
+          });
         });
-      });
-  }, [state.pool, state.topic]);
+    },
+    [state.pool, state.topic]
+  );
 
   const judge = (judgment) => {
-    const docid = state.pool[state.current].docid
+    const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let log_payload = { docid: docid, judgment: judgment };
     if (judgment == "0") {
       log_payload.passage = [];
-    } else if ('passage' in state.pool[state.current]) {
+    } else if ("passage" in state.pool[state.current]) {
       log_payload.passage = state.pool[state.current].passage;
     }
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
-        dispatch({ 
-          type: Actions.SET_JUDGMENT, 
-          payload: { docid: docid, judgment: judgment }
+        dispatch({
+          type: Actions.SET_JUDGMENT,
+          payload: { docid: docid, judgment: judgment },
         });
         if (judgment == "0") {
-          dispatch({ 
+          dispatch({
             type: Actions.SET_PASSAGES,
-            payload: { docid: docid, passage: [] }
-           });
+            payload: { docid: docid, passage: [] },
+          });
         }
       }
     });
-  }
+  };
 
   const add_passage = (passage) => {
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
-    let cur_pass = ('passage' in state.pool[state.current]) ? state.pool[state.current].passage : [];
-    cur_pass = cur_pass.filter((entry) => (entry.sentence != passage.sentence));
+    let cur_pass =
+      "passage" in state.pool[state.current]
+        ? state.pool[state.current].passage
+        : [];
+    cur_pass = cur_pass.filter((entry) => entry.sentence != passage.sentence);
     let new_pass = cur_pass.concat(passage);
     let log_payload = { docid: docid, judgment: judgment, passage: new_pass };
     if (judgment === "-1" || judgment === "0") {
@@ -449,30 +466,35 @@ function App() {
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
         if (log_payload.judgment != judgment) {
-          dispatch({ 
-            type: Actions.SET_JUDGMENT, 
-            payload: { docid: docid, judgment: log_payload.judgment}
+          dispatch({
+            type: Actions.SET_JUDGMENT,
+            payload: { docid: docid, judgment: log_payload.judgment },
           });
         }
-        dispatch({ 
-          type: Actions.SET_PASSAGES, 
-          payload: { docid: docid, passage: new_pass }
+        dispatch({
+          type: Actions.SET_PASSAGES,
+          payload: { docid: docid, passage: new_pass },
         });
       }
     });
   };
 
   const del_passage = (passage) => {
-    if (!('passage' in state.pool[state.current]) || state.pool[state.current].passage.length == 0)
+    if (
+      !("passage" in state.pool[state.current]) ||
+      state.pool[state.current].passage.length == 0
+    )
       return;
     const docid = state.pool[state.current].docid;
     const encoded_docid = encodeURIComponent(docid);
     let judgment = state.pool[state.current].judgment;
-    let passages = state.pool[state.current].passage.filter((p) => p.sentence != passage.sentence);
+    let passages = state.pool[state.current].passage.filter(
+      (p) => p.sentence != passage.sentence
+    );
     let log_payload = { docid: docid, judgment: judgment, passage: passages };
     if (passages.length == 0) {
       log_payload.judgment = "0";
@@ -480,22 +502,22 @@ function App() {
     fetch("judge?t=" + state.topic + "&d=" + encoded_docid, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(log_payload) 
+      body: JSON.stringify(log_payload),
     }).then((response) => {
       if (response.ok) {
         if (log_payload.judgment == "0") {
-          dispatch({ 
-            type: Actions.SET_JUDGMENT, 
-            payload: { docid: docid, judgment: "0" }
+          dispatch({
+            type: Actions.SET_JUDGMENT,
+            payload: { docid: docid, judgment: "0" },
           });
-          dispatch({ 
+          dispatch({
             type: Actions.SET_PASSAGES,
-            payload: { docid: docid, passage: [] }
-           });
+            payload: { docid: docid, passage: [] },
+          });
         } else {
-          dispatch({ 
-            type: Actions.SET_PASSAGES, 
-            payload: { docid: docid, passage: passages }
+          dispatch({
+            type: Actions.SET_PASSAGES,
+            payload: { docid: docid, passage: passages },
           });
         }
       }
@@ -517,10 +539,7 @@ function App() {
     }
     return (
       <ButtonGroup key={i}>
-        <Button
-          variant={rel_levels[i].color}
-          onClick={() => judge(i)}
-        >
+        <Button variant={rel_levels[i].color} onClick={() => judge(i)}>
           <span className={style}>{rel_levels[i].label}</span>
         </Button>
       </ButtonGroup>
@@ -532,12 +551,13 @@ function App() {
    * current document.  'n' and 'p' move to the next and previous
    * pool document respectively.   The spacebar judges the current
    * document irrelevant and moves to the next document.
+   *
+   */
   const onKeyPress = (event) => {
     switch (event.key) {
       case "0":
       case "1":
       case "2":
-      case "3":
         judge(event.key);
         break;
       case "n":
@@ -549,8 +569,7 @@ function App() {
     }
   };
 
-  useKeyPress(["n", "p", "0", "1", "2", "3"], onKeyPress);
-   */
+  useKeyPress(["n", "p", "0", "1", "2"], onKeyPress);
 
   const docDiv = useRef(null);
 
@@ -607,9 +626,7 @@ function App() {
                 ))}
               </Form.Control>
             </Col>
-            <Col xs="auto">
-              {judgment_buttons}
-            </Col>
+            <Col xs="auto">{judgment_buttons}</Col>
             <Col xs="auto" className="mx-3 ms-auto">
               <Button onClick={() => dispatch({ type: Actions.LOGOUT })}>
                 Log out
@@ -647,8 +664,8 @@ function App() {
                     : null
                 }
               />
-              <DocumentView 
-                document={state.doc} 
+              <DocumentView
+                document={state.doc}
                 judgment={
                   state.current >= 0 && state.pool[state.current].passage
                     ? state.pool[state.current].passage
@@ -657,7 +674,7 @@ function App() {
                 add_passage={add_passage}
                 del_passage={del_passage}
               />
-           </Col>
+            </Col>
           </Row>
         </Container>
       </AssessState.Provider>
